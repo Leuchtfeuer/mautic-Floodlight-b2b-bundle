@@ -29,8 +29,7 @@ class IpLookupSubscriberTest extends MauticMysqlTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->activePlugin();
-        $this->useCleanupRollback = false;
+
         $this->pageRepo          = $this->em->getRepository(Page::class);
         $this->hitRepo           = $this->em->getRepository(Hit::class);
         $this->leadRepo          = $this->em->getRepository(Lead::class);
@@ -38,7 +37,19 @@ class IpLookupSubscriberTest extends MauticMysqlTestCase
         $this->companyRepo       = $this->em->getRepository(Company::class);
         $this->companyDomainRepo = $this->em->getRepository(FloodlightCompanyDomains::class);
         $this->companyLeadRepo   = $this->em->getRepository(CompanyLead::class);
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->useCleanupRollback = false;
+        $this->setUpSymfony($this->configParams);
+    }
 
+    private function updateApikey()
+    {
+        $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
+        $form    = $crawler->selectButton('Save')->form();
+        $form['integration_config[apiKeys][api_key]']->setValue('212123123');
+        $crawler = $this->client->submit($form);
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
     }
 
     public function testPluginNoActivated(): void
@@ -52,7 +63,8 @@ class IpLookupSubscriberTest extends MauticMysqlTestCase
 
     private function activePlugin(bool $isPublished = true): void
     {
-        $this->client->request('GET', '/s/plugins/reload');
+        $crawler = $this->client->request('GET', '/s/plugins/reload');
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
         $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/Config/blacklist.php';
         if (!file_exists($configPathTo)) {
@@ -64,19 +76,16 @@ class IpLookupSubscriberTest extends MauticMysqlTestCase
         if (empty($integration)) {
             $plugin      = $this->em->getRepository(Plugin::class)->findOneBy(['bundle' => 'LeuchtfeuerFloodlightB2BBundle']);
             $integration = new Integration();
-            $integration->setName('LeuchtfeuerFloodlightB2B');
+            $integration->setName(LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME);
             $integration->setPlugin($plugin);
         }
-        $apiKeys = $integration->getApiKeys();
-        $apiKeys['api_key'] = '21313213';
-        $integration->setApiKeys($apiKeys);
+        //        $apiKeys = $integration->getApiKeys();
+        //        $apiKeys['api_key'] = '21313213';
+        //        $integration->setApiKeys($apiKeys);
+        $integration->setApiKeys([]);
         $integration->setIsPublished($isPublished);
         $this->em->persist($integration);
-
         $this->em->flush();
-
-
-
     }
 
     public function testIpLookupWithOnlyOneLeadFail(): void

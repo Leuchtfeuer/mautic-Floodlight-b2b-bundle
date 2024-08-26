@@ -9,7 +9,6 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 
 class LeuchtfeuerFloodlightB2BExtension extends Extension
 {
-
     public function load(array $configs, ContainerBuilder $container)
     {
         $loader = new PhpFileLoader($container, new FileLocator(__DIR__.'/../Config'));

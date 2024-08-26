@@ -8,7 +8,8 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsMo
 interface DTOInterface
 {
     public function load(array $data): void;
-    public function fillCompany(Company $company): Company;
-    public function fillCompaniesDomain(FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel, Company $company): Company;
 
+    public function fillCompany(Company $company): Company;
+
+    public function fillCompaniesDomain(FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel, Company $company): Company;
 }

@@ -7,20 +7,20 @@ return [
     'author'      => 'Leuchtfeuer Digital Marketing GmbH',
     'services'    => [
         'integrations' => [
-            'mautic.integration.leuchtfeuerfloodlight' => [
+            'mautic.integration.leuchtfeuerfloodlightb2b' => [
                 'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration::class,
                 'tags'  => [
                     'mautic.integration',
                     'mautic.basic_integration',
                 ],
             ],
-            'mautic.integration.leuchtfeuerfloodlight.configuration' => [
+            'mautic.integration.leuchtfeuerfloodlightb2b.configuration' => [
                 'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Support\ConfigSupport::class,
                 'tags'  => [
                     'mautic.config_integration',
                 ],
             ],
-            'mautic.integration.leuchtfeuerfloodlight.config' => [
+            'mautic.integration.leuchtfeuerfloodlightb2b.config' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class,
                 'arguments' => [
                     'mautic.integrations.helper',

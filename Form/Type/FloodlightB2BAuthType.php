@@ -33,5 +33,4 @@ class FloodlightB2BAuthType extends AbstractType
             ]
         );
     }
-
 }

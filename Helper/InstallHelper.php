@@ -4,22 +4,23 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
 use Mautic\CoreBundle\Factory\MauticFactory;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
+use Mautic\CoreBundle\Helper\PathsHelper;
 
 class InstallHelper
 {
     public function __construct(
         private CoreParametersHelper $coreParametersHelper,
         private MauticFactory $factory,
-
-    )
-    {
+        private PathsHelper $pathsHelper
+    ) {
     }
+
     public function copyBlacklistFile(): void
     {
-        $blacklistFile = $this->coreParametersHelper->get('root_path').'/config/blacklist.php';
+        $blacklistFile = $this->pathsHelper->getRootPath().'/config/blacklist.php';
         if (!file_exists($blacklistFile)) {
-            $configPath   = $this->coreParametersHelper->get('plugins', true).'/LeuchtfeuerFloodlightB2BBundle/Config/blacklist.php';
-            $configPathTo = $this->coreParametersHelper->get('root_path', true).'/config/blacklist.php';
+            $configPath   = $this->pathsHelper->getPluginsPath().'/LeuchtfeuerFloodlightB2BBundle/Config/blacklist.php';
+            $configPathTo = $this->pathsHelper->getRootPath().'/config/blacklist.php';
             copy($configPath, $configPathTo);
         }
     }
@@ -57,7 +58,7 @@ class InstallHelper
 
     public function installFields(string $alias, string $name, string $type): void
     {
-        $tablePrefix = $this->coreParametersHelper->get('table_prefix');
+        $tablePrefix   = $this->coreParametersHelper->get('table_prefix');
         $q             = $this->factory->getEntityManager()->getConnection();
         $sql           = 'Select * from '.$tablePrefix.'lead_fields where alias = "'.$alias.'"';
         $stmt          = $q->prepare($sql);

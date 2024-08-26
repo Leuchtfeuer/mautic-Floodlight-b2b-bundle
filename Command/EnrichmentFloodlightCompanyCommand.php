@@ -15,11 +15,11 @@ use Symfony\Component\Console\Output\OutputInterface;
 class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
 {
     public function __construct(
-        protected PathsHelper                   $pathsHelper,
-        protected CoreParametersHelper          $coreParametersHelper,
-        protected CompanyModel                  $companyModel,
+        protected PathsHelper $pathsHelper,
+        protected CoreParametersHelper $coreParametersHelper,
+        protected CompanyModel $companyModel,
         protected FloodlightCompanyDomainsModel $companyDomainsModel,
-        protected Config                        $config,
+        protected Config $config,
     ) {
         parent::__construct($pathsHelper, $coreParametersHelper);
     }
@@ -38,8 +38,9 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
             return 1;
         }
 
-        if(!$this->config->isProTier()){
+        if (!$this->config->isProTier()) {
             $output->writeln('<info>Plugin is pro tier</info>');
+
             return 1;
         }
 
@@ -49,7 +50,6 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
 
             return 0;
         }
-
 
         return 0;
     }

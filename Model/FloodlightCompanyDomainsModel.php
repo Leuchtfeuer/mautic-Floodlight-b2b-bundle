@@ -14,12 +14,11 @@ use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\UserBundle\Model\UserModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\PluginInstallSubscriber;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\LeuchtfeuerFloodlightB2BBundle;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\PluginInstallSubscriber;
 
 class FloodlightCompanyDomainsModel extends FormModel
 {

@@ -10,7 +10,7 @@ class LeuchtfeuerFloodlightB2BIntegration extends BasicIntegration implements Ba
 {
     use ConfigurationTrait;
 
-    public const INTEGRATION_NAME = 'leuchtfeuerfloodlightb2b';
+    public const INTEGRATION_NAME = 'LeuchtfeuerFloodlightB2B';
     public const DISPLAY_NAME     = 'Floodlight B2B by Leuchtfeuer';
 
     public function getName(): string

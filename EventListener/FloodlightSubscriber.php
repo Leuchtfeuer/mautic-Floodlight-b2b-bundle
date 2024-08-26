@@ -15,11 +15,11 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class FloodlightSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private IpLookupRulesHelper           $ipLookupRulesHelper,
-        private Config                        $config,
+        private IpLookupRulesHelper $ipLookupRulesHelper,
+        private Config $config,
         private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel,
         private FloodlightIpDomainLookupsModel $floodlightIpDomainLookupsModel,
-        private FloodlightService             $flooglightService,
+        private FloodlightService $flooglightService,
     ) {
     }
 
@@ -41,15 +41,13 @@ class FloodlightSubscriber implements EventSubscriberInterface
     private function execute(PageHitEvent $event): void
     {
         $isValid = $this->ipLookupRulesHelper->check($event->getHit());
-
         if (false === $isValid) {
             return;
         }
 
         $this->saveDomain($event);
-
         if ($this->config->isProTier()) {
-            $this->saveIpLookup($event);
+            $this->saveIpLookup($event->getRequest()->server->get('REMOTE_ADDR'));
         }
     }
 

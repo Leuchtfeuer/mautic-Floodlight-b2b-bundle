@@ -37,7 +37,11 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $integration->setIsPublished($isPublished);
         $this->em->persist($integration);
         $this->em->flush();
-        $installHelper = new InstallHelper(self::getContainer()->get('mautic.helper.core_parameters'), self::getContainer()->get('mautic.factory'));
+        $installHelper = new InstallHelper(
+            self::getContainer()->get('mautic.helper.core_parameters'),
+            self::getContainer()->get('mautic.factory'),
+            self::getContainer()->get('mautic.helper.paths')
+        );
         $installHelper->installWhoisPythonLib();
     }
 

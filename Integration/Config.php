@@ -68,17 +68,16 @@ class Config
         if (str_contains($apiKeys['api_key'], 'free_')) {
             return true;
         }
+
         return false;
     }
 
     public function isProTier(): bool
     {
-
         if (!$this->isConfigured() || $this->isFreeTier()) {
             return false;
         }
 
         return true;
     }
-
 }

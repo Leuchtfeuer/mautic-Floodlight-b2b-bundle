@@ -15,9 +15,9 @@ class IpLookupRulesHelper
     public const LEAD_DOMAINS_STATUS_VALID       = 'valid';
 
     public function __construct(
-        private PageModel                     $pageModel,
-        private FloodlightLeadDomainsModel    $leadDomainsModel,
-        private WhoisPyService                $whoisPyService,
+        private PageModel $pageModel,
+        private FloodlightLeadDomainsModel $leadDomainsModel,
+        private WhoisPyService $whoisPyService,
         private FloodlightCompanyDomainsModel $companyDomainsModel
     ) {
     }

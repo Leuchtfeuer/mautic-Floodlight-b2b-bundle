@@ -15,7 +15,7 @@ return function (ContainerConfigurator $configurator): void {
     $excludes = [
     ];
     $services->load('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\', '../')
-        ->exclude('../{' . implode(',', array_merge(MauticCoreExtension::DEFAULT_EXCLUDES, $excludes)) . '}');
+        ->exclude('../{'.implode(',', array_merge(MauticCoreExtension::DEFAULT_EXCLUDES, $excludes)).'}');
     $services->load('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Entity\\', '../Entity/*Repository.php')
         ->tag(Doctrine\Bundle\DoctrineBundle\DependencyInjection\Compiler\ServiceRepositoryCompilerPass::REPOSITORY_SERVICE_TAG);
     $services->alias('leuchtfeuerfloodlightb2b.helper.install', MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\InstallHelper::class);
