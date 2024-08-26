@@ -1,0 +1,47 @@
+<?php
+
+namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Helper;
+
+use Mautic\CoreBundle\Test\MauticMysqlTestCase;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
+
+class DomainBlacklistHelperTest extends MauticMysqlTestCase
+{
+    private DomainBlacklistHelper $domainBlackList;
+    private string $domain;
+
+    public function setUp(): void
+    {
+        parent::setUp();
+
+        $configPathTo    = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        $pluginPathFrom  = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/Config/blacklist.php';
+        if (!file_exists($configPathTo)) {
+            copy($pluginPathFrom, $configPathTo);
+        }
+        $this->domainBlackList = new DomainBlacklistHelper();
+        $this->domain          = 'foobaa';
+        $this->domainBlackList->remove('foobaa');
+    }
+
+    public function testGetDomain(): void
+    {
+        $this->assertIsArray($this->domainBlackList->get());
+        $this->assertGreaterThan(10, count($this->domainBlackList->get()));
+    }
+
+    public function testAddDomain(): void
+    {
+        $this->assertFalse(in_array($this->domain, $this->domainBlackList->get()));
+        $this->domainBlackList->add($this->domain);
+        $this->assertTrue(in_array($this->domain, $this->domainBlackList->get()));
+    }
+
+    public function testRemoveDomain(): void
+    {
+        $this->domainBlackList->add($this->domain);
+        $this->assertTrue(in_array($this->domain, $this->domainBlackList->get()));
+        $this->domainBlackList->remove($this->domain);
+        $this->assertFalse(in_array($this->domain, $this->domainBlackList->get()));
+    }
+}

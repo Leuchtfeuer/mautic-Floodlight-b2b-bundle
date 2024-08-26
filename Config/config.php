@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'name'        => 'Floodlight for B2B',
+    'description' => 'Floodlight for B2B plugin: Detect and qualify companies from anonymous leads in Mautic, using the Floodlight for B2B service',
+    'version'     => '1.0.0',
+    'author'      => 'Leuchtfeuer Digital Marketing GmbH',
+    'services'    => [
+        'integrations' => [
+            'mautic.integration.leuchtfeuerfloodlight' => [
+                'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration::class,
+                'tags'  => [
+                    'mautic.integration',
+                    'mautic.basic_integration',
+                ],
+            ],
+            'mautic.integration.leuchtfeuerfloodlight.configuration' => [
+                'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Support\ConfigSupport::class,
+                'tags'  => [
+                    'mautic.config_integration',
+                ],
+            ],
+            'mautic.integration.leuchtfeuerfloodlight.config' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class,
+                'arguments' => [
+                    'mautic.integrations.helper',
+                ],
+            ],
+        ],
+    ],
+    'parameters' => [
+    ],
+];
