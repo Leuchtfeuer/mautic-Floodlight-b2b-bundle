@@ -78,6 +78,10 @@ class Config
             return false;
         }
 
-        return true;
+        if (str_contains($this->getApiKeys()['api_key'], 'pro_')) {
+            return true;
+        }
+
+        return false;
     }
 }

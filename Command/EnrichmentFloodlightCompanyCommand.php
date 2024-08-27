@@ -26,7 +26,7 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
 
     protected function configure(): void
     {
-        $this->setName('leuchtfeuer:flood:enrich')
+        $this->setName('leuchtfeuer:floodlight:enrich')
             ->setDescription('Enrich company data with ABM data');
     }
 
@@ -35,13 +35,13 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
         if (!$this->config->isConfigured() || !$this->config->isPublished()) {
             $output->writeln('<error>Plugin is not configured</error>');
 
-            return 1;
+            return 0;
         }
 
         if (!$this->config->isProTier()) {
-            $output->writeln('<info>Plugin is pro tier</info>');
+            $output->writeln('<error>Plugin isn\'t pro tier</error>');
 
-            return 1;
+            return 0;
         }
 
         $companies = $this->getCompaniesToEnrich();

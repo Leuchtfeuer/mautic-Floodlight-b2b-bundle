@@ -34,10 +34,10 @@ class PluginInstallSubscriber implements EventSubscriberInterface
 
         $this->installHelper->copyBlacklistFile();
         $this->installHelper->installWhoisPythonLib();
-        //        $this->installHelper->installFields(
-        //            self::FIELD_DATA['alias'],
-        //            self::FIELD_DATA['name'],
-        //            self::FIELD_DATA['type']
-        //        );c
+        $this->installHelper->installFields(
+            self::FIELD_DATA['alias'],
+            self::FIELD_DATA['name'],
+            self::FIELD_DATA['type']
+        );
     }
 }
