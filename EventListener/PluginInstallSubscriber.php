@@ -15,7 +15,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
         'type'  => 'textarea',
     ];
 
-    public function __construct(private readonly InstallHelper $installHelper)
+    public function __construct(private InstallHelper $installHelper)
     {
     }
 
