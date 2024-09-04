@@ -15,8 +15,6 @@ class InstallHelperTest extends MauticMysqlTestCase
 
     private function restartIpLookup(): void
     {
-//        $outputInstall[] = shell_exec('pip uninstall python-whois -y --break-system-packages');
-//        $outputInstall[] = shell_exec('pip uninstall ipwhois -y --break-system-packages');
         $configPathTo    = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
@@ -27,9 +25,6 @@ class InstallHelperTest extends MauticMysqlTestCase
     {
         $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'iplookup_whois_json']);
         $this->assertNull($field);
-//        $outputList    = shell_exec('pip list');
-//        $this->assertStringNotContainsString('python-whois', $outputList);
-//        $this->assertStringNotContainsString('ipwhois', $outputList);
         $configPathTo = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
         $this->assertFileDoesNotExist($configPathTo);
         $this->client->request('GET', '/s/plugins/reload');
@@ -38,22 +33,14 @@ class InstallHelperTest extends MauticMysqlTestCase
         $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'iplookup_whois_json']);
         $this->assertNotNull($field);
         $this->assertSame('iplookup_whois_json', $field->getAlias());
-//        $outputList    = shell_exec('pip list');
-//        $this->assertStringContainsString('python-whois', $outputList);
-//        $this->assertStringContainsString('ipwhois', $outputList);
         $this->assertFileExists($configPathTo);
     }
 
     public function testRunCommandWithNoWhoysInstalled(): void
     {
-//        $outputList    = shell_exec('pip list');
-//        $this->assertStringNotContainsString('python-whois', $outputList);
-//        $this->assertStringNotContainsString('ipwhois', $outputList);
         $this->client->request('GET', '/s/plugins/reload');
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
-//        $outputInstall[] = shell_exec('pip uninstall python-whois -y --break-system-packages');
-//        $outputInstall[] = shell_exec('pip uninstall ipwhois -y --break-system-packages');
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
     }

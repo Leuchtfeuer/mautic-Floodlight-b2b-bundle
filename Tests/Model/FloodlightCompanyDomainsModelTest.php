@@ -67,7 +67,6 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $leadEntity->setCreatedBy($user);
         $leadEntity->setModifiedBy($user);
         $leadEntity->setOwner($user);
-        //        $this->em->persist($leadEntity);
 
         $companyModelMock = $this->getMockBuilder(\Mautic\LeadBundle\Model\CompanyModel::class)
             ->disableOriginalConstructor()

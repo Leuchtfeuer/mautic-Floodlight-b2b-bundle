@@ -79,9 +79,6 @@ class IpLookupSubscriberTest extends MauticMysqlTestCase
             $integration->setName(LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME);
             $integration->setPlugin($plugin);
         }
-        //        $apiKeys = $integration->getApiKeys();
-        //        $apiKeys['api_key'] = '21313213';
-        //        $integration->setApiKeys($apiKeys);
         $integration->setApiKeys([]);
         $integration->setIsPublished($isPublished);
         $this->em->persist($integration);
