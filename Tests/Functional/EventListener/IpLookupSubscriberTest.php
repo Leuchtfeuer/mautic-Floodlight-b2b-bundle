@@ -47,7 +47,7 @@ class IpLookupSubscriberTest extends MauticMysqlTestCase
     {
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
-        $form['integration_config[apiKeys][api_key]']->setValue('212123123');
+        $form['integration_config[apiKeys][api_key]']->setValue('pro_12334');
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
     }
@@ -131,14 +131,46 @@ class IpLookupSubscriberTest extends MauticMysqlTestCase
 
     public function testIpLookupPlusTwoHoursSuccessAddCount(): void
     {
+        $items = $this->leadDomainRepo->findAll();
+        $this->leadDomainRepo->deleteEntities($items);
+
+        $items = $this->leadDomainRepo->findAll();
+        $this->assertEquals(0, count($items));
+
         $this->client->request('GET', '/mtracking.gif');
+        $items = $this->leadDomainRepo->findAll();
+        $this->assertEquals(0, count($items));
+
         $this->client->request('GET', '/mtracking.gif');
+        $items = $this->leadDomainRepo->findAll();
+        $this->assertEquals(1, count($items));
+
+        $this->client->request('GET', '/mtracking.gif');
+        $items = $this->leadDomainRepo->findAll();
+        $this->assertEquals(1, count($items));
+
         $lastItem = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
+
+        $lead = $this->createLead();
         $lastItem->setDateModified(new \DateTime('-2 hours'));
+        $lastItem->setLead($lead);
         $this->em->persist($lastItem);
+        $this->em->flush();
+
         $this->client->request('GET', '/mtracking.gif');
+        $items = $this->leadDomainRepo->findAll();
+        $this->assertEquals(2, count($items));
+
         $lastItem = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
-        $this->assertEquals(2, $lastItem->getCount());
+        $lead     = $this->createLead();
+        $lastItem->setDateModified(new \DateTime('-2 hours'));
+        $lastItem->setLead($lead);
+        $this->em->persist($lastItem);
+        $this->em->flush();
+
+        $this->client->request('GET', '/mtracking.gif');
+        $items = $this->leadDomainRepo->findAll();
+        $this->assertEquals(3, count($items));
     }
 
     public function testLookupCreateCompany(): void
@@ -222,5 +254,16 @@ class IpLookupSubscriberTest extends MauticMysqlTestCase
         $this->assertContains('domain', $companyDomains);
         $this->assertContains('date_added', $companyDomains);
         $this->assertContains('date_modified', $companyDomains);
+    }
+
+    private function createLead(): Lead
+    {
+        $lead = new Lead();
+        $lead->setFirstname('Contact');
+        $lead->setEmail('test@test.com');
+        $this->em->persist($lead);
+        $this->em->flush();
+
+        return $lead;
     }
 }

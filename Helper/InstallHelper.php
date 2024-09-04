@@ -59,6 +59,9 @@ class InstallHelper
     public function installFields(string $alias, string $name, string $type): void
     {
         $tablePrefix   = $this->coreParametersHelper->get('table_prefix');
+        if ('test' == $_SERVER['APP_ENV']) {
+            $tablePrefix = $tablePrefix.$_SERVER['APP_ENV'].'_';
+        }
         $q             = $this->factory->getEntityManager()->getConnection();
         $sql           = 'Select * from '.$tablePrefix.'lead_fields where alias = "'.$alias.'"';
         $stmt          = $q->prepare($sql);

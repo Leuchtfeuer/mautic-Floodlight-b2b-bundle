@@ -46,6 +46,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
         }
 
         $this->saveDomain($event);
+
         if ($this->config->isProTier()) {
             $this->saveIpLookup($event->getRequest()->server->get('REMOTE_ADDR'));
         }

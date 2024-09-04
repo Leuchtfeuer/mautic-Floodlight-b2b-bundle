@@ -8,7 +8,7 @@ return [
     'services'    => [
         'others' => [
             'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice' => [
-                'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService::class,
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService::class,
                 'arguments' => [
                     'monolog.logger.mautic',
                 ],
@@ -27,11 +27,11 @@ return [
                 'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper::class,
             ],
             'mautic.leuchtfeuerfloodlightb2b.helper.iplookuprules' => [
-                'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class,
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class,
                 'arguments' => [
                     'mautic.page.model.page',
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
-                    'mautic.helper.integration',
+                    'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice',
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
                 ],
             ],

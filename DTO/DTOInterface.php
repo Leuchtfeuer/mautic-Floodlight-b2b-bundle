@@ -11,5 +11,5 @@ interface DTOInterface
 
     public function fillCompany(Company $company): Company;
 
-    public function fillCompaniesDomain(FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel, Company $company): Company;
+    public function fillCompaniesDomain(FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel, Company $company): array;
 }

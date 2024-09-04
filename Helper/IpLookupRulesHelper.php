@@ -58,9 +58,11 @@ class IpLookupRulesHelper
     private function lookupHasMoreThanOneHour($leadId)
     {
         $result = $this->leadDomainsModel->getRepository()->findOneBy(['lead' => $leadId], ['dateModified' => 'DESC']);
+
         if (empty($result)) {
             return true;
         }
+
         if ($result->getDateModified() > (new \DateTime())->modify('-1 hour')) {
             return false;
         }

@@ -9,11 +9,24 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class PluginInstallSubscriber implements EventSubscriberInterface
 {
-    public const FIELD_DATA = [
-        'alias' => 'iplookup_whois_json',
-        'name'  => 'IP Lookup Whois',
-        'type'  => 'textarea',
-    ];
+    public const FIELD_DATA =
+        [
+            [
+                'alias' => 'iplookup_whois_json',
+                'name'  => 'IP Lookup Whois',
+                'type'  => 'textarea',
+            ],
+            [
+                'alias' => 'enrichment_date',
+                'name'  => 'Enrichment Date',
+                'type'  => 'datetime',
+            ],
+            [
+                'alias' => 'companyindustry_tags',
+                'name'  => 'Industry Tags',
+                'type'  => 'textarea',
+            ],
+        ];
 
     public function __construct(private InstallHelper $installHelper)
     {
@@ -33,11 +46,12 @@ class PluginInstallSubscriber implements EventSubscriberInterface
         }
 
         $this->installHelper->copyBlacklistFile();
-        $this->installHelper->installWhoisPythonLib();
-        $this->installHelper->installFields(
-            self::FIELD_DATA['alias'],
-            self::FIELD_DATA['name'],
-            self::FIELD_DATA['type']
-        );
+        foreach (self::FIELD_DATA as $fieldData) {
+            $this->installHelper->installFields(
+                $fieldData['alias'],
+                $fieldData['name'],
+                $fieldData['type']
+            );
+        }
     }
 }
