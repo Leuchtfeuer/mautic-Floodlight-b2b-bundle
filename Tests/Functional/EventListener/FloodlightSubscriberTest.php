@@ -16,7 +16,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
-class IpLookupSubscriberTest extends MauticMysqlTestCase
+class FloodlightSubscriberTest extends MauticMysqlTestCase
 {
     private $pageRepo;
     private $hitRepo;

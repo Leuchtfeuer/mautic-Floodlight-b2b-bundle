@@ -21,6 +21,15 @@ return [
                     'mautic.helper.core_parameters',
                     'mautic.factory',
                     'mautic.helper.paths',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.field',
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.helper.field' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper::class,
+                'arguments' => [
+                    'mautic.lead.model.field',
+                    'form.factory',
+                    'monolog.logger.mautic',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist' => [

@@ -54,7 +54,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         return parent::getEntity($id);
     }
 
-    public function save($domain, Lead $lead, $details): FloodlightCompanyDomains
+    public function save(string $domain, Lead $lead, array $details): FloodlightCompanyDomains
     {
         $companyDomain = $this->getRepository()->findOneBy(
             [

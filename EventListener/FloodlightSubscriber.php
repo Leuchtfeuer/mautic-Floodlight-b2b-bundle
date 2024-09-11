@@ -67,7 +67,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
         $this->floodlightCompanyDomainsModel->save($domain, $event->getHit()->getLead(), $dataDomain['details']);
     }
 
-    private function saveIpLookup($ip): void
+    private function saveIpLookup(string $ip): void
     {
         if (
             !$this->ipLookupRulesHelper->isIp($ip)

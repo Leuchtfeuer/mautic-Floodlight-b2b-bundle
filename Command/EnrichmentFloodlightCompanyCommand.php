@@ -9,6 +9,7 @@ use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Model\CompanyModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
@@ -25,6 +26,7 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
         protected FloodlightCompanyDomainsModel $flCompanyDomainsModel,
         protected Config $config,
         protected FloodlightService $flooglightService,
+        protected FieldHelper $fieldHelper
     ) {
         parent::__construct($pathsHelper, $coreParametersHelper);
     }
@@ -98,6 +100,12 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
         }
 
         $company       = $this->companyModel->getEntity($flcompanyDomain->getCompany()->getId());
+        if (!$company instanceof Company) {
+            $output->writeln('<error>Company not found</error>');
+            $output->writeln('<comment>-----------------------------------------------------------------</comment>');
+
+            return;
+        }
         if (Response::HTTP_BAD_REQUEST === $result['status']) {
             $company->addUpdatedField('enrichment_date', \date('Y-m-d H:i:s'));
             $this->companyModel->saveEntity($company);
@@ -111,6 +119,7 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
         }
 
         $floodlightDTO = new FloodlightDTO($result);
+        $this->fieldHelper->updateProperties($floodlightDTO);
         $company       = $floodlightDTO->fillCompany($company);
         $this->companyModel->saveEntity($company);
         $output->writeln('<info>Company data updated</info>');
@@ -146,9 +155,9 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
     }
 
     /**
-     * @return array<Company>|array
+     * @return array<Company>|null
      */
-    private function getCompaniesToEnrich(): array
+    private function getCompaniesToEnrich(): ?array
     {
         return $this->companyModel->getRepository()->getEntitiesWithCustomFields(
             'company',

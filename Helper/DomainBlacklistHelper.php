@@ -6,11 +6,17 @@ class DomainBlacklistHelper
 {
     public const BLACKLIST_PATH_FILE = __DIR__.'/../../../config/blacklist.php';
 
+    /**
+     * @param array<string> $blacklist
+     */
     public function __construct(private array $blacklist = [])
     {
         $this->blacklist = $this->readFile();
     }
 
+    /**
+     * @return array<string>|null
+     */
     private function readFile(): ?array
     {
         return explode(PHP_EOL, file_get_contents(self::BLACKLIST_PATH_FILE));
@@ -31,6 +37,9 @@ class DomainBlacklistHelper
         file_put_contents(self::BLACKLIST_PATH_FILE, $textFile);
     }
 
+    /**
+     * @return array<string>|null
+     */
     public function get(): ?array
     {
         return $this->blacklist;
