@@ -1,0 +1,26 @@
+{
+  "name": "leuchtfeuer/mautic-floodlight-b2b-bundle",
+  "description": "Floodlight for B2B plugin: Detect and qualify companies from anonymous leads in Mautic, using the Floodlight for B2B service",
+  "license": "GPL-3.0",
+  "type": "mautic-plugin",
+  "homepage": "https://www.Leuchtfeuer.com",
+  "authors": [
+    {
+      "name": "Leuchtfeuer Digital Marketing GmbH",
+      "email": "mautic-plugins@Leuchtfeuer.com"
+    }
+  ],
+  "extra": {
+    "install-directory-name": "LeuchtfeuerFloodlightB2BBundle"
+  },
+  "autoload": {
+    "psr-4": {
+      "MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\": ""
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Tests\\": "Tests"
+    }
+  }
+}
