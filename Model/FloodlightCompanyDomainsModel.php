@@ -9,12 +9,13 @@ use Mautic\CoreBundle\Model\FormModel;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Translation\Translator;
 use Mautic\IntegrationsBundle\Sync\Notification\Helper\UserHelper as NotificationUserHelper;
+use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\UserBundle\Model\UserModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\PluginInstallSubscriber;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -45,7 +46,10 @@ class FloodlightCompanyDomainsModel extends FormModel
         return $this->em->getRepository(FloodlightCompanyDomains::class);
     }
 
-    public function getEntity($id = null): ?object
+    /**
+     * @param int|null $id
+     */
+    public function getEntity($id = null): FloodlightCompanyDomains
     {
         if (null === $id) {
             return new FloodlightCompanyDomains();
@@ -54,6 +58,9 @@ class FloodlightCompanyDomainsModel extends FormModel
         return parent::getEntity($id);
     }
 
+    /**
+     * @param array<string> $details
+     */
     public function save(string $domain, Lead $lead, array $details): FloodlightCompanyDomains
     {
         $companyDomain = $this->getRepository()->findOneBy(
@@ -61,6 +68,7 @@ class FloodlightCompanyDomainsModel extends FormModel
                 'domain' => $domain,
             ]
         );
+        assert($companyDomain instanceof FloodlightCompanyDomains || null === $companyDomain);
         if (empty($companyDomain)) {
             return $this->newCompanyDomain($domain, $lead, $details);
         }
@@ -76,16 +84,24 @@ class FloodlightCompanyDomainsModel extends FormModel
         return $companyDomain;
     }
 
-    private function updateFieldWhoisDetails($companyDomain, $details): void
+    /**
+     * @param array<string> $details
+     */
+    private function updateFieldWhoisDetails(FloodlightCompanyDomains $companyDomain, array $details): void
     {
         $companyDomain->getCompany()->addUpdatedField(
-            PluginInstallSubscriber::FIELD_DATA['alias'],
+            'iplookup_whois_json',
             json_encode($this->transformDetails($details), JSON_FORCE_OBJECT)
         );
         $this->companiesModel->saveEntity($companyDomain->getCompany());
     }
 
-    private function transformDetails($details): array
+    /**
+     * @param array<string> $details
+     *
+     * @return array<string>
+     */
+    private function transformDetails(array $details): array
     {
         return [
             'whois_company_name' => $details['company_name'],
@@ -94,23 +110,35 @@ class FloodlightCompanyDomainsModel extends FormModel
         ];
     }
 
-    private function newCompanyDomain($domain, Lead $lead, $details = []): FloodlightCompanyDomains
+    /**
+     * @param array<string> $details
+     */
+    private function newCompanyDomain(string $domain, Lead $lead, array $details = []): FloodlightCompanyDomains
     {
         $this->newCompany($domain, $lead, $details);
         $companies     = $this->leadModel->getCompanies($lead);
         $company       = $this->companiesModel->getEntity($companies[0]['company_id']);
+
         $companyDomain = new FloodlightCompanyDomains();
         $companyDomain->setDomain($domain);
         $companyDomain->setDateAdded(new \DateTime());
         $companyDomain->setDateModified(new \DateTime());
         $companyDomain->setIsPrimaryDomain(true);
-        $companyDomain->setCompany($company);
+        if (!empty($company->getId())) {
+            $companyDomain->setCompany($company);
+        }
+
         $this->saveEntity($companyDomain);
 
         return $companyDomain;
     }
 
-    private function newCompany($domain, Lead $lead, $details): array
+    /**
+     * @param array<string> $details
+     *
+     * @return array<string, Company|Lead>
+     */
+    private function newCompany(string $domain, Lead $lead, array $details): array
     {
         $companyEntity = $this->companiesModel->getEntity();
         $userIds       = $this->notificationUserHelper->getAdminUsers();
@@ -123,7 +151,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         $companyEntity->setModifiedBy($user);
         $companyEntity->setOwner($user);
         if (!empty($details)) {
-            $companyEntity->addUpdatedField(PluginInstallSubscriber::FIELD_DATA['alias'], json_encode($this->transformDetails($details)));
+            $companyEntity->addUpdatedField('iplookup_whois_json', json_encode($this->transformDetails($details)));
         }
         $this->companiesModel->saveEntity($companyEntity);
         $this->leadModel->addToCompany($lead, $companyEntity);
@@ -136,7 +164,10 @@ class FloodlightCompanyDomainsModel extends FormModel
         ];
     }
 
-    public function updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain(int $lead, string $domain, $domainDetails = [])
+    /**
+     * @param array<string> $domainDetails
+     */
+    public function updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain(int $lead, string $domain, array $domainDetails = []): FloodlightLeadDomains
     {
         $leadEntity    = $this->leadModel->getEntity($lead);
         $companyDomain = $this->getRepository()->findOneBy(
@@ -148,6 +179,7 @@ class FloodlightCompanyDomainsModel extends FormModel
             empty($companyDomain)
             && IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE !== $domain
             && IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED !== $domain
+            && null !== $leadEntity
         ) {
             $companyDomain = $this->save($domain, $leadEntity, $domainDetails);
         }
@@ -159,13 +191,15 @@ class FloodlightCompanyDomainsModel extends FormModel
             ]
         );
 
-        if (empty($leadDomain)) {
+        if (empty($leadDomain) && null !== $leadEntity) {
             $leadDomain = $this->leadDomainsModel->getEntity();
             $leadDomain->setLead($leadEntity);
             $leadDomain->setDomain($domain);
             $leadDomain->setDateAdded(new \DateTime());
             $leadDomain->setCount(0);
         }
+
+        assert($leadDomain instanceof FloodlightLeadDomains);
 
         $leadDomain->setDateModified(new \DateTime());
         $leadDomain->setCount($leadDomain->getCount() + 1);

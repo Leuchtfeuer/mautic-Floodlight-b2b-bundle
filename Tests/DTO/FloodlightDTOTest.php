@@ -27,7 +27,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     private function loadDTO(): void
     {
         $dataFake            = json_decode($this->fakeData(), true);
-        $data['content']     = $dataFake;
+        $data                = $dataFake['company'];
         $this->floodlightDTO = new FloodlightDTO($data);
     }
 
@@ -39,9 +39,8 @@ class FloodlightDTOTest extends MauticMysqlTestCase
                         "id": "60b725f10c9c85c70d97880dfe8191b3",
                         "primary_domain": "http://goldmansachs.com ",
                         "companyname": "Goldman Sachs Group",
-                        "address1": "Main street 1",
-                        "address2": "Mansion House",
-                        "address2": "Mansion House",
+                        "companyaddress1": "Main street 1",
+                        "companyaddress2": "Mansion House",
                         "companycity": "Hannover",
                         "zip": "30177",
                         "companycountry": "Germany",
@@ -70,8 +69,8 @@ class FloodlightDTOTest extends MauticMysqlTestCase
         $this->assertEquals('Goldman Sachs Group', $newCompany->getName());
         $this->assertEquals('Germany', $newCompany->getCountry());
         $this->assertEquals('Hannover', $newCompany->getCity());
-        $this->assertEquals('Main street 1 Mansion House', $newCompany->getAddress1());
-        $this->assertEquals(0, $this->floodlightDTO->getNumberOfEmployees());
-        $this->assertIsInt($this->floodlightDTO->getNumberOfEmployees());
+        $this->assertEquals('Main street 1', $newCompany->getAddress1());
+        $this->assertEquals(0, $this->floodlightDTO->getCompanyNumberOfEmployees());
+        $this->assertEmpty($this->floodlightDTO->getCompanyNumberOfEmployees());
     }
 }

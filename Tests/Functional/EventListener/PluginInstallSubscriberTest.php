@@ -63,7 +63,7 @@ class PluginInstallSubscriberTest extends MauticMysqlTestCase
 
     public function testCheckPropertiesF4bCompanyTechnologies(): void
     {
-        $this->baseTestFields('f4b_companytechnologies', ['Mautic', 'mautic', 'Select - Multiple']);
+        $this->baseTestFields('f4b_companytechnologies', ['Mautic', 'mautic', 'Options', 'Add a value']);
     }
 
     public function testCheckPropertiesF4bCompanyAnnualRevenueRange(): void
@@ -101,6 +101,7 @@ class PluginInstallSubscriberTest extends MauticMysqlTestCase
         $resultFieldCompanyType   = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => $alias]);
         $this->client->request('GET', '/s/contacts/fields/edit/'.$resultFieldCompanyType->getId());
         $content = $this->client->getResponse()->getContent();
+        //        dd($content);
         foreach ($finds as $find) {
             $this->assertStringContainsString($find, $content);
         }

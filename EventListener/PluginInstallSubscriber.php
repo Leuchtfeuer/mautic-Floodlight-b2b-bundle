@@ -18,10 +18,10 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'externalKeyName' => 'companyfloodlight_id',
             ],
             [
-              'alias'             => 'f4b_companycrunchbase_handle',
-                'name'            => 'Crunchbase Handle',
-                'type'            => 'text',
-                'externalKeyName' => 'companycrunchbase_handle',
+                'alias'             => 'f4b_companycrunchbase_handle',
+                'name'              => 'Crunchbase Handle',
+                'type'              => 'text',
+                'externalKeyName'   => 'companycrunchbase_handle',
             ],
             [
                 'alias'           => 'f4b_companyname_legal',

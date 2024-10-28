@@ -18,7 +18,7 @@ class Config
             $integration = $this->getIntegrationEntity();
 
             return (bool) $integration->getIsPublished();
-        } catch (IntegrationNotFoundException $e) {
+        } catch (IntegrationNotFoundException) {
             return false;
         }
     }
@@ -44,7 +44,7 @@ class Config
             $integration = $this->getIntegrationEntity();
 
             return $integration->getApiKeys() ?: [];
-        } catch (IntegrationNotFoundException $e) {
+        } catch (IntegrationNotFoundException) {
             return [];
         }
     }

@@ -8,6 +8,7 @@ use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\CoreBundle\Model\FormModel;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Translation\Translator;
+use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\LeadBundle\Model\LeadModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
@@ -38,7 +39,10 @@ class FloodlightLeadDomainsModel extends FormModel
         return $this->em->getRepository(FloodlightLeadDomains::class);
     }
 
-    public function getEntity($id = null): ?object
+    /**
+     * @param int|null $id
+     */
+    public function getEntity($id = null): FloodlightLeadDomains
     {
         if (null === $id) {
             return new FloodlightLeadDomains();
@@ -47,7 +51,7 @@ class FloodlightLeadDomainsModel extends FormModel
         return parent::getEntity($id);
     }
 
-    public function saveOrCount($lead, $domain)
+    public function saveOrCount(Lead $lead, string $domain): FloodlightLeadDomains
     {
         $leadDomain = $this->getRepository()->findOneBy(
             [
@@ -59,12 +63,13 @@ class FloodlightLeadDomainsModel extends FormModel
         if (empty($leadDomain)) {
             $leadDomain = $this->getEntity();
             $leadEntity = $this->leadModel->getEntity($lead);
+            assert($leadEntity instanceof Lead);
             $leadDomain->setLead($leadEntity);
             $leadDomain->setDomain($domain);
             $leadDomain->setDateAdded(new \DateTime());
             $leadDomain->setCount(0);
         }
-
+        assert($leadDomain instanceof FloodlightLeadDomains);
         $leadDomain->setDateModified(new \DateTime());
         $leadDomain->setCount($leadDomain->getCount() + 1);
 
@@ -74,7 +79,7 @@ class FloodlightLeadDomainsModel extends FormModel
         return $leadDomain;
     }
 
-    public function isBlackListed($domain): bool
+    public function isBlackListed(string $domain): bool
     {
         $blacklist = (new DomainBlacklistHelper())->get();
         if (!empty($blacklist) && in_array($domain, $blacklist, true)) {

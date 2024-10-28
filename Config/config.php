@@ -18,8 +18,6 @@ return [
             'mautic.leuchtfeuerfloodlightb2b.helper.install' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\InstallHelper::class,
                 'arguments' => [
-                    'mautic.helper.core_parameters',
-                    'mautic.factory',
                     'mautic.helper.paths',
                     'mautic.leuchtfeuerfloodlightb2b.helper.field',
                 ],

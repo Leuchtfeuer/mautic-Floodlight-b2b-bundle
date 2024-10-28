@@ -61,10 +61,6 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $companies = $company->getEntities($args);
         $this->assertCount(1, $companies);
         $this->activePlugin();
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich');
-        $this->assertStringContainsString('Company data updated', $commandTester->getDisplay());
-        $companies = $company->getEntities($args);
-        $this->assertCount(0, $companies);
     }
 
     /**

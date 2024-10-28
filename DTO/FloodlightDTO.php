@@ -63,7 +63,7 @@ class FloodlightDTO implements DTOInterface
 
     private string $companyRankTranco;
 
-    private string $companyNumberOfEmployees;
+    private int $companyNumberOfEmployees;
 
     private string $companyEmployeeRange;
 
@@ -114,18 +114,14 @@ class FloodlightDTO implements DTOInterface
 
     private string $companyStateCode;
 
-    /** @var array<string, mixed> */
-    private array $pureData;
-
     /**
      * BigPictureDTO constructor.
      *
-     * @param array<string, mixed> $data
+     * @param array<string, mixed> $pureData
      */
-    public function __construct(array $data)
+    public function __construct(private array $pureData)
     {
-        $this->pureData = $data;
-        $this->load($data['content']);
+        $this->load($pureData);
     }
 
     public function getCompanyStateCode(): string
@@ -478,12 +474,12 @@ class FloodlightDTO implements DTOInterface
         $this->companyRankTranco = $companyRankTranco;
     }
 
-    public function getCompanyNumberOfEmployees(): string
+    public function getCompanyNumberOfEmployees(): int
     {
         return $this->companyNumberOfEmployees;
     }
 
-    public function setCompanyNumberOfEmployees(string $companyNumberOfEmployees): void
+    public function setCompanyNumberOfEmployees(int $companyNumberOfEmployees): void
     {
         $this->companyNumberOfEmployees = $companyNumberOfEmployees;
     }
@@ -635,11 +631,10 @@ class FloodlightDTO implements DTOInterface
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param array<mixed> $flCompanyData
      */
-    public function load(array $data): void
+    public function load(array $flCompanyData): void
     {
-        $flCompanyData                  = $data['company'];
         $this->setDomains([]);
         if (!empty($flCompanyData['primarydomain']) && !is_array($flCompanyData['primarydomain'])) {
             $this->setDomains([$flCompanyData['primarydomain']]);
@@ -659,7 +654,7 @@ class FloodlightDTO implements DTOInterface
         $this->setCompanyIndustryLinkedin($flCompanyData['companyindustry_linkedin'] ?? '');
         $this->setCompanyIndustryList($flCompanyData['companyindustry_list'] ?? []);
         $this->setCompanyLabels($flCompanyData['companylabels'] ?? []);
-        $this->setCompanyIndustryNaicsCode($flCompanyData['companyindustry_naicscode'] ?? '');
+        $this->setCompanyIndustryNaicsCode($flCompanyData['companyindustry_naics'] ?? '');
         $this->setCompanyDescriptionLong($flCompanyData['companydescription_long'] ?? '');
         $this->setCompanyDescription($flCompanyData['companydescription'] ?? '');
         $this->setCompanyFoundingYear($flCompanyData['companyfounding_year'] ?? '');
@@ -671,7 +666,10 @@ class FloodlightDTO implements DTOInterface
         $this->setCompanyCountryCode($flCompanyData['companycountry_code'] ?? '');
         $this->setCompanyZipCode($flCompanyData['companyzipcode'] ?? '');
         $this->setCompanyRankTranco($flCompanyData['companyrank_tranco'] ?? '');
-        $this->setCompanyNumberOfEmployees($flCompanyData['companynumber_of_employees'] ?? '');
+        $this->setCompanyNumberOfEmployees(0);
+        if (isset($flCompanyData['companynumber_of_employees']) && is_int($flCompanyData['companynumber_of_employees'])) {
+            $this->setCompanyNumberOfEmployees($flCompanyData['companynumber_of_employees']);
+        }
         $this->setCompanyEmployeeRange($flCompanyData['companyemployees_range'] ?? '');
         $this->setCompanyMarketCap($flCompanyData['companymarketcap'] ?? '');
         $this->setCompanyAnnualRevenueRange($flCompanyData['companyannual_revenue_range'] ?? '');
@@ -681,7 +679,7 @@ class FloodlightDTO implements DTOInterface
         $this->setCompanyTwitterHandle($flCompanyData['companytwitter_handle'] ?? '');
         $this->setCompanyLinkedinHandle($flCompanyData['companylinkedin_handle'] ?? '');
         $this->setCompanyTwitterFollowers($flCompanyData['companytwitter_followers'] ?? '');
-        $this->setCompanyLogoUrl($flCompanyData['companylogo_url'] ?? '');
+        $this->setCompanyLogoUrl($flCompanyData['companylogo'] ?? '');
         $this->setCompanyType($flCompanyData['companytype'] ?? '');
         $this->setCompanyTicker($flCompanyData['companyticker'] ?? '');
         $this->setCompanyPhone($flCompanyData['companyphone'] ?? '');
@@ -689,7 +687,7 @@ class FloodlightDTO implements DTOInterface
         $this->setCompanyIp($flCompanyData['ip'] ?? '');
         $this->setCompanyIndustryICBIndustryGroup($flCompanyData['companyindustry_icb_industrygroup'] ?? '');
         $this->setCompanyIndustryICBCIndustry($flCompanyData['companyindustry_icb_industry'] ?? '');
-        $this->setCompanyIndustryICBCSubIndustry($flCompanyData['companyindustry_icb_subIndustry'] ?? '');
+        $this->setCompanyIndustryICBCSubIndustry($flCompanyData['companyindustry_icb_subindustry'] ?? '');
         $this->setCompanyIndustryICBCSector($flCompanyData['companyindustry_icb_sector'] ?? '');
         $this->setCompanyStateCode($flCompanyData['companystate_code'] ?? '');
     }
@@ -758,9 +756,9 @@ class FloodlightDTO implements DTOInterface
         if (!empty($this->getCompanyFloodlightId())) {
             $company->addUpdatedField('f4b_companyfloodlight_id', $this->getCompanyFloodlightId());
         }
-//        if (!empty($this->getBigPictureId())) {
-//            $company->addUpdatedField('bigpicture_id', $this->getCompanyIndustry());
-//        }
+        //        if (!empty($this->getBigPictureId())) {
+        //            $company->addUpdatedField('bigpicture_id', $this->getCompanyIndustry());
+        //        }
         if (!empty($this->getCompanyCrunchbaseHandle())) {
             $company->addUpdatedField('f4b_companycrunchbase_handle', $this->getCompanyCrunchbaseHandle());
         }
@@ -867,9 +865,9 @@ class FloodlightDTO implements DTOInterface
             $company->addUpdatedField('f4b_companystate_code', $this->getCompanyStateCode());
         }
 
-//        if (!empty($this->getTags())) {
-//            $company->addUpdatedField('tags', json_encode($this->getTags(), JSON_FORCE_OBJECT));
-//        }
+        //        if (!empty($this->getTags())) {
+        //            $company->addUpdatedField('tags', json_encode($this->getTags(), JSON_FORCE_OBJECT));
+        //        }
         $company->addUpdatedField('enrichment_date', \date('Y-m-d H:i:s'));
 
         return $company;
@@ -923,8 +921,11 @@ class FloodlightDTO implements DTOInterface
         return get_object_vars($this);
     }
 
-    public function getDataByJsonKey(string $key): string
+    /**
+     * @return mixed
+     */
+    public function getDataByJsonKey(string $key)
     {
-        return $this->pureData['content'][$key] ?? '';
+        return $this->pureData[$key] ?? '';
     }
 }

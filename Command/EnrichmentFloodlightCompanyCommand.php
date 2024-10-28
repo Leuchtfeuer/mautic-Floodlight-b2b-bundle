@@ -100,12 +100,6 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
         }
 
         $company       = $this->companyModel->getEntity($flcompanyDomain->getCompany()->getId());
-        if (!$company instanceof Company) {
-            $output->writeln('<error>Company not found</error>');
-            $output->writeln('<comment>-----------------------------------------------------------------</comment>');
-
-            return;
-        }
         if (Response::HTTP_BAD_REQUEST === $result['status']) {
             $company->addUpdatedField('enrichment_date', \date('Y-m-d H:i:s'));
             $this->companyModel->saveEntity($company);

@@ -5,33 +5,32 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventList
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyLead;
+use Mautic\LeadBundle\Entity\CompanyLeadRepository;
+use Mautic\LeadBundle\Entity\CompanyRepository;
 use Mautic\LeadBundle\Entity\Lead;
-use Mautic\PageBundle\Entity\Hit;
-use Mautic\PageBundle\Entity\Page;
+use Mautic\LeadBundle\Entity\LeadRepository;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightIpDomainLookups;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
 class FloodlightSubscriberTest extends MauticMysqlTestCase
 {
-    private $pageRepo;
-    private $hitRepo;
-    private $leadRepo;
-    private $leadDomainRepo;
-    private $companyRepo;
-    private $companyDomainRepo;
-    private $companyLeadRepo;
+    private LeadRepository $leadRepo;
+    private FloodlightLeadDomainsRepository $leadDomainRepo;
+    private CompanyRepository $companyRepo;
+    private FloodlightCompanyDomainsRepository $companyDomainRepo;
+    private CompanyLeadRepository $companyLeadRepo;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->pageRepo          = $this->em->getRepository(Page::class);
-        $this->hitRepo           = $this->em->getRepository(Hit::class);
         $this->leadRepo          = $this->em->getRepository(Lead::class);
         $this->leadDomainRepo    = $this->em->getRepository(FloodlightLeadDomains::class);
         $this->companyRepo       = $this->em->getRepository(Company::class);
@@ -43,7 +42,7 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
         $this->setUpSymfony($this->configParams);
     }
 
-    private function updateApikey()
+    private function updateApikey(): void
     {
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
@@ -110,6 +109,8 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
         $totalCompaniesAfterRequest    = $this->companyRepo->findAll();
         $totalCompaniesDomainAfterRepo = $this->companyDomainRepo->findAll();
         $this->assertEquals(1, count($totalItemsAfterRequest));
+        assert($totalItemsAfterRequest[0] instanceof FloodlightLeadDomains);
+        assert($totalCompaniesDomainAfterRepo[0] instanceof FloodlightCompanyDomains);
         $this->assertEquals('localhost', $totalItemsAfterRequest[0]->getDomain());
         $this->assertEquals('localhost', $totalCompaniesAfterRequest[0]->getName());
         $this->assertEquals('localhost', $totalCompaniesDomainAfterRepo[0]->getDomain());
@@ -148,6 +149,8 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
 
         $lastItem = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
 
+        assert($lastItem instanceof FloodlightLeadDomains);
+
         $lead = $this->createLead();
         $lastItem->setDateModified(new \DateTime('-2 hours'));
         $lastItem->setLead($lead);
@@ -159,6 +162,7 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
         $this->assertEquals(2, count($items));
 
         $lastItem = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
+        assert($lastItem instanceof FloodlightLeadDomains);
         $lead     = $this->createLead();
         $lastItem->setDateModified(new \DateTime('-2 hours'));
         $lastItem->setLead($lead);
@@ -179,6 +183,7 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
         $lastItem = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
+        assert($lastItem instanceof FloodlightLeadDomains);
         $this->assertEquals(1, $lastItem->getCount());
         $this->assertEquals('localhost', $lastItem->getDomain());
         $companies = $this->em->getRepository(Company::class)->findAll();
@@ -186,6 +191,7 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
         $this->assertEquals('localhost', $companies[0]->getName());
         $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
         $this->assertEquals(1, count($companyDomains));
+        assert($companyDomains[0] instanceof FloodlightCompanyDomains);
         $this->assertEquals('localhost', $companyDomains[0]->getDomain());
     }
 
@@ -204,6 +210,7 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
         $lastItem          = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
         $lastCompany       = $this->companyRepo->findOneBy([], ['id' => 'DESC']);
         $lastCompanyDomain = $this->companyDomainRepo->findOneBy([], ['id' => 'DESC']);
+        assert($lastItem instanceof FloodlightLeadDomains);
         $this->assertEquals(1, $lastItem->getCount());
         $this->assertEquals('blacklisted', $lastItem->getDomain());
         $this->assertEmpty($lastCompany);
@@ -220,16 +227,21 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
         $lastItem          = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
+        assert($lastItem instanceof FloodlightLeadDomains);
         $test              = $this->companyRepo->findAll();
         $domain            = $lastItem->getDomain();
         $lastCompany       = $this->companyDomainRepo->findOneBy(['domain' => $domain]);
+        assert($lastItem instanceof FloodlightLeadDomains);
+        assert($lastCompany instanceof FloodlightCompanyDomains);
         $this->assertEquals('localhost', $lastCompany->getDomain());
+        assert($lastCompany->getCompany() instanceof Company);
+        assert($lastItem->getLead() instanceof Lead);
         $companyLead = $this->companyLeadRepo->getCompanyLeadEntity($lastItem->getLead()->getId(), $lastCompany->getCompany()->getId());
         $this->assertNotEmpty($companyLead);
         $this->assertEquals($lastItem->getLead()->getId(), $companyLead[0]['lead_id']);
     }
 
-    public function testIfTableIsInstalled()
+    public function testIfTableIsInstalled(): void
     {
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
@@ -241,7 +253,7 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
         $this->assertContains('type', $ipDomains);
     }
 
-    public function testIfTableIsInstalledCompanyDomains()
+    public function testIfTableIsInstalledCompanyDomains(): void
     {
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');

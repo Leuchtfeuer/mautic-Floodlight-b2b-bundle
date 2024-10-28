@@ -95,7 +95,7 @@ class FieldHelper
      */
     private function getFieldsWithPropertiesToUpdate(array $fieldsAllowedToBeUpdated, FloodlightDTO $dataFloodlight): array
     {
-        $requestDataFloodlight = $dataFloodlight->getPureData()['content']['company'];
+        $requestDataFloodlight = $dataFloodlight->getPureData();
 
         $result = [];
         foreach ($fieldsAllowedToBeUpdated as $key => $fieldAllowedToBeUpdated) {
@@ -138,15 +138,6 @@ class FieldHelper
         }
 
         return $values;
-    }
-
-    private function getLocalAlias(string $alias): string
-    {
-        if ('company_technologies' === $alias) {
-            $alias = 'companytechnologies';
-        }
-
-        return 'f4b_'.$alias;
     }
 
     private function getExternalAlias(string $alias): string

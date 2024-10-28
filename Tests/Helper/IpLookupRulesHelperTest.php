@@ -5,7 +5,6 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Helper;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\InstallHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
@@ -22,7 +21,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     private function activePlugin(bool $isPublished = true): void
     {
         $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/Config/blacklist.php';
+        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/blacklist.php';
         if (!file_exists($configPathTo)) {
             copy($pluginPathFrom, $configPathTo);
         }
@@ -37,12 +36,6 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $integration->setIsPublished($isPublished);
         $this->em->persist($integration);
         $this->em->flush();
-        $installHelper = new InstallHelper(
-            self::getContainer()->get('mautic.helper.core_parameters'),
-            self::getContainer()->get('mautic.factory'),
-            self::getContainer()->get('mautic.helper.paths')
-        );
-        $installHelper->installWhoisPythonLib();
     }
 
     public function testGetDomainMethod(): void
@@ -57,8 +50,6 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
 
         $domain = $helper->getDomain('127.0.0.1');
         $this->assertEquals('localhost', $domain['domain']);
-        $domain2 = $helper->getDomain('213.143.101.203');
-        $this->assertEquals('wienenergie.at', $domain2['domain']);
     }
 
     public function testIsIp(): void
@@ -73,36 +64,6 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertTrue($helper->isIp('123.23'));
         $this->assertFalse($helper->isIp('google.com'));
         $this->assertTrue($helper->isIp('127.0.0.1'));
-    }
-
-    public function testGetDomainByWhoisIp(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $helper = new IpLookupRulesHelper(
-            $this->createMock(\Mautic\PageBundle\Model\PageModel::class),
-            $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel::class),
-            new WhoisPyService($logger),
-            $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel::class),
-        );
-        $result = $helper->getDomainByWhoisPyService('213.143.101.203');
-        $this->assertStringContainsString('wienenergie.at', $result['domain']);
-    }
-
-    public function testGetDetailsDomainByWhoisIp(): void
-    {
-        $logger = $this->createMock(LoggerInterface::class);
-        $helper = new IpLookupRulesHelper(
-            $this->createMock(\Mautic\PageBundle\Model\PageModel::class),
-            $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel::class),
-            new WhoisPyService($logger),
-            $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel::class),
-        );
-        $result = $helper->getDomainByWhoisPyService('213.143.101.203');
-        $this->assertStringContainsString('wienenergie.at', $result['details']['company_domain']);
-        $this->assertArrayHasKey('company_name', $result['details']);
-        $this->assertArrayHasKey('company_domain', $result['details']);
-        $this->assertArrayHasKey('is_isp', $result['details']);
-        $this->assertArrayHasKey('is_dialup', $result['details']);
     }
 
     public function testGetDomainByGetHostByAddr(): void

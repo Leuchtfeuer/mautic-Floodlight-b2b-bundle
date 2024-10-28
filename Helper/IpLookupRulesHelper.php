@@ -22,7 +22,10 @@ class IpLookupRulesHelper
     ) {
     }
 
-    public function evaluate(Hit $hit, string $domain, $domainDetails=[]): array
+    /**
+     * @return array<string, mixed>
+     */
+    public function evaluate(Hit $hit, string $domain, array $domainDetails=[]): array
     {
         $result = $this->companyDomainsModel->updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain($hit->getLead()->getId(), $domain, $domainDetails);
 
@@ -55,7 +58,7 @@ class IpLookupRulesHelper
         return true;
     }
 
-    private function lookupHasMoreThanOneHour($leadId)
+    private function lookupHasMoreThanOneHour(int $leadId): bool
     {
         $result = $this->leadDomainsModel->getRepository()->findOneBy(['lead' => $leadId], ['dateModified' => 'DESC']);
 
@@ -67,7 +70,7 @@ class IpLookupRulesHelper
             return false;
         }
 
-        return $result;
+        return true;
     }
 
     private function checkMoreThan2($leadId): bool
