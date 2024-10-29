@@ -9,7 +9,7 @@ class FloodlightService implements FloodlightServiceInterface
 {
     public const FLOODLIGHT_API = 'https://api-dev.floodlight-b2b.com';
 
-    public function __construct(private readonly ApiClient $client)
+    public function __construct(private ApiClient $client)
     {
     }
 
