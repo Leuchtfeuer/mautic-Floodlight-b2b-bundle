@@ -7,7 +7,10 @@ use Psr\Http\Message\ResponseInterface;
 
 class FloodlightService implements FloodlightServiceInterface
 {
-    public const FLOODLIGHT_API = 'https://api-dev.floodlight-b2b.com';
+    private const TRY_COUNT = 3;
+
+    private const FLOODLIGHT_API  = 'https://api-dev.floodlight-b2b.com';
+    public const SECONDS_SLEEPING = 3;
 
     public function __construct(private ApiClient $client)
     {
@@ -15,15 +18,32 @@ class FloodlightService implements FloodlightServiceInterface
 
     public const FLOODLIGHT_VERSION = 'v1';
 
-    public function get(string $ip): array|bool
+    /**
+     * @return array<mixed>|bool
+     */
+    public function get(string $ip, int $try = 0): array|bool
     {
-        $response = $this->getCompanyByIp($ip);
+        $response   = $this->getCompanyByIp($ip);
+        $statusCode = $response->getStatusCode();
 
-        if (200 !== $response->getStatusCode()) {
+        if (self::TRY_COUNT === $try + 1) {
             return false;
         }
 
-        return json_decode($response->getBody()->getContents(), true);
+        if (202 === $statusCode) {
+            sleep(self::SECONDS_SLEEPING);
+
+            return $this->get($ip, $try + 1);
+        }
+
+        if (200 !== $statusCode) {
+            return false;
+        }
+
+        $result = json_decode($response->getBody()->getContents(), true);
+        assert(is_array($result));
+
+        return $result;
     }
 
     private function getCompanyByIp(string $ip): ResponseInterface
