@@ -23,11 +23,24 @@ class FloodlightService implements FloodlightServiceInterface
      */
     public function get(string $ip, int $try = 0): array|bool
     {
+        // Check if had more than 3 tries of request 202
+        if (self::TRY_COUNT === $try) {
+            return false;
+        }
+
         $response   = $this->getCompanyByIp($ip);
+        // Check if response is Status Code with Error like 404, 500, etc.
+        if (false === $response) {
+            return false;
+        }
+
         $statusCode = $response->getStatusCode();
 
-        if (self::TRY_COUNT === $try + 1) {
-            return false;
+        if (200 === $statusCode) {
+            $result = json_decode($response->getBody()->getContents(), true);
+            assert(is_array($result));
+
+            return $result;
         }
 
         if (202 === $statusCode) {
@@ -36,18 +49,16 @@ class FloodlightService implements FloodlightServiceInterface
             return $this->get($ip, $try + 1);
         }
 
-        if (200 !== $statusCode) {
-            return false;
-        }
-
-        $result = json_decode($response->getBody()->getContents(), true);
-        assert(is_array($result));
-
-        return $result;
+        // Check if response is Status Code success but different of 200
+        return false;
     }
 
-    private function getCompanyByIp(string $ip): ResponseInterface
+    private function getCompanyByIp(string $ip): ResponseInterface|bool
     {
-        return $this->client->getClient()->request('GET', sprintf('%s/%s/companies/ip/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ip));
+        try {
+            return $this->client->getClient()->request('GET', sprintf('%s/%s/companies/ip/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ip));
+        } catch (\Exception) {
+            return false;
+        }
     }
 }

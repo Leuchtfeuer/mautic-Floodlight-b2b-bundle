@@ -11,6 +11,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsMo
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightIpDomainLookupsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Psr\Log\LoggerInterface;
 
 class FloodlightSubscriber implements EventSubscriberInterface
 {
@@ -20,6 +21,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
         private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel,
         private FloodlightIpDomainLookupsModel $floodlightIpDomainLookupsModel,
         private FloodlightService $flooglightService,
+        private LoggerInterface $logger
     ) {
     }
 
@@ -77,6 +79,10 @@ class FloodlightSubscriber implements EventSubscriberInterface
         }
 
         $data           = $this->flooglightService->get($ip);
+        if (false === $data) {
+            $this->logger->error('Floodlight API failed to return data for IP: '.$ip);
+            return;
+        }
         $ipDomainLookup = (new FloodlightDTO($data))->fillIpLookUp();
         $this->floodlightIpDomainLookupsModel->saveEntity($ipDomainLookup);
     }
