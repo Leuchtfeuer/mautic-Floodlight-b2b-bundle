@@ -93,8 +93,12 @@ class FloodlightSubscriber implements EventSubscriberInterface
         $floodlightDTO = new FloodlightDTO($data);
         $ipDomainLookup = $floodlightDTO->fillIpLookUp();
         $this->floodlightIpDomainLookupsModel->saveEntity($ipDomainLookup);
+        $this->logger->error('fillIpLookUp data for IP: '.$ipDomainLookup->getIp().' was successfully retrieved with id'.$ipDomainLookup->getId());
         $this->fieldHelper->updateProperties($floodlightDTO);
+        $this->logger->error('Updating fields values properties for IP: ');
         $company       = $floodlightDTO->fillCompany($company);
+        $this->logger->error('Company data for IP: '.$company->getName().' was successfully retrieved with id '.$company->getId());
+
         $this->companyModel->saveEntity($company);
 
     }
