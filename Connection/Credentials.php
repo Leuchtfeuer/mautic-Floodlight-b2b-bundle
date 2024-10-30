@@ -13,7 +13,7 @@ class Credentials implements HeaderCredentialsInterface
         return 'Authorization';
     }
 
-    public function getApiKey(): ?string
+    public function getApiKey(): string
     {
         return 'Bearer ';
     }
