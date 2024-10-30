@@ -69,7 +69,6 @@ class FloodlightService implements FloodlightServiceInterface
         } catch (\Exception $e) {
 
             $this->logger->error('Url client get : '.$url);
-            $this->logger->error('header '.$this->client->getClient()->getConfig());
             $this->logger->error('FloodlightService getCompanyByIp fail: '.$e->getMessage());
             return false;
         }
