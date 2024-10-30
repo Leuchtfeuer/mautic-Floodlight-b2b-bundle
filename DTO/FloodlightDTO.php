@@ -747,18 +747,12 @@ class FloodlightDTO implements DTOInterface
         if (!empty($this->getCompanyDescription())) {
             $company->setDescription($this->getCompanyDescription());
         }
-        if (!empty($this->getCompanyAnnualRevenueRange())) {
-            $company->addUpdatedField('companyannual_revenue', $this->getCompanyAnnualRevenueRange());
-        }
         if (!empty($this->getCompanyNumberOfEmployees())) {
             $company->addUpdatedField('companynumber_of_employees', $this->getCompanyNumberOfEmployees());
         }
         if (!empty($this->getCompanyFloodlightId())) {
             $company->addUpdatedField('f4b_companyfloodlight_id', $this->getCompanyFloodlightId());
         }
-        //        if (!empty($this->getBigPictureId())) {
-        //            $company->addUpdatedField('bigpicture_id', $this->getCompanyIndustry());
-        //        }
         if (!empty($this->getCompanyCrunchbaseHandle())) {
             $company->addUpdatedField('f4b_companycrunchbase_handle', $this->getCompanyCrunchbaseHandle());
         }

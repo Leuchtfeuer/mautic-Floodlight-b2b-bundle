@@ -68,7 +68,7 @@ class FloodlightCompanyDomainsModel extends FormModel
                 'domain' => $domain,
             ]
         );
-        assert($companyDomain instanceof FloodlightCompanyDomains || null === $companyDomain);
+
         if (empty($companyDomain)) {
             return $this->newCompanyDomain($domain, $lead, $details);
         }

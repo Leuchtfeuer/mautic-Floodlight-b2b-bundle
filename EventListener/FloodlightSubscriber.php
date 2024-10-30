@@ -2,9 +2,11 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener;
 
+use Mautic\LeadBundle\Entity\Company;
 use Mautic\PageBundle\Event\PageHitEvent;
 use Mautic\PageBundle\PageEvents;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
@@ -12,6 +14,8 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightIpDomainLookupsM
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Psr\Log\LoggerInterface;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
+use Mautic\LeadBundle\Model\CompanyModel;
 
 class FloodlightSubscriber implements EventSubscriberInterface
 {
@@ -21,7 +25,9 @@ class FloodlightSubscriber implements EventSubscriberInterface
         private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel,
         private FloodlightIpDomainLookupsModel $floodlightIpDomainLookupsModel,
         private FloodlightService $flooglightService,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        private FieldHelper $fieldHelper,
+        private CompanyModel $companyModel
     ) {
     }
 
@@ -47,14 +53,13 @@ class FloodlightSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->saveDomain($event);
-
-        if ($this->config->isProTier()) {
-            $this->saveIpLookup($event->getRequest()->server->get('REMOTE_ADDR'));
+        $companyDomain = $this->saveDomain($event);
+        if ($this->config->isProTier() && null !== $companyDomain) {
+            $this->saveIpLookup($event->getRequest()->server->get('REMOTE_ADDR'),$companyDomain->getCompany());
         }
     }
 
-    private function saveDomain(PageHitEvent $event): void
+    private function saveDomain(PageHitEvent $event): ?FloodlightCompanyDomains
     {
         $dataDomain     = $this->ipLookupRulesHelper->getDomain($event->getRequest()->server->get('REMOTE_ADDR'));
         $domain         = $dataDomain['domain'];
@@ -63,13 +68,14 @@ class FloodlightSubscriber implements EventSubscriberInterface
             IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE === $result['domain']
             || IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED === $result['domain']
         ) {
-            return;
+            $this->logger->error('Domain is blacklisted or failed to evaluate: '.$domain);
+            return null;
         }
 
-        $this->floodlightCompanyDomainsModel->save($domain, $event->getHit()->getLead(), $dataDomain['details']);
+        return $this->floodlightCompanyDomainsModel->save($domain, $event->getHit()->getLead(), $dataDomain['details']);
     }
 
-    private function saveIpLookup(string $ip): void
+    private function saveIpLookup(string $ip, Company $company): void
     {
         if (
             !$this->ipLookupRulesHelper->isIp($ip)
@@ -83,7 +89,13 @@ class FloodlightSubscriber implements EventSubscriberInterface
             $this->logger->error('Floodlight API failed to return data for IP: '.$ip);
             return;
         }
-        $ipDomainLookup = (new FloodlightDTO($data))->fillIpLookUp();
+
+        $floodlightDTO = new FloodlightDTO($data);
+        $ipDomainLookup = $floodlightDTO->fillIpLookUp();
         $this->floodlightIpDomainLookupsModel->saveEntity($ipDomainLookup);
+        $this->fieldHelper->updateProperties($floodlightDTO);
+        $company       = $floodlightDTO->fillCompany($company);
+        $this->companyModel->saveEntity($company);
+
     }
 }

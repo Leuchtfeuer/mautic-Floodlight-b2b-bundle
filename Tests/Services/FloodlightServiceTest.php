@@ -8,6 +8,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Log\LoggerInterface;
 
 class FloodlightServiceTest extends TestCase
 {
@@ -17,6 +18,7 @@ class FloodlightServiceTest extends TestCase
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $stream            = $this->createMock(StreamInterface::class);
+        $logger            = $this->createMock(LoggerInterface::class);
         $stream->expects(self::once())
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
@@ -33,7 +35,7 @@ class FloodlightServiceTest extends TestCase
             ->method('getBody')
             ->willReturn($stream);
 
-        $service = new FloodlightService($client);
+        $service = new FloodlightService($client,$logger);
         $result  = $service->get('1.2.3.4');
         self::assertSame([['foo' => 'bar']], $result);
         self::assertIsArray($result);
@@ -44,6 +46,7 @@ class FloodlightServiceTest extends TestCase
         $client            = $this->createMock(ApiClient::class);
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
+        $logger            = $this->createMock(LoggerInterface::class);
         $guzzleClient->expects(self::exactly(3))
             ->method('request')
             ->willReturn($responseInterface);
@@ -54,7 +57,7 @@ class FloodlightServiceTest extends TestCase
             ->method('getStatusCode')
             ->willReturn(202);
 
-        $service = new FloodlightService($client);
+        $service = new FloodlightService($client,$logger);
         $result  = $service->get('12.1.1.3');
         self::assertFalse($result);
         self::assertIsBool($result);
@@ -65,6 +68,7 @@ class FloodlightServiceTest extends TestCase
         $client            = $this->createMock(ApiClient::class);
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
+        $logger            = $this->createMock(LoggerInterface::class);
 
         $guzzleClient->expects(self::once())
             ->method('request')
@@ -76,7 +80,7 @@ class FloodlightServiceTest extends TestCase
             ->method('getStatusCode')
             ->willReturn(404);
 
-        $service = new FloodlightService($client);
+        $service = new FloodlightService($client,$logger);
         $result  = $service->get('1.2.3.4');
         self::assertFalse($result);
         self::assertIsBool($result);
@@ -88,6 +92,7 @@ class FloodlightServiceTest extends TestCase
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $stream            = $this->createMock(StreamInterface::class);
+        $logger            = $this->createMock(LoggerInterface::class);
         $stream->expects(self::once())
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
@@ -104,7 +109,7 @@ class FloodlightServiceTest extends TestCase
             ->method('getBody')
             ->willReturn($stream);
 
-        $service = new FloodlightService($client);
+        $service = new FloodlightService($client,$logger);
         $result  = $service->get('1.2.3.4');
         self::assertSame([['foo' => 'bar']], $result);
         self::assertIsArray($result);
@@ -115,6 +120,7 @@ class FloodlightServiceTest extends TestCase
         $client            = $this->createMock(ApiClient::class);
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
+        $logger            = $this->createMock(LoggerInterface::class);
         $guzzleClient->expects(self::exactly(2))
             ->method('request')
             ->willReturn($responseInterface);
@@ -125,7 +131,7 @@ class FloodlightServiceTest extends TestCase
             ->method('getStatusCode')
             ->willReturnOnConsecutiveCalls(202, 404);
 
-        $service = new FloodlightService($client);
+        $service = new FloodlightService($client,$logger);
         $result  = $service->get('1.2.3.4');
         self::assertFalse($result);
         self::assertIsBool($result);
