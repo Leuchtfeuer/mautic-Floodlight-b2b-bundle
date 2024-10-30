@@ -20,6 +20,7 @@ class FieldHelper
         'is_listable'            => true,
         'is_publicity_updatable' => false,
         'is_unique_identifier'   => false,
+        'is_index'               => false,
     ];
 
     public const KEY_FIELDS_TO_UPDATE = [
@@ -63,6 +64,7 @@ class FieldHelper
         $field->setIsListable(self::DEFAULT_VALUES['is_listable']);
         $field->setIsPubliclyUpdatable(self::DEFAULT_VALUES['is_publicity_updatable']);
         $field->setIsUniqueIdentifier(self::DEFAULT_VALUES['is_unique_identifier']);
+        $field->setIsIndex(self::DEFAULT_VALUES['is_index']);
 
         if (!empty($properties)) {
             $result = $this->fieldModel->setFieldProperties($field, $properties);
@@ -186,6 +188,7 @@ class FieldHelper
             ];
         }
         $result = $this->fieldModel->setFieldProperties($field, $newProperties);
+        $field->setIsIndex(false);
         if ($result) {
             $this->fieldModel->saveEntity($field);
         } else {
