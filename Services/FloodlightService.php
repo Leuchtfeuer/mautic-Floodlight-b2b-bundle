@@ -42,11 +42,18 @@ class FloodlightService implements FloodlightServiceInterface
         $statusCode = $response->getStatusCode();
 
         if (200 === $statusCode) {
-            $this->logger->info('FloodlightService get success with ip : '.$ip);
-            $this->logger->info('FloodlightService get success with content : '.$response->getBody()->getContents());
-            $result = json_decode($response->getBody()->getContents(), true);
-            assert(is_array($result));
-            $this->logger->info('FloodlightService get success with content sanitaze: '.json_encode($result));
+            $content = $response->getBody()->getContents();
+            $this->logger->error('FloodlightService get success with ip : '.$ip);
+            $this->logger->error('FloodlightService get success with content : '.$content);
+            $result = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            $this->logger->error('FloodlightService get success with content sanitaze: '.json_encode($result));
+            $this->logger->error('FloodlightService get success with content sanitaze jhon throw '.json_last_error_msg());
+            if (null === $result) {
+                $result = json_decode($content, false, 512, JSON_THROW_ON_ERROR);
+                $result = (array) $result;
+                $this->logger->error('FloodlightService get success with content sanitaze2: '.json_encode($result));
+                $this->logger->error('FloodlightService get success with content sanitaze jhon throw2 '.json_last_error_msg());
+            }
             return $result;
         }
 
