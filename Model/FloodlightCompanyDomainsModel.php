@@ -14,8 +14,10 @@ use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\UserBundle\Model\UserModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -36,7 +38,8 @@ class FloodlightCompanyDomainsModel extends FormModel
         private LeadModel $leadModel,
         private NotificationUserHelper $notificationUserHelper,
         private UserModel $userModel,
-        private FloodlightLeadDomainsModel $leadDomainsModel
+        private FloodlightLeadDomainsModel $leadDomainsModel,
+        private FieldHelper $fieldHelper,
     ) {
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $logger, $coreParametersHelper);
     }
@@ -59,9 +62,11 @@ class FloodlightCompanyDomainsModel extends FormModel
     }
 
     /**
-     * @param array<string> $details
+     * @param array<string,array|FloodlightDTO|string> $details
+     *
+     * @return array<FloodlightCompanyDomains>
      */
-    public function save(string $domain, Lead $lead, array $details): FloodlightCompanyDomains
+    public function save(string $domain, Lead $lead, array $details): array
     {
         $companyDomain = $this->getRepository()->findOneBy(
             [
@@ -73,7 +78,7 @@ class FloodlightCompanyDomainsModel extends FormModel
             return $this->newCompanyDomain($domain, $lead, $details);
         }
 
-        if (!empty($details) && isset($details['company_name'])) {
+        if (!empty($details) && isset($details['pyservice'])) {
             $this->updateFieldWhoisDetails($companyDomain, $details);
         }
         $this->leadModel->addToCompany($lead, $companyDomain->getCompany());
@@ -81,7 +86,7 @@ class FloodlightCompanyDomainsModel extends FormModel
 
         $this->saveEntity($companyDomain);
 
-        return $companyDomain;
+        return [$companyDomain];
     }
 
     /**
@@ -111,10 +116,53 @@ class FloodlightCompanyDomainsModel extends FormModel
     }
 
     /**
-     * @param array<string> $details
+     * @return array<FloodlightCompanyDomains>
      */
-    private function newCompanyDomain(string $domain, Lead $lead, array $details = []): FloodlightCompanyDomains
+    private function newCompanyDomainByFloodlight(FloodlightDTO $floodlightDTO, Lead $lead): array
     {
+        // Save IP lookup
+        $ipDomainLookup = $floodlightDTO->fillIpLookUp();
+        $this->leadDomainsModel->saveEntity($ipDomainLookup);
+        $this->logger->error('fillIpLookUp data for IP: '.$ipDomainLookup->getIp().' was successfully retrieved with id'.$ipDomainLookup->getId());
+
+        // Update fields values properties from FloodlightDTO
+        $this->fieldHelper->updateProperties($floodlightDTO);
+
+        $this->logger->error('Updating fields values properties for IP: ');
+
+        // Save company
+        $company       = $floodlightDTO->fillCompany($this->companiesModel->getEntity());
+        $this->logger->error('Company data for IP: '.$company->getName().' was successfully retrieved with id '.$company->getId());
+        $this->companiesModel->saveEntity($company);
+
+        // Add company to lead and set as primary company
+        $this->leadModel->addToCompany($lead, $company);
+        $lead->setPrimaryCompany($company);
+        $this->leadModel->saveEntity($lead);
+
+        // Save company domain
+        $companiesDomains = $floodlightDTO->fillCompaniesDomain($this, $company);
+        if (!empty($companiesDomains)) {
+            foreach ($companiesDomains as $companiesDomain) {
+                $this->logger->error('Company domain data for IP: '.$company->getName().' was successfully retrieved with id '.$companiesDomain->getId());
+            }
+            $this->saveEntities($companiesDomains);
+        }
+
+        return $companiesDomains;
+    }
+
+    /**
+     * @param array<string,array|FloodlightDTO> $details
+     *
+     * @return array<FloodlightCompanyDomains>
+     */
+    private function newCompanyDomain(string $domain, Lead $lead, array $details = []): array
+    {
+        if (!empty($details) && array_key_exists('floodlight', $details)) {
+            return $this->newCompanyDomainByFloodlight($details['floodlight'], $lead);
+        }
+
         $this->newCompany($domain, $lead, $details);
         $companies     = $this->leadModel->getCompanies($lead);
         $company       = $this->companiesModel->getEntity($companies[0]['company_id']);
@@ -130,71 +178,72 @@ class FloodlightCompanyDomainsModel extends FormModel
 
         $this->saveEntity($companyDomain);
 
-        return $companyDomain;
+        return [$companyDomain];
     }
 
     /**
-     * @param array<string> $details
+     * @param array<string,string|array> $details
      *
      * @return array<string, Company|Lead>
      */
     private function newCompany(string $domain, Lead $lead, array $details): array
     {
-        $companyEntity = $this->companiesModel->getEntity();
+        $company       = $this->companiesModel->getEntity();
         $userIds       = $this->notificationUserHelper->getAdminUsers();
         $user          = $this->userModel->getEntity($userIds[0]);
-        $companyEntity->setName($domain);
-        $companyEntity->setDateAdded(new \DateTime());
-        $companyEntity->setDateModified(new \DateTime());
-        $companyEntity->setIsPublished(true);
-        $companyEntity->setCreatedBy($user);
-        $companyEntity->setModifiedBy($user);
-        $companyEntity->setOwner($user);
-        if (!empty($details)) {
-            $companyEntity->addUpdatedField('iplookup_whois_json', json_encode($this->transformDetails($details)));
+
+        $company->setName($domain);
+        $company->setDateAdded(new \DateTime());
+        $company->setDateModified(new \DateTime());
+        $company->setIsPublished(true);
+        $company->setCreatedBy($user);
+        $company->setModifiedBy($user);
+        $company->setOwner($user);
+        if (!empty($details) && isset($details['pyservice'])) {
+            $company->addUpdatedField('iplookup_whois_json', json_encode($this->transformDetails($details['pyservice']), JSON_THROW_ON_ERROR));
         }
-        $this->companiesModel->saveEntity($companyEntity);
-        $this->leadModel->addToCompany($lead, $companyEntity);
-        $lead->setPrimaryCompany($companyEntity);
+        $this->companiesModel->saveEntity($company);
+        $this->leadModel->addToCompany($lead, $company);
+        $lead->setPrimaryCompany($company);
         $this->leadModel->saveEntity($lead);
 
         return [
-            'company' => $companyEntity,
+            'company' => $company,
             'lead'    => $lead,
         ];
     }
 
     /**
-     * @param array<string> $domainDetails
+     * @param array<> $domainDetails
      */
-    public function updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain(int $lead, string $domain, array $domainDetails = []): FloodlightLeadDomains
+    public function updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain(int $lead, array $dataDomain): FloodlightLeadDomains
     {
         $leadEntity    = $this->leadModel->getEntity($lead);
         $companyDomain = $this->getRepository()->findOneBy(
             [
-                'domain' => $domain,
+                'domain' => $dataDomain['domain'],
             ]
         );
         if (
             empty($companyDomain)
-            && IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE !== $domain
-            && IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED !== $domain
+            && IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE !== $dataDomain['status']
+            && IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED !== $dataDomain['status']
             && null !== $leadEntity
         ) {
-            $companyDomain = $this->save($domain, $leadEntity, $domainDetails);
+            $companyDomain = $this->save($dataDomain['domain'], $leadEntity, $dataDomain['details']);
         }
 
         $leadDomain = $this->leadDomainsModel->getRepository()->findOneBy(
             [
                 'lead'   => $lead,
-                'domain' => $domain,
+                'domain' => $dataDomain['domain'],
             ]
         );
 
         if (empty($leadDomain) && null !== $leadEntity) {
             $leadDomain = $this->leadDomainsModel->getEntity();
             $leadDomain->setLead($leadEntity);
-            $leadDomain->setDomain($domain);
+            $leadDomain->setDomain($dataDomain['domain']);
             $leadDomain->setDateAdded(new \DateTime());
             $leadDomain->setCount(0);
         }

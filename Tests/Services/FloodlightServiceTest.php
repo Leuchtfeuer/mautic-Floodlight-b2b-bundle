@@ -35,7 +35,7 @@ class FloodlightServiceTest extends TestCase
             ->method('getBody')
             ->willReturn($stream);
 
-        $service = new FloodlightService($client,$logger);
+        $service = new FloodlightService($client, $logger);
         $result  = $service->get('1.2.3.4');
         self::assertSame([['foo' => 'bar']], $result);
         self::assertIsArray($result);
@@ -57,7 +57,7 @@ class FloodlightServiceTest extends TestCase
             ->method('getStatusCode')
             ->willReturn(202);
 
-        $service = new FloodlightService($client,$logger);
+        $service = new FloodlightService($client, $logger);
         $result  = $service->get('12.1.1.3');
         self::assertFalse($result);
         self::assertIsBool($result);
@@ -76,11 +76,11 @@ class FloodlightServiceTest extends TestCase
         $client->expects(self::once())
             ->method('getClient')
             ->willReturn($guzzleClient);
-        $responseInterface->expects(self::once())
+        $responseInterface->expects(self::any())
             ->method('getStatusCode')
             ->willReturn(404);
 
-        $service = new FloodlightService($client,$logger);
+        $service = new FloodlightService($client, $logger);
         $result  = $service->get('1.2.3.4');
         self::assertFalse($result);
         self::assertIsBool($result);
@@ -102,14 +102,14 @@ class FloodlightServiceTest extends TestCase
         $client->expects(self::once())
             ->method('getClient')
             ->willReturn($guzzleClient);
-        $responseInterface->expects(self::once())
+        $responseInterface->expects(self::any())
             ->method('getStatusCode')
             ->willReturn(200);
         $responseInterface->expects(self::once())
             ->method('getBody')
             ->willReturn($stream);
 
-        $service = new FloodlightService($client,$logger);
+        $service = new FloodlightService($client, $logger);
         $result  = $service->get('1.2.3.4');
         self::assertSame([['foo' => 'bar']], $result);
         self::assertIsArray($result);
@@ -127,11 +127,11 @@ class FloodlightServiceTest extends TestCase
         $client->expects(self::exactly(2))
             ->method('getClient')
             ->willReturn($guzzleClient);
-        $responseInterface->expects(self::exactly(2))
+        $responseInterface->expects(self::exactly(3))
             ->method('getStatusCode')
-            ->willReturnOnConsecutiveCalls(202, 404);
+            ->willReturnOnConsecutiveCalls(202, 404, 404);
 
-        $service = new FloodlightService($client,$logger);
+        $service = new FloodlightService($client, $logger);
         $result  = $service->get('1.2.3.4');
         self::assertFalse($result);
         self::assertIsBool($result);

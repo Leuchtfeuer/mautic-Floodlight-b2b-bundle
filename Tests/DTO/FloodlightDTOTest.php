@@ -14,6 +14,8 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     {
         parent::setUp();
         $this->loadDTO();
+        $this->useCleanupRollback = false;
+        $this->setUpSymfony($this->configParams);
     }
 
     public function testGettersAndSetters(): void

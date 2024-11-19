@@ -19,7 +19,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepo
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
-class FloodlightSubscriberTest extends MauticMysqlTestCase
+class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
     private LeadRepository $leadRepo;
     private FloodlightLeadDomainsRepository $leadDomainRepo;
@@ -274,5 +274,13 @@ class FloodlightSubscriberTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $lead;
+    }
+
+    public function beforeTearDown(): void
+    {
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        if (file_exists($configPathTo)) {
+            unlink($configPathTo);
+        }
     }
 }

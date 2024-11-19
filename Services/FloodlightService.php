@@ -16,8 +16,7 @@ class FloodlightService implements FloodlightServiceInterface
     public function __construct(
         private ApiClient $client,
         private LoggerInterface $logger
-    )
-    {
+    ) {
     }
 
     public const FLOODLIGHT_VERSION = 'v1';
@@ -30,6 +29,7 @@ class FloodlightService implements FloodlightServiceInterface
         // Check if had more than 3 tries of request 202
         if (self::TRY_COUNT === $try) {
             $this->logger->error('FloodlightService get fail, status 202 for 3 times with ip : '.$ip);
+
             return false;
         }
 
@@ -54,6 +54,7 @@ class FloodlightService implements FloodlightServiceInterface
                 $this->logger->error('FloodlightService get success with content sanitaze2: '.json_encode($result));
                 $this->logger->error('FloodlightService get success with content sanitaze jhon throw2 '.json_last_error_msg());
             }
+
             return $result;
         }
 
@@ -63,6 +64,7 @@ class FloodlightService implements FloodlightServiceInterface
             return $this->get($ip, $try + 1);
         }
         $this->logger->error('FloodlightService get fail, status '.$response->getStatusCode().' with ip : '.$ip);
+
         // Check if response is Status Code success but different of 200
         return false;
     }
@@ -72,11 +74,11 @@ class FloodlightService implements FloodlightServiceInterface
         $url = sprintf('%s/%s/companies/ip/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ip);
 
         try {
-            return $this->client->getClient()->request('GET',$url );
+            return $this->client->getClient()->request('GET', $url);
         } catch (\Exception $e) {
-
             $this->logger->error('Url client get : '.$url);
             $this->logger->error('FloodlightService getCompanyByIp fail: '.$e->getMessage());
+
             return false;
         }
     }

@@ -306,6 +306,8 @@ class PluginInstallSubscriber implements EventSubscriberInterface
             if (isset($fieldData['limit'])) {
                 $options['limit'] = $fieldData['limit'];
             }
+
+            $options['isIndex'] = false;
             if (isset($fieldData['isIndex'])) {
                 $options['isIndex'] = $fieldData['isIndex'];
             }

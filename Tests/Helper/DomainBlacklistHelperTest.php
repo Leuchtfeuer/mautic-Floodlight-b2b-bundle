@@ -4,6 +4,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Helper;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
 class DomainBlacklistHelperTest extends MauticMysqlTestCase
 {
@@ -14,8 +15,8 @@ class DomainBlacklistHelperTest extends MauticMysqlTestCase
     {
         parent::setUp();
 
-        $configPathTo    = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
-        $pluginPathFrom  = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/Config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/blacklist.php';
         if (!file_exists($configPathTo)) {
             copy($pluginPathFrom, $configPathTo);
         }
@@ -43,5 +44,13 @@ class DomainBlacklistHelperTest extends MauticMysqlTestCase
         $this->assertTrue(in_array($this->domain, $this->domainBlackList->get()));
         $this->domainBlackList->remove($this->domain);
         $this->assertFalse(in_array($this->domain, $this->domainBlackList->get()));
+    }
+
+    public function beforeTearDown(): void
+    {
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        if (file_exists($configPathTo)) {
+            unlink($configPathTo);
+        }
     }
 }

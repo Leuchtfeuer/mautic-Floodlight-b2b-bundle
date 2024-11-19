@@ -7,14 +7,8 @@ use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\HttpFactory;
 use Mautic\IntegrationsBundle\Auth\Provider\AuthCredentialsInterface;
 use Mautic\IntegrationsBundle\Exception\PluginNotConfiguredException;
 
-// use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials;
-
 class ApiClient
 {
-    public function __construct(private HttpFactory $httpFactory)
-    {
-    }
-
     /**
      * @throws PluginNotConfiguredException
      */
@@ -28,6 +22,6 @@ class ApiClient
      */
     public function getClient(): ClientInterface
     {
-        return $this->httpFactory->getClient($this->getCredentials());
+        return (new HttpFactory())->getClient($this->getCredentials());
     }
 }

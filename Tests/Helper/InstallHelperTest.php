@@ -15,7 +15,7 @@ class InstallHelperTest extends MauticMysqlTestCase
 
     private function restartIpLookup(): void
     {
-        $configPathTo    = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
         }
@@ -31,7 +31,6 @@ class InstallHelperTest extends MauticMysqlTestCase
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
         $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'iplookup_whois_json']);
-        //        dd($field);
         $this->assertNotNull($field);
         $this->assertSame('iplookup_whois_json', $field->getAlias());
         $this->assertFileExists($configPathTo);
@@ -44,6 +43,6 @@ class InstallHelperTest extends MauticMysqlTestCase
         $this->setUpSymfony($this->configParams);
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
-        $this->assertResponseStatusCodeSame(200);
+        self::assertResponseStatusCodeSame(200);
     }
 }

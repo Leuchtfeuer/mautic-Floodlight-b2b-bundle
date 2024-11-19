@@ -5,7 +5,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Model;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightIpDomainLookups;
 
-class ipDomainLookupModelTest extends MauticMysqlTestCase
+class FloodlightIpDomainLookupModelTest extends MauticMysqlTestCase
 {
     public function setUp(): void
     {

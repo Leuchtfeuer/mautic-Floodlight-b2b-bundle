@@ -13,6 +13,16 @@ return [
                     'monolog.logger.mautic',
                 ],
             ],
+            'mautic.leuchtfeuerfloodlightb2b.services.floodlight' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.connection.apiclient',
+                    'monolog.logger.mautic',
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.connection.apiclient' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient::class,
+            ],
         ],
         'helpers' => [
             'mautic.leuchtfeuerfloodlightb2b.helper.install' => [
@@ -40,6 +50,8 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
                     'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice',
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
+                    'mautic.leuchtfeuerfloodlightb2b.services.floodlight',
+                    'mautic.integration.leuchtfeuerfloodlightb2b.config',
                 ],
             ],
         ],
