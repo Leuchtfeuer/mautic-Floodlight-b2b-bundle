@@ -15,7 +15,7 @@ class InstallHelperTest extends MauticMysqlTestCase
 
     private function restartIpLookup(): void
     {
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
         }
@@ -25,7 +25,7 @@ class InstallHelperTest extends MauticMysqlTestCase
     {
         $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'iplookup_whois_json']);
         $this->assertNull($field);
-        $configPathTo = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        $configPathTo = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         $this->assertFileDoesNotExist($configPathTo);
         $this->client->request('GET', '/s/plugins/reload');
         $this->useCleanupRollback = false;

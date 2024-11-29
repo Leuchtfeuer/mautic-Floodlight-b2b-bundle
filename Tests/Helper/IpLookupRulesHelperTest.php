@@ -33,8 +33,8 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         $reloadFacade->reloadPlugins();
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
+        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
         if (!file_exists($configPathTo)) {
             copy($pluginPathFrom, $configPathTo);
         }
@@ -130,13 +130,14 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
             $this->createMock(FloodlightService::class),
             $config,
         );
-        $lead       = $this->createLead();
-        $hit        = $this->createHit($lead);
-        $leadDomain = $helper->getDomain('127.0.0.2');
-        $result     = $helper->evaluate($hit, $leadDomain);
+        $lead             = $this->createLead();
+        $hit              = $this->createHit($lead);
+        $ip               = '127.0.0.2';
+        $leadDomain       = $helper->getDomain($ip);
+        $result           = $helper->evaluate($hit, $leadDomain);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']);
-        $this->assertInstanceOf(Lead::class, $result['result']->getLead());
-        $company = $result['result']->getLead()->getPrimaryCompany();
+        $this->assertInstanceOf(Lead::class, $result['result']->getContact());
+        $company = $result['result']->getContact()->getPrimaryCompany();
         $this->assertNotNull($company);
         $this->assertInstanceOf(Company::class, $company);
         $this->assertEquals($leadDomain['domain'], $company->getName());
@@ -163,15 +164,16 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
             $floodlightServiceMock,
             $config,
         );
-        $lead       = $this->createLead();
-        $hit        = $this->createHit($lead);
-        $leadDomain = $helper->getDomain('141.43.45.26');
-        $result     = $helper->evaluate($hit, $leadDomain);
+        $lead             = $this->createLead();
+        $hit              = $this->createHit($lead);
+        $ip               = '141.43.45.26';
+        $leadDomain       = $helper->getDomain($ip);
+        $result           = $helper->evaluate($hit, $leadDomain);
 
         $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']);
-        $this->assertInstanceOf(Lead::class, $result['result']->getLead());
+        $this->assertInstanceOf(Lead::class, $result['result']->getContact());
 
-        $company = $result['result']->getLead()->getPrimaryCompany();
+        $company = $result['result']->getContact()->getPrimaryCompany();
         $this->assertNotNull($company);
         $this->assertInstanceOf(Company::class, $company);
         $this->assertEquals($floodlightData['companyname'], $company->getName());
@@ -225,7 +227,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $rand       = rand(1, 1000000000);
         $leadDomain = new FloodlightLeadDomains();
         $leadDomain->setDomain($rand.'domain.com');
-        $leadDomain->setLead($lead);
+        $leadDomain->setContact($lead);
         $leadDomain->setDateAdded(new \DateTime());
         $leadDomain->setCount(0);
         $leadDomain->setDateModified(new \DateTime());
@@ -279,7 +281,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
 
     public function beforeTearDown(): void
     {
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
         }

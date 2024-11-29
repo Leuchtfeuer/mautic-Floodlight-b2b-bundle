@@ -77,7 +77,7 @@ class IpLookupRulesHelper
 
     private function lookupHasMoreThanOneHour(int $leadId): bool
     {
-        $result = $this->leadDomainsModel->getRepository()->findOneBy(['lead' => $leadId], ['dateModified' => 'DESC']);
+        $result = $this->leadDomainsModel->getRepository()->findOneBy(['contact' => $leadId], ['dateModified' => 'DESC']);
 
         if (empty($result)) {
             return true;
@@ -110,10 +110,12 @@ class IpLookupRulesHelper
         if (empty($remoteAddr)) {
             return false;
         }
+
         $data = $this->floodlightService->get($remoteAddr);
         if (false === $data) {
             return false;
         }
+
         $floodlightDTO = new FloodlightDTO($data);
 
         $domain  = $floodlightDTO->getCompanyPrimaryDomain();

@@ -6,7 +6,7 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 
 class CompanyDomainsTest extends MauticMysqlTestCase
 {
-    public const TABLE_NAME = 'test_fl_company_domains';
+    public const TABLE_NAME = 'test_f4b_company_domains';
 
     private $companyDomain;
 

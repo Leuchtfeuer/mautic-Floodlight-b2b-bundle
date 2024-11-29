@@ -13,7 +13,6 @@ use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightIpDomainLookups;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
@@ -64,8 +63,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         $crawler = $this->client->request('GET', '/s/plugins/reload');
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/Config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
+        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/Config/f4b_domain_blacklist.php';
         if (!file_exists($configPathTo)) {
             copy($pluginPathFrom, $configPathTo);
         }
@@ -153,7 +152,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $lead = $this->createLead();
         $lastItem->setDateModified(new \DateTime('-2 hours'));
-        $lastItem->setLead($lead);
+        $lastItem->setContact($lead);
         $this->em->persist($lastItem);
         $this->em->flush();
 
@@ -165,7 +164,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         assert($lastItem instanceof FloodlightLeadDomains);
         $lead     = $this->createLead();
         $lastItem->setDateModified(new \DateTime('-2 hours'));
-        $lastItem->setLead($lead);
+        $lastItem->setContact($lead);
         $this->em->persist($lastItem);
         $this->em->flush();
 
@@ -235,22 +234,21 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         assert($lastCompany instanceof FloodlightCompanyDomains);
         $this->assertEquals('localhost', $lastCompany->getDomain());
         assert($lastCompany->getCompany() instanceof Company);
-        assert($lastItem->getLead() instanceof Lead);
-        $companyLead = $this->companyLeadRepo->getCompanyLeadEntity($lastItem->getLead()->getId(), $lastCompany->getCompany()->getId());
+        assert($lastItem->getContact() instanceof Lead);
+        $companyLead = $this->companyLeadRepo->getCompanyLeadEntity($lastItem->getContact()->getId(), $lastCompany->getCompany()->getId());
         $this->assertNotEmpty($companyLead);
-        $this->assertEquals($lastItem->getLead()->getId(), $companyLead[0]['lead_id']);
+        $this->assertEquals($lastItem->getContact()->getId(), $companyLead[0]['lead_id']);
     }
 
     public function testIfTableIsInstalled(): void
     {
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
-        $ipDomains = $this->em->getRepository(FloodlightIpDomainLookups::class)->getTableColumns();
-        $this->assertNotEmpty($ipDomains);
-        $this->assertContains('id', $ipDomains);
-        $this->assertContains('ip_address', $ipDomains);
-        $this->assertContains('date_added', $ipDomains);
-        $this->assertContains('type', $ipDomains);
+        $ipLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->getTableColumns();
+        $this->assertNotEmpty($ipLeadDomains);
+        $this->assertContains('id', $ipLeadDomains);
+        $this->assertContains('date_added', $ipLeadDomains);
+        $this->assertContains('type', $ipLeadDomains);
     }
 
     public function testIfTableIsInstalledCompanyDomains(): void

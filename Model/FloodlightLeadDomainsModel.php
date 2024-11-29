@@ -9,7 +9,10 @@ use Mautic\CoreBundle\Model\FormModel;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Translation\Translator;
 use Mautic\LeadBundle\Model\CompanyModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -31,9 +34,14 @@ class FloodlightLeadDomainsModel extends FormModel
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $logger, $coreParametersHelper);
     }
 
-    public function getRepository()
+    public function getRepository(): FloodlightLeadDomainsRepository
     {
         return $this->em->getRepository(FloodlightLeadDomains::class);
+    }
+
+    public function getRepositoryFloodlightCompanyDomains(): FloodlightCompanyDomainsRepository
+    {
+        return $this->em->getRepository(FloodlightCompanyDomains::class);
     }
 
     /**

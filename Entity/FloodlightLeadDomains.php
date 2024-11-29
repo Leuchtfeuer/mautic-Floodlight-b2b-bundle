@@ -11,28 +11,45 @@ use Symfony\Component\Validator\Mapping\ClassMetadata as ValidatorClassMetadata;
 class FloodlightLeadDomains
 {
     private ?int $id = null;
-    private ?Lead $lead;
     private string $domain;
+
+    private ?string $type;
+
+    private ?string $ipHash;
     private int $count;
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
 
+    private ?Lead $contact;
+
     public static function loadMetadata(ORM\ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
-        $builder->setTable('fl_lead_domains')
+        $builder->setTable('f4b_lead_domains')
             ->setCustomRepositoryClass(FloodlightLeadDomainsRepository::class)
-            ->addIndex(['lead_id'], 'lead_domains_lead_id')
+            ->addIndex(['contact_id'], 'lead_domains_lead_id')
             ->addIndex(['domain'], 'lead_domains_domain');
 
         $builder->addBigIntIdField();
-        $builder->addLead(true, 'CASCADE');
+        $builder->addContact(true, 'CASCADE');
         $builder->createField('domain', 'string')
             ->columnName('domain')
             ->build();
+
         $builder->createField('count', 'integer')
             ->columnName('count')
             ->build();
+
+        $builder->createField('ipHash', 'string')
+            ->columnName('ip_hash')
+            ->nullable()
+            ->build();
+
+        $builder->createField('type', 'string')
+            ->columnName('type')
+            ->nullable()
+            ->build();
+
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')
             ->columnName('date_modified')
@@ -49,16 +66,36 @@ class FloodlightLeadDomains
                 ]
             )
         );
+
+        $metadata->addPropertyConstraint(
+            'ip',
+            new \Symfony\Component\Validator\Constraints\NotBlank(
+                [
+                    'message' => 'mautic.core.name.required',
+                ]
+            )
+        );
+
+        $metadata->addPropertyConstraint(
+            'type',
+            new \Symfony\Component\Validator\Constraints\NotBlank(
+                [
+                    'message' => 'mautic.core.name.required',
+                ]
+            )
+        );
     }
 
     public static function loadApiMetadata(ApiMetadataDriver $metadata): void
     {
-        $metadata->setGroupPrefix('fl_lead_domains')
+        $metadata->setGroupPrefix('f4b_lead_domains')
             ->addListProperties(
                 [
                     'id',
-                    'lead',
+                    'contact',
+                    'ip_address',
                     'domain',
+                    'type',
                     'count',
                     'dateAdded',
                     'dateModified',
@@ -67,8 +104,10 @@ class FloodlightLeadDomains
             ->addProperties(
                 [
                     'id',
+                    'ip_address',
                     'domain',
-                    'lead',
+                    'type',
+                    'contact',
                     'count',
                     'dateAdded',
                     'dateModified',
@@ -82,14 +121,14 @@ class FloodlightLeadDomains
         return $this->id;
     }
 
-    public function getLead(): ?Lead
+    public function getContact(): ?Lead
     {
-        return $this->lead;
+        return $this->contact;
     }
 
-    public function setLead(Lead $lead): void
+    public function setContact(Lead $contact): void
     {
-        $this->lead = $lead;
+        $this->contact = $contact;
     }
 
     public function getDomain(): string
@@ -135,5 +174,35 @@ class FloodlightLeadDomains
     public function setDateModified(\DateTime $dateModified): void
     {
         $this->dateModified = $dateModified;
+    }
+
+    public function getIpHash(): ?string
+    {
+        return $this->ipHash;
+    }
+
+    public function setIpHash(string $ipHash): void
+    {
+        $this->ipHash = $ipHash;
+    }
+
+    public function getIp(): string
+    {
+        return $this->ip;
+    }
+
+    public function setIp(string $ip): void
+    {
+        $this->ip = $ip;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): void
+    {
+        $this->type = $type;
     }
 }

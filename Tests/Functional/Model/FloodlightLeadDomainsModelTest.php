@@ -31,7 +31,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $leadDomainEntity = $floodlightLeadDomainsModel->getEntity($leadDomainId);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainEntity);
         $this->assertEquals($leadDomainId, $leadDomainEntity->getId());
-        $this->assertInstanceOf(Lead::class, $leadDomainEntity->getLead());
+        $this->assertInstanceOf(Lead::class, $leadDomainEntity->getContact());
     }
 
     public function testIsBlackListed(): void
@@ -56,8 +56,8 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         $reloadFacade->reloadPlugins();
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
+        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
         if (!file_exists($configPathTo)) {
             copy($pluginPathFrom, $configPathTo);
         }
@@ -72,8 +72,8 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $integration->setIsPublished($isPublished);
         $this->em->persist($integration);
         $this->em->flush();
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
+        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
         }
@@ -84,7 +84,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
 
     public function beforeTearDown(): void
     {
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
         }
@@ -111,7 +111,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
 
         $newLeadDomain = new FloodlightLeadDomains();
         $newLeadDomain->setDomain($domain);
-        $newLeadDomain->setLead($lead);
+        $newLeadDomain->setContact($lead);
         $newLeadDomain->setDateAdded(new \DateTime());
         $newLeadDomain->setDateModified(new \DateTime());
         $newLeadDomain->setCount(0);

@@ -2,7 +2,6 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
-use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\PathsHelper;
 
 class InstallHelper
@@ -15,10 +14,10 @@ class InstallHelper
 
     public function copyBlacklistFile(): void
     {
-        $blacklistFile = $this->pathsHelper->getRootPath().'/config/blacklist.php';
+        $blacklistFile = $this->pathsHelper->getRootPath().'/config/f4b_domain_blacklist.php';
         if (!file_exists($blacklistFile)) {
-            $configPath   = $this->pathsHelper->getPluginsPath().'/LeuchtfeuerFloodlightB2BBundle/Config/blacklist.php';
-            $configPathTo = $this->pathsHelper->getRootPath().'/config/blacklist.php';
+            $configPath   = $this->pathsHelper->getPluginsPath().'/LeuchtfeuerFloodlightB2BBundle/Config/f4b_domain_blacklist.php';
+            $configPathTo = $this->pathsHelper->getRootPath().'/config/f4b_domain_blacklist.php';
             copy($configPath, $configPathTo);
         }
     }

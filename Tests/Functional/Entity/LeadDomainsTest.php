@@ -7,7 +7,7 @@ use Mautic\LeadBundle\Entity\Lead;
 
 class LeadDomainsTest extends MauticMysqlTestCase
 {
-    public const TABLE_NAME = 'test_fl_lead_domains';
+    public const TABLE_NAME = 'test_f4b_lead_domains';
 
     private $leadDomain;
 
@@ -23,7 +23,7 @@ class LeadDomainsTest extends MauticMysqlTestCase
         $lead->setId(1);
         $this->em->persist($lead);
         $this->em->flush();
-        $leadDomain->setLead($lead);
+        $leadDomain->setContact($lead);
         $this->em->persist($leadDomain);
         $this->em->flush();
         $this->leadDomain = $leadDomain;
@@ -45,7 +45,7 @@ class LeadDomainsTest extends MauticMysqlTestCase
 
     public function testGetLead(): void
     {
-        $this->assertInstanceOf(Lead::class, $this->leadDomain->getLead());
+        $this->assertInstanceOf(Lead::class, $this->leadDomain->getContact());
     }
 
     public function testGetDomain(): void
@@ -71,8 +71,8 @@ class LeadDomainsTest extends MauticMysqlTestCase
     public function testSetLead(): void
     {
         $leadDomain = new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains();
-        $leadDomain->setLead($this->createMock(Lead::class));
-        $this->assertInstanceOf(Lead::class, $leadDomain->getLead());
+        $leadDomain->setContact($this->createMock(Lead::class));
+        $this->assertInstanceOf(Lead::class, $leadDomain->getContact());
     }
 
     public function testSetDomain(): void

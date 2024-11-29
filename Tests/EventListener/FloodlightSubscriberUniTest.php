@@ -3,43 +3,49 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\EventListener;
 
 use Mautic\IntegrationsBundle\Helper\IntegrationsHelper;
+use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\PageBundle\Event\PageHitEvent;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightIpDomainLookupsRepository;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
-use PHPUnit\Framework\MockObject\MockObject;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 class FloodlightSubscriberUniTest extends TestCase
 {
     private Config $config;
 
-    private $ipLookupRulesHelper;
+    private IpLookupRulesHelper $ipLookupRulesHelper;
 
-    private $floodlightCompanyDomainsModel;
+    private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel;
 
-    private $floodlightIpDomainLookupsModel;
+    private FloodlightLeadDomainsModel $floodlightLeadDomainsModel;
 
-    private $floodlightService;
+    private FloodlightService $floodlightService;
 
-    private $logger;
+    private LoggerInterface $logger;
 
-    private $fieldHelper;
+    private FieldHelper $fieldHelper;
 
-    private $companyModel;
+    private CompanyModel $companyModel;
 
     public function setUp(): void
     {
-        $this->config                         = $this->setConfig();
-        $this->ipLookupRulesHelper            = $this->setipLookupRulesHelper();
-        $this->floodlightCompanyDomainsModel  = $this->setFloodlightCompanyDomainModel();
-        $this->floodlightIpDomainLookupsModel = $this->setFloodlightIpDomainLookupModel();
-        $this->floodlightService              = $this->setFloodlightService();
-        $this->logger                         = $this->setLogger();
-        $this->fieldHelper                    = $this->setFieldHelper();
-        $this->companyModel                   = $this->setCompanyModel();
+        $this->config                          = $this->setConfig();
+        $this->ipLookupRulesHelper             = $this->setipLookupRulesHelper();
+        $this->floodlightCompanyDomainsModel   = $this->setFloodlightCompanyDomainModel();
+        $this->floodlightLeadDomainsModel      = $this->setFloodlightLeadDomainLookupModel();
+        $this->floodlightService               = $this->setFloodlightService();
+        $this->logger                          = $this->setLogger();
+        $this->fieldHelper                     = $this->setFieldHelper();
+        $this->companyModel                    = $this->setCompanyModel();
     }
 
     public function testOnPageHit(): void
@@ -48,7 +54,7 @@ class FloodlightSubscriberUniTest extends TestCase
             $this->ipLookupRulesHelper,
             $this->config,
             $this->floodlightCompanyDomainsModel,
-            $this->floodlightIpDomainLookupsModel,
+            $this->floodlightLeadDomainsModel,
             $this->floodlightService,
             $this->logger,
             $this->fieldHelper,
@@ -90,9 +96,9 @@ class FloodlightSubscriberUniTest extends TestCase
         return $pageHitEvent;
     }
 
-    private function setipLookupRulesHelper()
+    private function setipLookupRulesHelper(): IpLookupRulesHelper
     {
-        $ipLookupRulesHelper = $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class);
+        $ipLookupRulesHelper = $this->createMock(IpLookupRulesHelper::class);
         $ipLookupRulesHelper->expects($this->once())->method('check')->willReturn(true);
         $dataDomain = json_decode($this->dataJsonFromFloodlight(), true);
         $ipLookupRulesHelper->expects($this->once())->method('getDomain')->willReturn([
@@ -107,13 +113,15 @@ class FloodlightSubscriberUniTest extends TestCase
         return $ipLookupRulesHelper;
     }
 
-    private function setFloodlightCompanyDomainModel()
+    private function setFloodlightCompanyDomainModel(): FloodlightCompanyDomainsModel
     {
-        $flCompanyDomainsModel    = $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel::class);
+        $flCompanyDomainsModel      = $this->createMock(FloodlightCompanyDomainsModel::class);
+        $flCompanyDomainsRepository = $this->createMock(FloodlightCompanyDomainsRepository::class);
+        $flCompanyDomainsRepository->expects($this->any())->method('isNew')->willReturn(true);
         $FloodlightCompanyDomains = new FloodlightCompanyDomains();
         $flCompanyDomainsModel->expects($this->any())->method('getEntity')->willReturn($FloodlightCompanyDomains);
-        $FloodlightCompanyDomainsRepository = $this->createMock(FloodlightCompanyDomains::class);
-        $flCompanyDomainsModel->expects($this->any())->method('getRepository')->willReturn($FloodlightCompanyDomainsRepository);
+        //        $FloodlightCompanyDomainsRepository = $this->createMock(FloodlightCompanyDomains::class);
+        $flCompanyDomainsModel->expects($this->any())->method('getRepository')->willReturn($flCompanyDomainsRepository);
 
         $floodlightCompanyDomains1 = new FloodlightCompanyDomains();
         $floodlightCompanyDomains1->setCompany(new \Mautic\LeadBundle\Entity\Company());
@@ -133,41 +141,35 @@ class FloodlightSubscriberUniTest extends TestCase
         return $flCompanyDomainsModel;
     }
 
-    private function setFloodlightIpDomainLookupModel(bool $isNew = true)
+    private function setFloodlightLeadDomainLookupModel(): FloodlightLeadDomainsModel
     {
-        $floodlightIpDomainLookupsModel = $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightIpDomainLookupsModel::class);
-        //        $floodlightIpDomainLookupsModel->expects($this->once())->method('save')->willReturn([]);
-        $repository = $this->createMock(FloodlightIpDomainLookupsRepository::class);
-        $repository->expects($this->exactly(2))->method('isNew')->willReturn($isNew);
-        $floodlightIpDomainLookupsModel->expects($this->exactly(2))->method('getRepository')->willReturn($repository);
-
-        return $floodlightIpDomainLookupsModel;
+        return $this->createMock(FloodlightLeadDomainsModel::class);
     }
 
-    public function setFloodlightService()
+    public function setFloodlightService(): FloodlightService
     {
-        $floodlightService = $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService::class);
-        $floodlightService->expects($this->exactly(2))->method('get')->willReturn(json_decode($this->dataJsonFromFloodlight(), true));
+        $floodlightService = $this->createMock(FloodlightService::class);
+        $floodlightService->expects($this->any())->method('get')->willReturn(json_decode($this->dataJsonFromFloodlight(), true));
 
         return $floodlightService;
     }
 
     private function setLogger()
     {
-        $logger = $this->createMock(\Psr\Log\LoggerInterface::class);
+        $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->any())->method('error');
 
         return $logger;
     }
 
-    private function setFieldHelper()
+    private function setFieldHelper(): FieldHelper
     {
-        return $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper::class);
+        return $this->createMock(FieldHelper::class);
     }
 
     private function setCompanyModel()
     {
-        $companyModel = $this->createMock(\Mautic\LeadBundle\Model\CompanyModel::class);
+        $companyModel = $this->createMock(CompanyModel::class);
         $companyModel->expects($this->any())->method('getEntity')->willReturn(new \Mautic\LeadBundle\Entity\Company());
 
         return $companyModel;

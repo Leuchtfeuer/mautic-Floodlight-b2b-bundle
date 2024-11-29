@@ -4,7 +4,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
 class DomainBlacklistHelper
 {
-    public const BLACKLIST_PATH_FILE = __DIR__.'/../../../config/blacklist.php';
+    public const BLACKLIST_PATH_FILE = __DIR__.'/../../../config/f4b_domain_blacklist.php';
 
     /**
      * @param array<string> $blacklist

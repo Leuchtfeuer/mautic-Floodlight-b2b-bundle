@@ -2,7 +2,6 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener;
 
-use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\PageBundle\Event\PageHitEvent;
 use Mautic\PageBundle\PageEvents;
@@ -12,7 +11,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightIpDomainLookupsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -24,7 +23,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
         private IpLookupRulesHelper $ipLookupRulesHelper,
         private Config $config,
         private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel,
-        private FloodlightIpDomainLookupsModel $floodlightIpDomainLookupsModel,
+        private FloodlightLeadDomainsModel $floodlightLeadDomainsModel,
         private FloodlightService $flooglightService,
         private LoggerInterface $logger,
         private FieldHelper $fieldHelper,
@@ -59,7 +58,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
         if (null !== $companyDomains && $this->config->isProTier()) {
             foreach ($companyDomains as $companyDomain) {
                 assert($request instanceof Request);
-                $this->saveIpLookup($request->server->get('REMOTE_ADDR'), $companyDomain->getCompany());
+                $this->saveIpLookup($request->server->get('REMOTE_ADDR'), $companyDomain);
             }
         }
     }
@@ -75,7 +74,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
         if (!$dataDomain) {
             return null;
         }
-        $result         = $this->ipLookupRulesHelper->evaluate($event->getHit(), $dataDomain);
+        $result           = $this->ipLookupRulesHelper->evaluate($event->getHit(), $dataDomain);
         if (
             IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE === $result['status']
             || IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED === $result['status']
@@ -88,11 +87,12 @@ class FloodlightSubscriber implements EventSubscriberInterface
         return $this->floodlightCompanyDomainsModel->save($dataDomain['domain'], $event->getHit()->getLead(), $dataDomain['details']);
     }
 
-    private function saveIpLookup(string $ip, Company $company): void
+    private function saveIpLookup(string $ip, FloodlightCompanyDomains $companyDomains): void
     {
+        $company = $companyDomains->getCompany();
         if (
             !$this->ipLookupRulesHelper->isIp($ip)
-            || !$this->floodlightIpDomainLookupsModel->getRepository()->isNew($ip)
+            || !$this->floodlightLeadDomainsModel->getRepositoryFloodlightCompanyDomains()->isNew($companyDomains->getDomain())
         ) {
             return;
         }
@@ -104,10 +104,10 @@ class FloodlightSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $floodlightDTO  = new FloodlightDTO($data);
-        $ipDomainLookup = $floodlightDTO->fillIpLookUp();
-        $this->floodlightIpDomainLookupsModel->saveEntity($ipDomainLookup);
-        $this->logger->debug('fillIpLookUp data for IP: '.$ipDomainLookup->getIp().' was successfully retrieved with id'.$ipDomainLookup->getId());
+        $floodlightDTO    = new FloodlightDTO($data);
+        $leadDomainLookup = $floodlightDTO->fillLeadDomainLookUp();
+        $this->floodlightLeadDomainsModel->saveEntity($leadDomainLookup);
+        $this->logger->debug('fillLeadDomainLookUp data for IP: '.$leadDomainLookup->getIp().' was successfully retrieved with id'.$leadDomainLookup->getId());
         $this->fieldHelper->updateProperties($floodlightDTO);
         $this->logger->debug('Updating fields values properties for IP: ');
         $company       = $floodlightDTO->fillCompany($company);

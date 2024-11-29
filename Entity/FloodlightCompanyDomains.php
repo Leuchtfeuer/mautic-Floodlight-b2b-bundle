@@ -23,7 +23,7 @@ class FloodlightCompanyDomains
     public static function loadMetadata(ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
-        $builder->setTable('fl_company_domains')
+        $builder->setTable('f4b_company_domains')
             ->setCustomRepositoryClass(FloodlightCompanyDomainsRepository::class)
             ->addIndex(['company_id'], 'company_domains_company_id')
             ->addIndex(['domain'], 'company_domains_domain');

@@ -121,9 +121,9 @@ class FloodlightCompanyDomainsModel extends FormModel
     private function newCompanyDomainByFloodlight(FloodlightDTO $floodlightDTO, Lead $lead): array
     {
         // Save IP lookup
-        $ipDomainLookup = $floodlightDTO->fillIpLookUp();
-        $this->leadDomainsModel->saveEntity($ipDomainLookup);
-        $this->logger->error('fillIpLookUp data for IP: '.$ipDomainLookup->getIp().' was successfully retrieved with id'.$ipDomainLookup->getId());
+        $ipLeadDomainLookup = $floodlightDTO->fillLeadDomainLookUp();
+        $this->leadDomainsModel->saveEntity($ipLeadDomainLookup);
+        $this->logger->error('fillLeadDomainLookUp data for IP: '.$ipLeadDomainLookup->getIpHash().' was successfully retrieved with id '.$ipLeadDomainLookup->getIpHash());
 
         // Update fields values properties from FloodlightDTO
         $this->fieldHelper->updateProperties($floodlightDTO);
@@ -235,14 +235,14 @@ class FloodlightCompanyDomainsModel extends FormModel
 
         $leadDomain = $this->leadDomainsModel->getRepository()->findOneBy(
             [
-                'lead'   => $lead,
-                'domain' => $dataDomain['domain'],
+                'contact'   => $lead,
+                'domain'    => $dataDomain['domain'],
             ]
         );
 
         if (empty($leadDomain) && null !== $leadEntity) {
             $leadDomain = $this->leadDomainsModel->getEntity();
-            $leadDomain->setLead($leadEntity);
+            $leadDomain->setContact($leadEntity);
             $leadDomain->setDomain($dataDomain['domain']);
             $leadDomain->setDateAdded(new \DateTime());
             $leadDomain->setCount(0);

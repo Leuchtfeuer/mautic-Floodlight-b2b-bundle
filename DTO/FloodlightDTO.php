@@ -4,7 +4,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO;
 
 use Mautic\LeadBundle\Entity\Company;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightIpDomainLookups;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 
 class FloodlightDTO implements DTOInterface
@@ -33,7 +33,7 @@ class FloodlightDTO implements DTOInterface
 
     private string $companyIndustryICBIndustryGroup;
 
-    private string $companyIp;
+    private string $ip;
 
     private string $companyIndustryICBCIndustry;
 
@@ -114,6 +114,8 @@ class FloodlightDTO implements DTOInterface
 
     private string $companyStateCode;
 
+    private string $ipHash;
+
     /**
      * BigPictureDTO constructor.
      *
@@ -140,14 +142,14 @@ class FloodlightDTO implements DTOInterface
         return $this->pureData;
     }
 
-    public function getCompanyIp(): string
+    public function getIp(): string
     {
-        return $this->companyIp;
+        return $this->ip;
     }
 
-    public function setCompanyIp(string $companyIp): void
+    public function setIp(string $ip): void
     {
-        $this->companyIp = $companyIp;
+        $this->ip = $ip;
     }
 
     public function setCompanyIndustryICBIndustryGroup(string $companyIndustryICBIndustryGroup): void
@@ -684,12 +686,23 @@ class FloodlightDTO implements DTOInterface
         $this->setCompanyTicker($flCompanyData['companyticker'] ?? '');
         $this->setCompanyPhone($flCompanyData['companyphone'] ?? '');
         $this->setCompanyTimezone($flCompanyData['companytimezone'] ?? '');
-        $this->setCompanyIp($flCompanyData['ip'] ?? '');
+        $this->setIp($flCompanyData['ip'] ?? '');
         $this->setCompanyIndustryICBIndustryGroup($flCompanyData['companyindustry_icb_industrygroup'] ?? '');
         $this->setCompanyIndustryICBCIndustry($flCompanyData['companyindustry_icb_industry'] ?? '');
         $this->setCompanyIndustryICBCSubIndustry($flCompanyData['companyindustry_icb_subindustry'] ?? '');
         $this->setCompanyIndustryICBCSector($flCompanyData['companyindustry_icb_sector'] ?? '');
         $this->setCompanyStateCode($flCompanyData['companystate_code'] ?? '');
+        $this->setIpHash($flCompanyData['ip_hash'] ?? '');
+    }
+
+    public function getIpHash(): string
+    {
+        return $this->ipHash;
+    }
+
+    public function setIpHash(string $ipHash): void
+    {
+        $this->ipHash = $ipHash;
     }
 
     /** @return array<string> */
@@ -898,15 +911,17 @@ class FloodlightDTO implements DTOInterface
         return $result;
     }
 
-    public function fillIpLookUp(): FloodlightIpDomainLookups
+    public function fillLeadDomainLookUp(): FloodlightLeadDomains
     {
-        $ipDomainLookups = new FloodlightIpDomainLookups();
-        $ipDomainLookups->setDomain($this->getCompanyPrimaryDomain());
-        $ipDomainLookups->setIp($this->getCompanyIp());
-        $ipDomainLookups->setType($this->getCompanyType());
-        $ipDomainLookups->setDateAdded(new \DateTime());
+        $ipLeadDomainLookups = new FloodlightLeadDomains();
+        $ipLeadDomainLookups->setDomain($this->getCompanyPrimaryDomain());
+        $ipLeadDomainLookups->setType($this->getCompanyType());
+        $ipLeadDomainLookups->setDateAdded(new \DateTime());
+        $ipLeadDomainLookups->setDateModified(new \DateTime());
+        $ipLeadDomainLookups->setCount(0);
+        $ipLeadDomainLookups->setIpHash($this->getIpHash());
 
-        return $ipDomainLookups;
+        return $ipLeadDomainLookups;
     }
 
     /** @return array<string, mixed> */
