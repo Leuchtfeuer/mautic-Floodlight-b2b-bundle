@@ -24,11 +24,7 @@ class FloodlightService implements FloodlightServiceInterface
      */
     public function get(string $ip): array|bool
     {
-        $ip = '8.8.8.8';
-//        $ip = '85.244.197.82';
         $response   = $this->getCompanyByIp($ip);
-//        dump($response->getBody()->getContents(),'aaa');
-
 
         // Check if don't have response
         if (false === $response) {
@@ -45,7 +41,6 @@ class FloodlightService implements FloodlightServiceInterface
 
         if (200 === $statusCode || 202 === $statusCode) {
             $content = $response->getBody()->getContents();
-//            dd($content,$response->getBody()->getContents(),$statusCode);
 
             $this->logger->error('FloodlightService get success with content : '.$content);
             $result = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
@@ -60,8 +55,6 @@ class FloodlightService implements FloodlightServiceInterface
                 $this->logger->error('FloodlightService get success with content sanitaze jhon throw2 '.json_last_error_msg());
             }
 
-            $result['statusRequestCode'] = $statusCode;
-            return $result;
         }
 
         $result['statusRequestCode'] = $statusCode;
