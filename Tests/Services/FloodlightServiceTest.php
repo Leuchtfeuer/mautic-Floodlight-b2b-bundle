@@ -47,6 +47,10 @@ class FloodlightServiceTest extends TestCase
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $logger            = $this->createMock(LoggerInterface::class);
+        $stream            = $this->createMock(StreamInterface::class);
+        $stream->expects(self::any())
+            ->method('getContents')
+            ->willReturn('[{"foo": "bar"}]');
         $guzzleClient->expects(self::any())
             ->method('request')
             ->willReturn($responseInterface);
@@ -55,7 +59,10 @@ class FloodlightServiceTest extends TestCase
             ->willReturn($guzzleClient);
         $responseInterface->expects(self::any())
             ->method('getStatusCode')
-            ->willReturn(202);
+            ->willReturnOnConsecutiveCalls(202);
+        $responseInterface->expects(self::any())
+            ->method('getBody')
+            ->willReturn($stream);
 
         $service = new FloodlightService($client, $logger);
         $result  = $service->get('12.1.1.3');

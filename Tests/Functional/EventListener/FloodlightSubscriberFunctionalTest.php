@@ -226,7 +226,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lastCompany       = $this->companyRepo->findOneBy([], ['id' => 'DESC']);
         $lastCompanyDomain = $this->companyDomainRepo->findOneBy([], ['id' => 'DESC']);
         assert($lastItem instanceof FloodlightLeadDomains);
-        $this->assertEquals(2, $lastItem->getCount());
+        $this->assertEquals(1, $lastItem->getCount());
         $this->assertEquals('blacklisted', $lastItem->getDomain());
         $this->assertEmpty($lastCompany);
         $this->assertEmpty($lastCompanyDomain);
