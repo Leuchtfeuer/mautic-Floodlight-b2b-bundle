@@ -2,6 +2,7 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
+use Mautic\CoreBundle\Loader\ParameterLoader;
 use Mautic\PageBundle\Entity\Hit;
 use Mautic\PageBundle\Model\PageModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
@@ -18,14 +19,17 @@ class IpLookupRulesHelper
     public const LEAD_DOMAINS_STATUS_FAILURE     = 'failure';
     public const LEAD_DOMAINS_STATUS_VALID       = 'valid';
 
+    private ParameterLoader $parameterLoader;
+
     public function __construct(
         private PageModel $pageModel,
         private FloodlightLeadDomainsModel $leadDomainsModel,
         private WhoisPyService $whoisPyService,
         private FloodlightCompanyDomainsModel $companyDomainsModel,
         private FloodlightService $floodlightService,
-        private Config $config
+        private Config $config,
     ) {
+        $this->parameterLoader = new ParameterLoader();
     }
 
     /**
@@ -39,15 +43,28 @@ class IpLookupRulesHelper
      *     domain: string,
      *     result: FloodlightLeadDomains,
      *     status: string
-     * }
+     * }|false
      */
-    public function evaluate(Hit $hit, array $dataDomain): array
+    public function evaluate(Hit $hit, array $dataDomain): array|false
     {
-        $result = $this->companyDomainsModel->updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain($hit->getLead()->getId(), $dataDomain);
+        if (null === $hit->getLead()) {
+            return false;
+        }
+
+        $resultLeadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($hit->getLead(), $dataDomain);
+
+        $companyDomains   = $this->companyDomainsModel->getCompanyDomains($hit->getLead(), $dataDomain);
+
+        if (empty($companyDomains)) {
+            return false;
+        }
 
         return [
             'domain' => $dataDomain['domain'],
-            'result' => $result,
+            'result' => [
+                'leadDomain'     => $resultLeadDomain,
+                'companyDomains' => $companyDomains,
+            ],
             'status' => $dataDomain['status'],
         ];
     }
@@ -68,14 +85,14 @@ class IpLookupRulesHelper
             return false;
         }
 
-        if (!$this->lookupHasMoreThanOneHour($hit->getLead()->getId())) {
+        if (!$this->checkIfWasRecent($hit->getLead()->getId())) {
             return false;
         }
 
         return true;
     }
 
-    private function lookupHasMoreThanOneHour(int $leadId): bool
+    private function checkIfWasRecent(int $leadId): bool
     {
         $result = $this->leadDomainsModel->getRepository()->findOneBy(['contact' => $leadId], ['dateModified' => 'DESC']);
 
@@ -83,7 +100,8 @@ class IpLookupRulesHelper
             return true;
         }
 
-        if ($result->getDateModified() > (new \DateTime())->modify('-1 hour')) {
+        $hour = $this->parameterLoader->getParameterBag()->get('minimum_hour_to_new_entry', 2);
+        if ($result->getDateModified() > (new \DateTime())->modify('-'.$hour.' hour')) {
             return false;
         }
 
@@ -93,7 +111,6 @@ class IpLookupRulesHelper
     private function checkMoreThan2($leadId): bool
     {
         $result = $this->pageModel->getHitRepository()->findBy(['lead' => $leadId]);
-
         return count($result) > 1;
     }
 
@@ -112,24 +129,62 @@ class IpLookupRulesHelper
         }
 
         $data = $this->floodlightService->get($remoteAddr);
-        if (false === $data) {
+
+        $handleStatusRequest = [
+            '404',
+            '202',
+            '200',
+        ];
+
+        if (false === $data || !in_array($data['statusRequestCode'], $handleStatusRequest)) {
             return false;
         }
 
         $floodlightDTO = new FloodlightDTO($data);
-
         $domain  = $floodlightDTO->getCompanyPrimaryDomain();
+        if (empty($domain) && !empty($floodlightDTO->getDomains())) {
+            $domain = $floodlightDTO->getDomains()[0];
+        }
+        $status  = $this->getStatusDomain($domain);
 
-        $status = $this->getStatusDomain($domain);
         if (self::LEAD_DOMAINS_STATUS_BLACKLISTED === $status) {
             $domain = $status;
+        } elseif (404 === $data['statusRequestCode']) {
+            $domain          = self::LEAD_DOMAINS_STATUS_FAILURE;
+            $status          = self::LEAD_DOMAINS_STATUS_FAILURE;
+        } elseif (202 === $data['statusRequestCode']) {
+            $newFloodlightDTO = new FloodlightDTO([]);
+            $newFloodlightDTO->setIpHash($floodlightDTO->getIpHash());
+            $newFloodlightDTO->setDomains([]);
+            $floodlightDTO = $newFloodlightDTO;
+            $domain        = null;
         }
 
         return [
             'status'  => $status,
-            'domain'  => $domain,
-            'details' => ['floodlight' => $floodlightDTO],
+            'domain'  => $this->cleanDomain($domain),
+            'details' => [
+                'floodlight'    => $floodlightDTO,
+                'statusRequest' => $data['statusRequestCode'],
+            ],
         ];
+    }
+
+    private function cleanDomain(?string $domain): ?string
+    {
+        if (is_null($domain)) {
+            return null;
+        }
+        $parts = explode('.', $domain);
+        reset($parts);
+        $firstPart = current($parts);
+        preg_match_all('/\d/', $firstPart, $matches);
+        reset($parts);
+        if (count($matches[0]) > 1) {
+            return implode('.', array_slice($parts, 1));
+        }
+
+        return $domain;
     }
 
     /*
@@ -142,6 +197,7 @@ class IpLookupRulesHelper
     public function getDomain(string $remoteAddr): array|bool
     {
         if ($this->config->isProTier()) {
+
             $floodlightData = $this->getDataDomainByFloodlight($remoteAddr);
             if (false !== $floodlightData) {
                 return $floodlightData;
@@ -171,10 +227,7 @@ class IpLookupRulesHelper
      */
     public function getDomainByGetHostByAddr(string $remoteAddr): array
     {
-        $hostname    = gethostbyaddr($remoteAddr);
-        $domainParts = explode('.', $hostname);
-        $baseDomain  = array_slice($domainParts, -2, 2, true);
-        $domain      = implode('.', $baseDomain);
+        $domain      = gethostbyaddr($remoteAddr);
         $status      = $this->getStatusDomain($domain);
         if (self::LEAD_DOMAINS_STATUS_BLACKLISTED === $status) {
             $domain = $status;
@@ -182,8 +235,8 @@ class IpLookupRulesHelper
 
         return [
             'status'  => $status,
-            'domain'  => $domain,
-            'details' => ['hostname' => $hostname],
+            'domain'  => $this->cleanDomain($domain),
+            'details' => ['hostname' => $domain],
         ];
     }
 
@@ -208,7 +261,7 @@ class IpLookupRulesHelper
 
         return [
             'status'  => $status,
-            'domain'  => $domain,
+            'domain'  => $this->cleanDomain($domain),
             'details' => ['pyservice' => $details],
         ];
     }

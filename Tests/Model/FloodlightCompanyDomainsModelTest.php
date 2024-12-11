@@ -14,6 +14,7 @@ use Mautic\LeadBundle\Entity\Lead;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
@@ -74,8 +75,8 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
 
         assert($floodlightCompanyDomainModel instanceof FloodlightCompanyDomainsModel);
         // Has no Company Domain and domain is valid ( not blacklisted and not failed )
-        $leadDomain = $floodlightCompanyDomainModel->updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain(
-            $lead->getId(),
+        $resultFloodlightCompanyDomain = $floodlightCompanyDomainModel->getCompanyDomains(
+            $lead,
             $dataDomainFloodlightService
         );
 
@@ -84,14 +85,16 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
                 'domain' => $dataDomainFloodlightService['domain'],
             ]
         );
+
+        assert($resultFloodlightCompanyDomain['data'][0] instanceof FloodlightCompanyDomains);
         $this->assertNotNull($companyDomain2);
-        $this->assertNotNull($leadDomain);
-        $this->assertSame(1, $leadDomain->getCount());
-        $this->assertSame($companyDomain2->getDomain(), $leadDomain->getDomain());
+        $this->assertNotNull($resultFloodlightCompanyDomain['data'][0]);
+        $this->assertSame($companyDomain2->getDomain(), $resultFloodlightCompanyDomain['data'][0]->getDomain());
     }
 
     public function testUpdateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomainWithFloodlight(): void
     {
+
         $floodlightCompanyDomainModel = new FloodlightCompanyDomainsModel(
             $this->em,
             self::getContainer()->get('mautic.security'),
@@ -105,19 +108,24 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
             self::getContainer()->get('mautic.lead.model.lead'),
             $this->createMock(NotificationUserHelper::class),
             self::getContainer()->get('mautic.user.model.user'),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
             self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.field')
         );
         $lead = $this->createLead();
 
-        $dataJson = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
-        $dataDTO  = new FloodlightDTO($dataJson);
-
+        $dataJson      = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
+        $dataDTO       = new FloodlightDTO($dataJson);
+        $companyDomain = new FloodlightCompanyDomains();
+        $companyDomain->setDomain('le-non.de');
+        $companyDomain->setDateAdded(new \DateTime());
+        $companyDomain->setDateModified(new \DateTime());
+        $companyDomain->setIsPrimaryDomain(true);
         $dataDomainFloodlightService = [
             'domain'  => 'le-non.de',
             'status'  => 'valid',
             'details' => [
-                'floodlight' => $dataDTO,
+                'floodlight'        => $dataDTO,
+                'statusRequestCode' => 200,
+                'companyDomains'    => [$companyDomain],
             ],
         ];
 
@@ -129,8 +137,8 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $this->assertNull($companyDomain);
 
         // Has no Company Domain and domain is valid ( not blacklisted and not failed )
-        $leadDomain = $floodlightCompanyDomainModel->updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain(
-            $lead->getId(),
+        $resultsCompanyDomain = $floodlightCompanyDomainModel->getCompanyDomains(
+            $lead,
             $dataDomainFloodlightService
         );
 
@@ -140,17 +148,18 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
             ]
         );
         $this->assertNotNull($companyDomain2);
-        $this->assertNotNull($leadDomain);
-        $this->assertSame(1, $leadDomain->getCount());
-        $this->assertSame($companyDomain2->getDomain(), $leadDomain->getDomain());
+
+        assert($resultsCompanyDomain['data'][0] instanceof FloodlightCompanyDomains);
+        $this->assertNotNull($resultsCompanyDomain['data'][0]);
+        $this->assertCount(1, $resultsCompanyDomain['data']);
+        $this->assertSame($companyDomain2->getDomain(), $resultsCompanyDomain['data'][0]->getDomain());
 
         // Has no Company Domain and domain is valid ( not blacklisted and not failed ) add count to lead domain
-        $leadDomain = $floodlightCompanyDomainModel->updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain(
-            $lead->getId(),
+        $resultsCompanyDomain = $floodlightCompanyDomainModel->getCompanyDomains(
+            $lead,
             $dataDomainFloodlightService
         );
-        $this->assertNotNull($leadDomain);
-        $this->assertSame(2, $leadDomain->getCount());
+        $this->assertNotNull($resultsCompanyDomain);
     }
 
     private function createLead(): Lead

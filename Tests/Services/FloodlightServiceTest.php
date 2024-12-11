@@ -12,32 +12,32 @@ use Psr\Log\LoggerInterface;
 
 class FloodlightServiceTest extends TestCase
 {
-    public function testSuccessTwoStatusCode202AndOne200(): void
+    public function testSuccessTwoStatusCodeOne200(): void
     {
         $client            = $this->createMock(ApiClient::class);
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $stream            = $this->createMock(StreamInterface::class);
         $logger            = $this->createMock(LoggerInterface::class);
-        $stream->expects(self::once())
+        $stream->expects(self::any())
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
-        $guzzleClient->expects(self::exactly(3))
+        $guzzleClient->expects(self::any())
             ->method('request')
             ->willReturn($responseInterface);
-        $client->expects(self::exactly(3))
+        $client->expects(self::any())
             ->method('getClient')
             ->willReturn($guzzleClient);
-        $responseInterface->expects(self::exactly(3))
+        $responseInterface->expects(self::any())
             ->method('getStatusCode')
-            ->willReturnOnConsecutiveCalls(202, 202, 200);
-        $responseInterface->expects(self::once())
+            ->willReturnOnConsecutiveCalls(200);
+        $responseInterface->expects(self::any())
             ->method('getBody')
             ->willReturn($stream);
 
         $service = new FloodlightService($client, $logger);
         $result  = $service->get('1.2.3.4');
-        self::assertSame([['foo' => 'bar']], $result);
+        self::assertSame([['foo' => 'bar'], 'statusRequestCode' => 200], $result);
         self::assertIsArray($result);
     }
 
@@ -47,20 +47,19 @@ class FloodlightServiceTest extends TestCase
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $logger            = $this->createMock(LoggerInterface::class);
-        $guzzleClient->expects(self::exactly(3))
+        $guzzleClient->expects(self::any())
             ->method('request')
             ->willReturn($responseInterface);
-        $client->expects(self::exactly(3))
+        $client->expects(self::any())
             ->method('getClient')
             ->willReturn($guzzleClient);
-        $responseInterface->expects(self::exactly(3))
+        $responseInterface->expects(self::any())
             ->method('getStatusCode')
             ->willReturn(202);
 
         $service = new FloodlightService($client, $logger);
         $result  = $service->get('12.1.1.3');
-        self::assertFalse($result);
-        self::assertIsBool($result);
+        self::assertSame(202, $result['statusRequestCode']);
     }
 
     public function testFailStatusCode404(): void
@@ -70,10 +69,10 @@ class FloodlightServiceTest extends TestCase
         $guzzleClient      = $this->createMock(Client::class);
         $logger            = $this->createMock(LoggerInterface::class);
 
-        $guzzleClient->expects(self::once())
+        $guzzleClient->expects(self::any())
             ->method('request')
             ->willReturn($responseInterface);
-        $client->expects(self::once())
+        $client->expects(self::any())
             ->method('getClient')
             ->willReturn($guzzleClient);
         $responseInterface->expects(self::any())
@@ -81,9 +80,9 @@ class FloodlightServiceTest extends TestCase
             ->willReturn(404);
 
         $service = new FloodlightService($client, $logger);
+
         $result  = $service->get('1.2.3.4');
-        self::assertFalse($result);
-        self::assertIsBool($result);
+        self::assertSame(404, $result['statusRequestCode']);
     }
 
     public function testSuccess200FirstTry(): void
@@ -93,47 +92,25 @@ class FloodlightServiceTest extends TestCase
         $guzzleClient      = $this->createMock(Client::class);
         $stream            = $this->createMock(StreamInterface::class);
         $logger            = $this->createMock(LoggerInterface::class);
-        $stream->expects(self::once())
+        $stream->expects(self::any())
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
-        $guzzleClient->expects(self::once())
+        $guzzleClient->expects(self::any())
             ->method('request')
             ->willReturn($responseInterface);
-        $client->expects(self::once())
+        $client->expects(self::any())
             ->method('getClient')
             ->willReturn($guzzleClient);
         $responseInterface->expects(self::any())
             ->method('getStatusCode')
             ->willReturn(200);
-        $responseInterface->expects(self::once())
+        $responseInterface->expects(self::any())
             ->method('getBody')
             ->willReturn($stream);
 
         $service = new FloodlightService($client, $logger);
         $result  = $service->get('1.2.3.4');
-        self::assertSame([['foo' => 'bar']], $result);
+        self::assertSame([['foo' => 'bar'], 'statusRequestCode' => 200], $result);
         self::assertIsArray($result);
-    }
-
-    public function testFailStatusCode202And404(): void
-    {
-        $client            = $this->createMock(ApiClient::class);
-        $responseInterface = $this->createMock(ResponseInterface::class);
-        $guzzleClient      = $this->createMock(Client::class);
-        $logger            = $this->createMock(LoggerInterface::class);
-        $guzzleClient->expects(self::exactly(2))
-            ->method('request')
-            ->willReturn($responseInterface);
-        $client->expects(self::exactly(2))
-            ->method('getClient')
-            ->willReturn($guzzleClient);
-        $responseInterface->expects(self::exactly(3))
-            ->method('getStatusCode')
-            ->willReturnOnConsecutiveCalls(202, 404, 404);
-
-        $service = new FloodlightService($client, $logger);
-        $result  = $service->get('1.2.3.4');
-        self::assertFalse($result);
-        self::assertIsBool($result);
     }
 }

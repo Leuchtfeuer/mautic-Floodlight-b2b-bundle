@@ -7,7 +7,7 @@ use Mautic\LeadBundle\Entity\Lead;
 
 class LeadDomainsTest extends MauticMysqlTestCase
 {
-    public const TABLE_NAME = 'test_f4b_lead_domains';
+    public const TABLE_NAME = 'test_f4b_lead_ip_lookups';
 
     private $leadDomain;
 
@@ -19,6 +19,7 @@ class LeadDomainsTest extends MauticMysqlTestCase
         $leadDomain->setCount(1);
         $leadDomain->setDateAdded(new \DateTime());
         $leadDomain->setDateModified(new \DateTime());
+        $leadDomain->setIpHash('local');
         $lead = new Lead();
         $lead->setId(1);
         $this->em->persist($lead);

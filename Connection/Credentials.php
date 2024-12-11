@@ -15,6 +15,7 @@ class Credentials implements HeaderCredentialsInterface
 
     public function getApiKey(): string
     {
-        return 'Bearer f:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMsImZyZWUiOnRydWUsImlhdCI6MTcyOTE1MjU3NH0.rJw4ut4wEVxkhJdT7tNrHRSGWrxHheoVj_HtuA0YbNM';
+        return 'Bearer f:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMyLCJmcmVlIjp0cnVlLCJpYXQiOjE3MzA1NDM0Mzh9.lnKb5-Pt9ey5LEk4HGWCCqSQY0_C7AshKfwTVeDXsZQ';
+//                return '';
     }
 }

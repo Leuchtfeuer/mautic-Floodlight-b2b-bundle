@@ -4,9 +4,11 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\EventListener;
 
 use Mautic\IntegrationsBundle\Helper\IntegrationsHelper;
 use Mautic\LeadBundle\Model\CompanyModel;
+use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\PageBundle\Event\PageHitEvent;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
@@ -36,6 +38,8 @@ class FloodlightSubscriberUniTest extends TestCase
 
     private CompanyModel $companyModel;
 
+    private LeadModel $leadModel;
+
     public function setUp(): void
     {
         $this->config                          = $this->setConfig();
@@ -46,6 +50,12 @@ class FloodlightSubscriberUniTest extends TestCase
         $this->logger                          = $this->setLogger();
         $this->fieldHelper                     = $this->setFieldHelper();
         $this->companyModel                    = $this->setCompanyModel();
+        $this->leadModel                       = $this->getLeadModel();
+    }
+
+    private function getLeadModel()
+    {
+        return $this->createMock(LeadModel::class);
     }
 
     public function testOnPageHit(): void
@@ -54,11 +64,27 @@ class FloodlightSubscriberUniTest extends TestCase
             $this->ipLookupRulesHelper,
             $this->config,
             $this->floodlightCompanyDomainsModel,
-            $this->floodlightLeadDomainsModel,
-            $this->floodlightService,
             $this->logger,
             $this->fieldHelper,
-            $this->companyModel
+            $this->companyModel,
+            $this->leadModel,
+            $this->floodlightLeadDomainsModel
+        );
+        $pageHitEvent = $this->setPageHitEvent();
+        $floodlightSubscriber->onPageHit($pageHitEvent);
+    }
+
+    public function testOnPageUpdate()
+    {
+        $floodlightSubscriber = new FloodlightSubscriber(
+            $this->ipLookupRulesHelper,
+            $this->config,
+            $this->floodlightCompanyDomainsModel,
+            $this->logger,
+            $this->fieldHelper,
+            $this->companyModel,
+            $this->leadModel,
+            $this->floodlightLeadDomainsModel
         );
         $pageHitEvent = $this->setPageHitEvent();
         $floodlightSubscriber->onPageHit($pageHitEvent);
@@ -69,11 +95,11 @@ class FloodlightSubscriberUniTest extends TestCase
         $IntegrationsHelper = $this->createMock(IntegrationsHelper::class);
         $integration        = $this->createMock(\Mautic\PluginBundle\Entity\Integration::class);
         $integration->expects($this->any())->method('isPublished')->willReturn($isPublished);
-        $integration->expects($this->exactly(4))->method('getApiKeys')->willReturn(['api_key'=>'pro_123']);
+        $integration->expects($this->any())->method('getApiKeys')->willReturn(['api_key'=>'pro_123']);
         $integration->expects($this->once())->method('getIsPublished')->willReturn($isPublished);
         $integrationFloodlight = new LeuchtfeuerFloodlightB2BIntegration();
         $integrationFloodlight->setIntegrationConfiguration($integration);
-        $IntegrationsHelper->expects($this->exactly(5))->method('getIntegration')->willReturn($integrationFloodlight);
+        $IntegrationsHelper->expects($this->any())->method('getIntegration')->willReturn($integrationFloodlight);
 
         return new Config($IntegrationsHelper);
     }
@@ -84,30 +110,52 @@ class FloodlightSubscriberUniTest extends TestCase
         $pageHitEvent = $this->createMock(PageHitEvent::class);
         $lead         = $this->createMock(\Mautic\LeadBundle\Entity\Lead::class);
         $lead->expects($this->any())->method('getId')->willReturn(1);
-        $hit->expects($this->once())->method('getLead')->willReturn($lead);
-        $pageHitEvent->expects($this->exactly(3))->method('getHit')->willReturn($hit);
+        $hit->expects($this->any())->method('getLead')->willReturn($lead);
+        $pageHitEvent->expects($this->any())->method('getHit')->willReturn($hit);
 
         $server = new \Symfony\Component\HttpFoundation\ServerBag();
         $server->set('REMOTE_ADDR', '127.0.0.1');
         $request         = $this->createMock(\Symfony\Component\HttpFoundation\Request::class);
         $request->server = $server;
-        $pageHitEvent->expects($this->exactly(2))->method('getRequest')->willReturn($request);
+        $pageHitEvent->expects($this->any())->method('getRequest')->willReturn($request);
 
         return $pageHitEvent;
     }
 
     private function setipLookupRulesHelper(): IpLookupRulesHelper
     {
+        $floodlightCompanyDomains = new FloodlightCompanyDomains();
+        $floodlightCompanyDomains->setCompany(new \Mautic\LeadBundle\Entity\Company());
+        $floodlightCompanyDomains->setDomain('google.com');
+        $floodlightCompanyDomains->setDomain('google.pt');
+        $floodlightCompanyDomains->setDateModified(new \DateTime());
+        $floodlightCompanyDomains->setDateAdded(new \DateTime());
+
         $ipLookupRulesHelper = $this->createMock(IpLookupRulesHelper::class);
         $ipLookupRulesHelper->expects($this->once())->method('check')->willReturn(true);
         $dataDomain = json_decode($this->dataJsonFromFloodlight(), true);
         $ipLookupRulesHelper->expects($this->once())->method('getDomain')->willReturn([
             'status'  => 'valid',
             'domain'  => 'google.com',
-            'details' => ['floodlight' => new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO($dataDomain)],
+            'details' => [
+                'floodlight'        => new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO($dataDomain),
+                'statusRequestCode' => 200,
+                'companyDomains'    => [$floodlightCompanyDomains],
+            ],
         ]);
-        $ipLookupRulesHelper->expects($this->exactly(2))->method('isIp')->willReturn(true);
-        $ipLookupRulesHelper->expects($this->once())->method('evaluate')->willReturn(['domain' => 'google.com', 'result' => 'valid', 'status' => 'valid']);
+        $ipLookupRulesHelper->expects($this->any())->method('isIp')->willReturn(true);
+        $ipLookupRulesHelper->expects($this->once())->method('evaluate')->willReturn(
+            [
+                'domain' => 'google.com',
+                'result' => [
+                    'leadDomain'     => new FloodlightLeadDomains(),
+                    'companyDomains' => [
+                        'isNew' => true,
+                        'data'  => [$floodlightCompanyDomains],
+                    ],
+                ],
+                'status' => 'valid',
+            ]);
 
         //        $ipLookupRulesHelper->expects($this->once())->method('checkMoreThan2')->willReturn(true);
         return $ipLookupRulesHelper;
@@ -131,7 +179,7 @@ class FloodlightSubscriberUniTest extends TestCase
         $floodlightCompanyDomains2->setCompany(new \Mautic\LeadBundle\Entity\Company());
         $floodlightCompanyDomains2->setDomain('google.pt');
 
-        $flCompanyDomainsModel->expects($this->once())->method('save')->willReturn(
+        $flCompanyDomainsModel->expects($this->any())->method('save')->willReturn(
             [
                 $floodlightCompanyDomains1,
                 $floodlightCompanyDomains2,

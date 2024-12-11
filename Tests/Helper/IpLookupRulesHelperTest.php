@@ -11,6 +11,8 @@ use Mautic\PageBundle\Model\PageModel;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
@@ -49,6 +51,11 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $integration->setIsPublished($isPublished);
         $this->em->persist($integration);
         $this->em->flush();
+        $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
+        $form    = $crawler->selectButton('Save')->form();
+        $form['integration_config[apiKeys][api_key]']->setValue('pro_123');
+        $crawler = $this->client->submit($form);
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
     }
@@ -70,7 +77,6 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     public function testGetDomainMethod(): void
     {
         $helper = $this->getIpLookupRulesHelperMock();
-
         $domain = $helper->getDomain('127.0.0.1');
         $this->assertEquals('localhost', $domain['domain']);
     }
@@ -88,6 +94,13 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $helper = $this->getIpLookupRulesHelperMock();
         $result = $helper->getDomainByGetHostByAddr('127.0.0.1');
         $this->assertEquals('localhost', $result['details']['hostname']);
+    }
+
+    public function testGetGoogleDomainByGetHostByAddr(): void
+    {
+        $helper = $this->getIpLookupRulesHelperMock();
+        $result = $helper->getDomainByGetHostByAddr('8.8.8.8');
+        $this->assertEquals('dns.google', $result['details']['hostname']);
     }
 
     public function testGetDetailsDomainByGetHostByAddr(): void
@@ -115,18 +128,20 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertFalse($result);
     }
 
-    public function testEvaluateWithGetHostByAdress(): void
+    public function testEvaluateWithGetHostByAddress(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $config = $this->createMock(Config::class);
         $config->method('isPublished')->willReturn(true);
         $config->method('isConfigured')->willReturn(true);
         $config->method('isProTier')->willReturn(false);
-        $helper = new IpLookupRulesHelper(
+        $leadDomain    = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
+        $companyDomain = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
+        $helper        = new IpLookupRulesHelper(
             self::getContainer()->get('mautic.page.model.page'),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
+            $leadDomain,
             new WhoisPyService($logger),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
+            $companyDomain,
             $this->createMock(FloodlightService::class),
             $config,
         );
@@ -135,15 +150,15 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $ip               = '127.0.0.2';
         $leadDomain       = $helper->getDomain($ip);
         $result           = $helper->evaluate($hit, $leadDomain);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']);
-        $this->assertInstanceOf(Lead::class, $result['result']->getContact());
-        $company = $result['result']->getContact()->getPrimaryCompany();
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
+        $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
+        $company = $result['result']['leadDomain']->getContact()->getPrimaryCompany();
         $this->assertNotNull($company);
         $this->assertInstanceOf(Company::class, $company);
         $this->assertEquals($leadDomain['domain'], $company->getName());
     }
 
-    public function testEvaluateWithFloodlight()
+    public function testEvaluateWithFloodlightWithNoGetPromaryDomain(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $config = $this->createMock(Config::class);
@@ -151,11 +166,16 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $config->method('isConfigured')->willReturn(true);
         $config->method('isProTier')->willReturn(true);
 
-        $floodlightData        = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
-        $floodlightServiceMock = $this->createMock(FloodlightService::class);
+        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
+        $floodlightData['statusRequestCode']  = 200;
+        $floodlightServiceMock                = $this->createMock(FloodlightService::class);
         $floodlightServiceMock->method('get')
             ->willReturn($floodlightData);
 
+        $floodlightCompanyDomainsModelMock = $this->createMock(FloodlightCompanyDomainsModel::class);
+        $floodlightCompanyDomain           = new FloodlightCompanyDomains();
+        $floodlightCompanyDomainsModelMock->method('getCompanyDomains')
+            ->willReturn([$floodlightCompanyDomain]);
         $helper = new IpLookupRulesHelper(
             self::getContainer()->get('mautic.page.model.page'),
             self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
@@ -164,23 +184,169 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
             $floodlightServiceMock,
             $config,
         );
-        $lead             = $this->createLead();
-        $hit              = $this->createHit($lead);
-        $ip               = '141.43.45.26';
-        $leadDomain       = $helper->getDomain($ip);
-        $result           = $helper->evaluate($hit, $leadDomain);
+        $lead                 = $this->createLead();
+        $hit                  = $this->createHit($lead);
+        $ip                   = '141.43.45.26';
+        $leadDomain           = $helper->getDomain($ip);
+        $leadDomain['status'] = 'valid';
+        $leadDomain['domain'] = 'leuchtfeuer.com';
+        $result               = $helper->evaluate($hit, $leadDomain);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
+        $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
 
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']);
-        $this->assertInstanceOf(Lead::class, $result['result']->getContact());
+        $company = $result['result']['leadDomain']->getContact()->getPrimaryCompany();
+        $this->assertNull($company);
+    }
 
-        $company = $result['result']->getContact()->getPrimaryCompany();
+    public function testEvaluateWithFloodlight(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $config = $this->createMock(Config::class);
+        $config->method('isPublished')->willReturn(true);
+        $config->method('isConfigured')->willReturn(true);
+        $config->method('isProTier')->willReturn(true);
+
+        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
+        $floodlightData['statusRequestCode']  = 200;
+        $floodlightServiceMock                = $this->createMock(FloodlightService::class);
+        $floodlightServiceMock->method('get')
+            ->willReturn($floodlightData);
+
+        $floodlightCompanyDomainsModelMock = $this->createMock(FloodlightCompanyDomainsModel::class);
+        $floodlightCompanyDomain           = new FloodlightCompanyDomains();
+        $floodlightCompanyDomainsModelMock->method('getCompanyDomains')
+            ->willReturn([$floodlightCompanyDomain]);
+        $floodlightLeadDomainsModel    = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
+        $floodlightCompanyDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
+        $helper                        = new IpLookupRulesHelper(
+            self::getContainer()->get('mautic.page.model.page'),
+            $floodlightLeadDomainsModel,
+            new WhoisPyService($logger),
+            $floodlightCompanyDomainsModel,
+            $floodlightServiceMock,
+            $config,
+        );
+
+        assert($floodlightCompanyDomainsModel instanceof FloodlightCompanyDomainsModel);
+        $companyDomains = $floodlightCompanyDomainsModel->getRepository()->findAll();
+        $this->assertEmpty($companyDomains);
+        $lead                 = $this->createLead();
+        $hit                  = $this->createHit($lead);
+        $ip                   = '141.43.45.26';
+        $leadDomain           = $helper->getDomain($ip);
+        $leadDomain['status'] = 'valid';
+        $leadDomain['domain'] = 'le-non.de';
+        $result               = $helper->evaluate($hit, $leadDomain);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
+        $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
+
+        $companyDomains = $floodlightCompanyDomainsModel->getRepository()->findAll();
+
+        $this->assertCount(1, $companyDomains);
+        $company = $companyDomains[0]->getCompany();
         $this->assertNotNull($company);
         $this->assertInstanceOf(Company::class, $company);
         $this->assertEquals($floodlightData['companyname'], $company->getName());
-        $this->assertEquals($floodlightData['companyannual_revenue_range'], $company->getField('f4b_companyannual_revenue_range')['value']);
-        //        $this->assertEquals($floodlightData['companyemployees_range'], $company->getField('f4b_companyemployee_range')['value']);
-        $this->assertEquals($floodlightData['companyindustry'], $company->getField('companyindustry')['value']);
-        $this->assertEquals($floodlightData['companyindustry_naics'], $company->getField('f4b_companyindustry_naicscode')['value']);
+        $this->assertEquals($floodlightData['companyannual_revenue_range'], $company->getFieldValue('f4b_companyannual_revenue_range'));
+        $this->assertEquals($floodlightData['companyindustry'], $company->getIndustry());
+        $this->assertEquals($floodlightData['companyindustry_naics'], $company->getFieldValue('f4b_companyindustry_naicscode'));
+    }
+
+    public function testGetDomainWithFloodLightNoGetPrimaryCompany(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $config = $this->createMock(Config::class);
+        $config->method('isPublished')->willReturn(true);
+        $config->method('isConfigured')->willReturn(true);
+        $config->method('isProTier')->willReturn(true);
+
+        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight3.json'), true);
+        $floodlightData['statusRequestCode']  = 200;
+        $floodlightServiceMock                = $this->createMock(FloodlightService::class);
+        $floodlightServiceMock->method('get')
+            ->willReturn($floodlightData);
+
+        $floodlightCompanyDomainsModelMock = $this->createMock(FloodlightCompanyDomainsModel::class);
+        $floodlightCompanyDomain           = new FloodlightCompanyDomains();
+        $floodlightCompanyDomainsModelMock->method('getCompanyDomains')
+            ->willReturn([$floodlightCompanyDomain]);
+        $helper = new IpLookupRulesHelper(
+            self::getContainer()->get('mautic.page.model.page'),
+            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
+            new WhoisPyService($logger),
+            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
+            $floodlightServiceMock,
+            $config,
+        );
+        $domain = $helper->getDomain('127.0.0.1');
+        $this->assertEmpty($domain['domain']);
+        $this->assertSame($domain['status'], 'failure');
+    }
+
+    public function testGetDomainWithFloodLightWith404(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $config = $this->createMock(Config::class);
+        $config->method('isPublished')->willReturn(true);
+        $config->method('isConfigured')->willReturn(true);
+        $config->method('isProTier')->willReturn(true);
+
+        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight3.json'), true);
+        $floodlightData['statusRequestCode']  = 404;
+        $floodlightServiceMock                = $this->createMock(FloodlightService::class);
+        $floodlightServiceMock->method('get')
+            ->willReturn($floodlightData);
+
+        $floodlightCompanyDomainsModelMock = $this->createMock(FloodlightCompanyDomainsModel::class);
+        $floodlightCompanyDomain           = new FloodlightCompanyDomains();
+        $floodlightCompanyDomainsModelMock->method('getCompanyDomains')
+            ->willReturn([$floodlightCompanyDomain]);
+        $helper = new IpLookupRulesHelper(
+            self::getContainer()->get('mautic.page.model.page'),
+            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
+            new WhoisPyService($logger),
+            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
+            $floodlightServiceMock,
+            $config,
+        );
+        $domain = $helper->getDomain('127.0.0.1');
+        $this->assertSame($domain['status'], 'failure');
+        $this->assertSame($domain['domain'], 'failure');
+        $this->assertSame($domain['details']['statusRequest'], 404);
+        assert($domain['details']['floodlight'] instanceof FloodlightDTO);
+    }
+
+    public function testGetDomainWithFloodLightWith202(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $config = $this->createMock(Config::class);
+        $config->method('isPublished')->willReturn(true);
+        $config->method('isConfigured')->willReturn(true);
+        $config->method('isProTier')->willReturn(true);
+
+        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
+        $floodlightData['statusRequestCode']  = 202;
+        $floodlightServiceMock                = $this->createMock(FloodlightService::class);
+        $floodlightServiceMock->method('get')
+            ->willReturn($floodlightData);
+
+        $floodlightCompanyDomainsModelMock = $this->createMock(FloodlightCompanyDomainsModel::class);
+        $floodlightCompanyDomain           = new FloodlightCompanyDomains();
+        $floodlightCompanyDomainsModelMock->method('getCompanyDomains')
+            ->willReturn([$floodlightCompanyDomain]);
+        $helper = new IpLookupRulesHelper(
+            self::getContainer()->get('mautic.page.model.page'),
+            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
+            new WhoisPyService($logger),
+            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
+            $floodlightServiceMock,
+            $config,
+        );
+        $domain = $helper->getDomain('123.0.0.1');
+        $this->assertSame($domain['status'], 'valid');
+        assert($domain['details']['floodlight'] instanceof FloodlightDTO);
+        $this->assertNotSame($domain['details']['floodlight']->getCompanyName(), $floodlightData['companyname']);
+        $this->assertNotSame($domain['details']['floodlight']->getIpHash(), 'local');
     }
 
     public function testCheckIpLookUpCanBeProcessed(): void
@@ -228,6 +394,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $leadDomain = new FloodlightLeadDomains();
         $leadDomain->setDomain($rand.'domain.com');
         $leadDomain->setContact($lead);
+        $leadDomain->setIpHash('local');
         $leadDomain->setDateAdded(new \DateTime());
         $leadDomain->setCount(0);
         $leadDomain->setDateModified(new \DateTime());

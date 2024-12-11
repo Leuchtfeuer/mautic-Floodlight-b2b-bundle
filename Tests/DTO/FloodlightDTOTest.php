@@ -5,6 +5,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\DTO;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 
 class FloodlightDTOTest extends MauticMysqlTestCase
 {
@@ -21,58 +22,100 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     public function testGettersAndSetters(): void
     {
         $name = $this->floodlightDTO->getCompanyName();
-        $this->assertEquals('Goldman Sachs Group', $name);
+        $this->assertEquals('Brandenburgische Technische Universitt Cottbus-Senftenberg', $name);
         $this->assertEquals('Germany', $this->floodlightDTO->getCompanyCountry());
-        $this->assertEquals('Hannover', $this->floodlightDTO->getCompanyCity());
+        $this->assertEquals('Cottbus', $this->floodlightDTO->getCompanyCity());
     }
 
     private function loadDTO(): void
     {
-        $dataFake            = json_decode($this->fakeData(), true);
-        $data                = $dataFake['company'];
-        $this->floodlightDTO = new FloodlightDTO($data);
+        //        dd($this->fakeData());
+        $dataFake            = $this->fakeData();
+        $this->floodlightDTO = new FloodlightDTO($dataFake);
     }
 
-    private function fakeData(): string
+    private function fakeData(int $type=1): array
     {
-        return '{
-                    "domain": "http://abc.de ",
-                    "company": {
-                        "id": "60b725f10c9c85c70d97880dfe8191b3",
-                        "primary_domain": "http://goldmansachs.com ",
-                        "companyname": "Goldman Sachs Group",
-                        "companyaddress1": "Main street 1",
-                        "companyaddress2": "Mansion House",
-                        "companycity": "Hannover",
-                        "zip": "30177",
-                        "companycountry": "Germany",
-                        "legalName": "The Goldman Sachs Group, Inc.",
-                        "logo": "http://<hostname>/logo/goldmansachs.com",
-                        "url": "https://www.goldmansachs.com/",
-                        "wzl": "23457",
-                        "naics": "abc",
-                        "isic": "123",
-                        "nace": "xyz",
-                        "uk-sic": "987654",
-                        "industry tags": [
-                            "Finance",
-                            "Financial Services",
-                            "FinTech"
-                        ]
-                    }
-                }';
+        if (2 === $type) {
+            return json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight2.json'), true);
+        }
+
+        return json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
     }
 
     public function testGetCompanyEntity(): void
     {
-        $company    = new Company();
-        $newCompany = $this->floodlightDTO->fillCompany($company);
+        $floodlightDto = new FloodlightDTO($this->fakeData());
+        $company       = new Company();
+        $newCompany    = $floodlightDto->fillCompany($company);
         $this->assertInstanceOf(Company::class, $newCompany);
-        $this->assertEquals('Goldman Sachs Group', $newCompany->getName());
+        $this->assertEquals('Brandenburgische Technische Universitt Cottbus-Senftenberg', $newCompany->getName());
         $this->assertEquals('Germany', $newCompany->getCountry());
-        $this->assertEquals('Hannover', $newCompany->getCity());
-        $this->assertEquals('Main street 1', $newCompany->getAddress1());
-        $this->assertEquals(0, $this->floodlightDTO->getCompanyNumberOfEmployees());
-        $this->assertEmpty($this->floodlightDTO->getCompanyNumberOfEmployees());
+        $this->assertEquals('Cottbus', $newCompany->getCity());
+        $this->assertEquals('Platz Der Deutschen Einheit 1', $newCompany->getAddress1());
+        $this->assertEquals(3001, $this->floodlightDTO->getCompanyNumberOfEmployees());
+        $this->assertNotEmpty($this->floodlightDTO->getCompanyNumberOfEmployees());
+    }
+
+    public function testFillCompaniesDomain(): void
+    {
+        $floodlightCompanyDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
+        $company                       = new Company();
+        $domains                       = $this->floodlightDTO->getDomains();
+        $domains[]                     = 'www.example.com';
+        $domains[]                     = 'www.leuchtfeuer.com';
+        $this->floodlightDTO->setDomains($domains);
+        $result = $this->floodlightDTO->fillCompaniesDomain($floodlightCompanyDomainsModel, $company);
+        $this->assertNotEmpty($result);
+        $this->assertCount(3, $result);
+        $this->assertTrue($result[0]->getIsPrimaryDomain());
+        $this->assertFalse($result[1]->getIsPrimaryDomain());
+        $this->assertFalse($result[2]->getIsPrimaryDomain());
+        $this->assertSame('www.example.com', $result[1]->getDomain());
+        $this->assertSame('www.leuchtfeuer.com', $result[2]->getDomain());
+    }
+
+    public function testFillCompanyDomain(): void
+    {
+        $floodlightDto = new FloodlightDTO($this->fakeData(2));
+        $company       = new Company();
+        $company->setName('Casa da Moeda do Brasil');
+        $company->setCountry('Brazil');
+        $company->setCity('Brasilia');
+        $company->setAddress1('Address 1');
+        $company->setDateAdded(new \DateTime());
+        $company->setDateModified(new \DateTime());
+
+        $this->em->persist($company);
+        $this->em->flush();
+
+        $newCompany = $floodlightDto->fillCompany($company);
+
+        $this->assertInstanceOf(Company::class, $newCompany);
+        $this->assertEquals('Casa da Moeda do Brasil', $newCompany->getName());
+        $this->assertEquals('Germany', $newCompany->getCountry());
+        $this->assertEquals('Cottbus', $newCompany->getCity());
+        $this->assertEquals('Platz Der Deutschen Einheit 1', $newCompany->getAddress1());
+        $this->assertEquals(3001, $this->floodlightDTO->getCompanyNumberOfEmployees());
+    }
+
+    public function testFillLeadDomain(): void
+    {
+        $floodlightDto = new FloodlightDTO($this->fakeData());
+        $leadDomain    = $floodlightDto->fillLeadDomainLookUp();
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomain);
+        $this->assertNotSame('local', $leadDomain->getIpHash());
+        $this->assertSame(1, $leadDomain->getCount());
+    }
+
+    public function testFillLeadDomainNoIpHash(): void
+    {
+        $data =$this->fakeData();
+        unset($data['ip_hash']);
+        $floodlightDto = new FloodlightDTO($data);
+        $leadDomain    = $floodlightDto->fillLeadDomainLookUp();
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomain);
+        $this->assertSame('local', $leadDomain->getIpHash());
+        $this->assertSame('le-non.de', $leadDomain->getDomain());
     }
 }

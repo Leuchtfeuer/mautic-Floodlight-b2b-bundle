@@ -78,5 +78,6 @@ return [
         ],
     ],
     'parameters' => [
+        'minimum_hour_to_new_entry' => 1, // Minimum hour to new entry, IN HOUR
     ],
 ];

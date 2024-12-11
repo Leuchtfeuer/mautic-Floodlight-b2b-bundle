@@ -11,21 +11,25 @@ use Symfony\Component\Validator\Mapping\ClassMetadata as ValidatorClassMetadata;
 class FloodlightLeadDomains
 {
     private ?int $id = null;
-    private string $domain;
+
+    private ?string $domain = null;
 
     private ?string $type;
 
     private ?string $ipHash;
+
     private int $count;
+
     private \DateTime $dateAdded;
-    private \DateTime $dateModified;
+
+    private ?\DateTime $dateModified = null;
 
     private ?Lead $contact;
 
     public static function loadMetadata(ORM\ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
-        $builder->setTable('f4b_lead_domains')
+        $builder->setTable('f4b_lead_ip_lookups')
             ->setCustomRepositoryClass(FloodlightLeadDomainsRepository::class)
             ->addIndex(['contact_id'], 'lead_domains_lead_id')
             ->addIndex(['domain'], 'lead_domains_domain');
@@ -34,6 +38,7 @@ class FloodlightLeadDomains
         $builder->addContact(true, 'CASCADE');
         $builder->createField('domain', 'string')
             ->columnName('domain')
+            ->nullable()
             ->build();
 
         $builder->createField('count', 'integer')
@@ -42,7 +47,6 @@ class FloodlightLeadDomains
 
         $builder->createField('ipHash', 'string')
             ->columnName('ip_hash')
-            ->nullable()
             ->build();
 
         $builder->createField('type', 'string')
@@ -53,6 +57,7 @@ class FloodlightLeadDomains
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')
             ->columnName('date_modified')
+            ->nullable()
             ->build();
     }
 
@@ -60,15 +65,6 @@ class FloodlightLeadDomains
     {
         $metadata->addPropertyConstraint(
             'domain',
-            new \Symfony\Component\Validator\Constraints\NotBlank(
-                [
-                    'message' => 'mautic.core.name.required',
-                ]
-            )
-        );
-
-        $metadata->addPropertyConstraint(
-            'ip',
             new \Symfony\Component\Validator\Constraints\NotBlank(
                 [
                     'message' => 'mautic.core.name.required',
@@ -93,7 +89,6 @@ class FloodlightLeadDomains
                 [
                     'id',
                     'contact',
-                    'ip_address',
                     'domain',
                     'type',
                     'count',
@@ -104,7 +99,6 @@ class FloodlightLeadDomains
             ->addProperties(
                 [
                     'id',
-                    'ip_address',
                     'domain',
                     'type',
                     'contact',
@@ -131,12 +125,12 @@ class FloodlightLeadDomains
         $this->contact = $contact;
     }
 
-    public function getDomain(): string
+    public function getDomain(): ?string
     {
         return $this->domain;
     }
 
-    public function setDomain(string $domain): void
+    public function setDomain(?string $domain): void
     {
         $this->domain = $domain;
     }
@@ -166,12 +160,12 @@ class FloodlightLeadDomains
         $this->dateAdded = $dateAdded;
     }
 
-    public function getDateModified(): \DateTime
+    public function getDateModified(): ?\DateTime
     {
         return $this->dateModified;
     }
 
-    public function setDateModified(\DateTime $dateModified): void
+    public function setDateModified(?\DateTime $dateModified): void
     {
         $this->dateModified = $dateModified;
     }
@@ -184,16 +178,6 @@ class FloodlightLeadDomains
     public function setIpHash(string $ipHash): void
     {
         $this->ipHash = $ipHash;
-    }
-
-    public function getIp(): string
-    {
-        return $this->ip;
-    }
-
-    public function setIp(string $ip): void
-    {
-        $this->ip = $ip;
     }
 
     public function getType(): ?string

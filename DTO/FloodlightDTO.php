@@ -9,6 +9,8 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsMo
 
 class FloodlightDTO implements DTOInterface
 {
+    public const DEFAULT_IP_HASH = 'local';
+
     /** @var array<string> */
     private array $companyNameAlternative;
 
@@ -693,6 +695,13 @@ class FloodlightDTO implements DTOInterface
         $this->setCompanyIndustryICBCSector($flCompanyData['companyindustry_icb_sector'] ?? '');
         $this->setCompanyStateCode($flCompanyData['companystate_code'] ?? '');
         $this->setIpHash($flCompanyData['ip_hash'] ?? '');
+        if (!empty($this->getDomainAliases())) {
+            $domains = $this->getDomains();
+            foreach ($this->getDomainAliases() as $domain) {
+                $domains[] = $domain;
+            }
+            $this->setDomains($domains);
+        }
     }
 
     public function getIpHash(): string
@@ -734,6 +743,15 @@ class FloodlightDTO implements DTOInterface
         $this->domains = $domains;
     }
 
+    public function fillCompanyDomain(FloodlightCompanyDomains $companyDomain): FloodlightCompanyDomains
+    {
+        $companyDomain->setDomain($this->getCompanyPrimaryDomain());
+        $companyDomain->setCompany($companyDomain->getCompany());
+        $companyDomain->setDateModified(new \DateTime());
+
+        return $companyDomain;
+    }
+
     public function fillCompany(Company $company): Company
     {
         if (!empty($this->getCompanyName())) {
@@ -745,6 +763,7 @@ class FloodlightDTO implements DTOInterface
         if (!empty($this->getCompanyCountry())) {
             $company->setCountry($this->getCompanyCountry());
         }
+
         if (!empty($this->getCompanyAddress1())) {
             $company->setAddress1($this->getCompanyAddress1());
         }
@@ -872,9 +891,6 @@ class FloodlightDTO implements DTOInterface
             $company->addUpdatedField('f4b_companystate_code', $this->getCompanyStateCode());
         }
 
-        //        if (!empty($this->getTags())) {
-        //            $company->addUpdatedField('tags', json_encode($this->getTags(), JSON_FORCE_OBJECT));
-        //        }
         $company->addUpdatedField('enrichment_date', \date('Y-m-d H:i:s'));
 
         return $company;
@@ -889,13 +905,16 @@ class FloodlightDTO implements DTOInterface
             return [];
         }
         $result = [];
+
         foreach ($this->getDomains() as $domain) {
+            $domain = $this->cleanDomain($domain);
             $companyDomain = $floodlightCompanyDomainsModel->getRepository()->findOneBy(
                 [
                     'domain'  => $domain,
                     'company' => $company,
                 ]
             );
+
             if (!empty($companyDomain)) {
                 continue;
             }
@@ -903,6 +922,10 @@ class FloodlightDTO implements DTOInterface
             $companyDomain->setDomain($domain);
             $companyDomain->setCompany($company);
             $companyDomain->setIsPrimaryDomain(false);
+            if ($domain === $this->getCompanyPrimaryDomain()) {
+                $companyDomain->setIsPrimaryDomain(true);
+            }
+
             $companyDomain->setDateAdded(new \DateTime());
             $companyDomain->setDateModified(new \DateTime());
             $result[] = $companyDomain;
@@ -911,15 +934,40 @@ class FloodlightDTO implements DTOInterface
         return $result;
     }
 
+    private function cleanDomain(?string $domain): ?string
+    {
+        if (is_null($domain)) {
+            return null;
+        }
+        $parts = explode('.', $domain);
+        reset($parts);
+        $firstPart = current($parts);
+        preg_match_all('/\d/', $firstPart, $matches);
+        reset($parts);
+        if (count($matches[0]) > 1) {
+            return implode('.', array_slice($parts, 1));
+        }
+
+        return $domain;
+    }
+
     public function fillLeadDomainLookUp(): FloodlightLeadDomains
     {
         $ipLeadDomainLookups = new FloodlightLeadDomains();
-        $ipLeadDomainLookups->setDomain($this->getCompanyPrimaryDomain());
+        $domain = $this->getCompanyPrimaryDomain();
+        if(empty($domain) && !empty($this->getDomains())){
+            $domain = $this->getDomains()[0];
+        }
+        $ipLeadDomainLookups->setDomain($domain);
         $ipLeadDomainLookups->setType($this->getCompanyType());
         $ipLeadDomainLookups->setDateAdded(new \DateTime());
         $ipLeadDomainLookups->setDateModified(new \DateTime());
-        $ipLeadDomainLookups->setCount(0);
-        $ipLeadDomainLookups->setIpHash($this->getIpHash());
+        $ipLeadDomainLookups->setCount(1);
+        $ipHash = $this->getIpHash();
+        if (empty($ipHash)) {
+            $ipHash = self::DEFAULT_IP_HASH;
+        }
+        $ipLeadDomainLookups->setIpHash($ipHash);
 
         return $ipLeadDomainLookups;
     }
