@@ -29,7 +29,6 @@ class FloodlightDTOTest extends MauticMysqlTestCase
 
     private function loadDTO(): void
     {
-        //        dd($this->fakeData());
         $dataFake            = $this->fakeData();
         $this->floodlightDTO = new FloodlightDTO($dataFake);
     }
@@ -84,7 +83,6 @@ class FloodlightDTOTest extends MauticMysqlTestCase
         $company->setCity('Brasilia');
         $company->setAddress1('Address 1');
         $company->setDateAdded(new \DateTime());
-        $company->setDateModified(new \DateTime());
 
         $this->em->persist($company);
         $this->em->flush();

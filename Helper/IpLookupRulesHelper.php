@@ -111,6 +111,7 @@ class IpLookupRulesHelper
     private function checkMoreThan2($leadId): bool
     {
         $result = $this->pageModel->getHitRepository()->findBy(['lead' => $leadId]);
+
         return count($result) > 1;
     }
 
@@ -141,7 +142,7 @@ class IpLookupRulesHelper
         }
 
         $floodlightDTO = new FloodlightDTO($data);
-        $domain  = $floodlightDTO->getCompanyPrimaryDomain();
+        $domain        = $floodlightDTO->getCompanyPrimaryDomain();
         if (empty($domain) && !empty($floodlightDTO->getDomains())) {
             $domain = $floodlightDTO->getDomains()[0];
         }
@@ -197,7 +198,6 @@ class IpLookupRulesHelper
     public function getDomain(string $remoteAddr): array|bool
     {
         if ($this->config->isProTier()) {
-
             $floodlightData = $this->getDataDomainByFloodlight($remoteAddr);
             if (false !== $floodlightData) {
                 return $floodlightData;

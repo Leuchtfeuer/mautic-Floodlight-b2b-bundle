@@ -54,7 +54,6 @@ class FloodlightService implements FloodlightServiceInterface
                 $this->logger->error('FloodlightService get success with content sanitaze2: '.json_encode($result));
                 $this->logger->error('FloodlightService get success with content sanitaze jhon throw2 '.json_last_error_msg());
             }
-
         }
 
         $result['statusRequestCode'] = $statusCode;

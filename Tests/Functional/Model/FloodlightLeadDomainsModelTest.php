@@ -117,13 +117,13 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
         assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
         $company = $this->addNewCompany();
-        $lead = $this->addLead();
+        $lead    = $this->addLead();
         // Set primary company
         $lead->setPrimaryCompany($company);
         $this->em->persist($lead);
         $this->em->flush();
 
-        $this->assertSame($lead->getPrimaryCompany(),$company);
+        $this->assertSame($lead->getPrimaryCompany(), $company);
 
         $domain1 = 'lfexample.com';
         $domain2 = 'test.lfexample.com';
@@ -138,7 +138,6 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $leadDomain2->setCount(4);
         $this->em->persist($leadDomain2);
         $this->em->flush();
-
 
         $company2 = $this->addNewCompany('Test Company 2 test.lfexample.com');
 
@@ -165,13 +164,10 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $floodlightLeadDomainsModel->recalculateLeadPrimaryCompany($lead);
 
         $leadModel = self::getContainer()->get('mautic.lead.model.lead');
-        $newLead = $leadModel->getEntity($lead->getId());
-        $this->assertNotSame($company->getId(),$newLead->getPrimaryCompany()->getId());
-        $this->assertSame($newLead->getPrimaryCompany(),$company2);
-        $this->assertSame($newLead->getPrimaryCompany()->getName(),$company2->getName());
-
-
-
+        $newLead   = $leadModel->getEntity($lead->getId());
+        $this->assertNotSame($company->getId(), $newLead->getPrimaryCompany()->getId());
+        $this->assertSame($newLead->getPrimaryCompany(), $company2);
+        $this->assertSame($newLead->getPrimaryCompany()->getName(), $company2->getName());
     }
 
     private function addNewCompany($name = 'Test Company'): Company
@@ -180,6 +176,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $company->setName($name);
         $this->em->persist($company);
         $this->em->flush();
+
         return $company;
     }
 
@@ -246,6 +243,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $newLeadDomain->setIpHash('local');
         $newLeadDomain->setDateAdded(new \DateTime());
         $newLeadDomain->setDateModified(new \DateTime());
+        $newLeadDomain->setEnrichmentDate(new \DateTime());
         $newLeadDomain->setCount(0);
         $this->em->persist($newLeadDomain);
         $this->em->flush();

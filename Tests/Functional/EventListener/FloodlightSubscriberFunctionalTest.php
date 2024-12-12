@@ -65,9 +65,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     private function activePlugin(bool $isPublished = true): void
     {
-
-//        $reloadFacade = self::getContainer()->get(ReloadFacade::class);
-//        $reloadFacade->reloadPlugins();
+        $reloadFacade = self::getContainer()->get(ReloadFacade::class);
+        $reloadFacade->reloadPlugins();
         $this->client->request('GET', '/s/plugins/reload');
         $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
@@ -91,8 +90,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
             unlink($configPathTo);
         }
         copy($pluginPathFrom, $configPathTo);
-//        $this->useCleanupRollback = false;
-//        $this->setUpSymfony($this->configParams);
+        //        $this->useCleanupRollback = false;
+        //        $this->setUpSymfony($this->configParams);
     }
 
     public function testIpLookupWithOnlyOneLeadFail(): void
@@ -283,19 +282,19 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     public function testOnPageHitSaveFlowFiveTimes()
     {
-        $floodlightSubscriber = self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber::class);
-        assert($floodlightSubscriber instanceof \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber);
+        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
+        assert($floodlightSubscriber instanceof FloodlightSubscriber);
 
         $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
 
         $lead = $this->createLead();
-        $hit = $this->createHit($lead);
+        $hit  = $this->createHit($lead);
 
         $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
 
         $floodlightSubscriber->onPageHit($pageHitEventMock1);
-        $company1 = $this->em->getRepository(Company::class)->findAll();
-        $leadDomainsHit1 = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $company1           = $this->em->getRepository(Company::class)->findAll();
+        $leadDomainsHit1    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $companyDomainsHit1 = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
         $this->assertEmpty($company1);
         $this->assertEmpty($leadDomainsHit1);
@@ -304,15 +303,14 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         // Hit 2 with the same lead, save lead domain and company domain
         $request = new \Symfony\Component\HttpFoundation\Request();
         $request->server->set('REMOTE_ADDR', '127.0.0.1');
-        $hit2 = $this->createHit($lead);
+        $hit2              = $this->createHit($lead);
         $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
         $pageHitEventMock2->expects($this->exactly(2))->method('getHit')->willReturn($hit2);
         $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
         $floodlightSubscriber->onPageHit($pageHitEventMock2);
-        $leadDomainsHit2 = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $leadDomainsHit2    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
         $companyDomainsHit2 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit2[0]->getDomain()]);
-        $company2 = $this->em->getRepository(Company::class)->findAll();
-
+        $company2           = $this->em->getRepository(Company::class)->findAll();
 
         $this->assertNotEmpty($leadDomainsHit2);
         $this->assertCount(1, $leadDomainsHit2);
@@ -322,16 +320,15 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame($company2[0]->getId(), $companyDomainsHit2[0]->getCompany()->getId());
         $this->assertCount(1, $company2);
 
-
         // Hit 3 with the same lead, save lead domain and company domain
-        $hit3 = $this->createHit($lead);
+        $hit3              = $this->createHit($lead);
         $pageHitEventMock3 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
         $pageHitEventMock3->expects($this->exactly(4))->method('getHit')->willReturn($hit3);
         $pageHitEventMock3->expects($this->exactly(1))->method('getRequest')->willReturn($request);
         $floodlightSubscriber->onPageHit($pageHitEventMock3);
-        $leadDomainsHit3 = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $leadDomainsHit3    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
         $companyDomainsHit3 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit3[0]->getDomain()]);
-        $company3 = $this->em->getRepository(Company::class)->findAll();
+        $company3           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($leadDomainsHit3);
         $this->assertCount(1, $leadDomainsHit3);
         $this->assertSame(2, $leadDomainsHit3[0]->getCount());
@@ -341,17 +338,17 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $company3);
 
         // Hit 4 with the same lead, with different domain, save lead domain and company domain
-        $hit4 = $this->createHit($lead);
+        $hit4     = $this->createHit($lead);
         $request2 = new \Symfony\Component\HttpFoundation\Request();
         $request2->server->set('REMOTE_ADDR', '8.8.8.8');
         $pageHitEventMock4 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
         $pageHitEventMock4->expects($this->exactly(2))->method('getHit')->willReturn($hit3);
         $pageHitEventMock4->expects($this->exactly(1))->method('getRequest')->willReturn($request2);
         $floodlightSubscriber->onPageHit($pageHitEventMock4);
-        $leadDomainsHit4 = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $leadDomainsHit4     = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
         $totalCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $companyDomainsHit4 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit4[1]->getDomain()]);
-        $company4 = $this->em->getRepository(Company::class)->findAll();
+        $companyDomainsHit4  = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit4[1]->getDomain()]);
+        $company4            = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($leadDomainsHit4);
         $this->assertCount(2, $leadDomainsHit4);
         $this->assertSame(1, $leadDomainsHit4[1]->getCount());
@@ -371,53 +368,50 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $floodlightSubscriber->onPageHit($pageHitEventMock5);
         $currentLead = $this->em->getRepository(Lead::class)->find($lead->getId());
         $this->assertSame($currentLead->getPrimaryCompany()->getId(), $company4[1]->getId());
-
     }
 
     public function testOnPageHitSaveWithFloodlight()
     {
-//        $this->updateApikey('pro_123');
-//
-//        $lead = $this->createLead();
-//        $hit = $this->createHit($lead);
-//
-//        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit,false);
-//        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-//
-//        $lead = $this->createLead();
-//        $request = new \Symfony\Component\HttpFoundation\Request();
-//        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
-//        $pageHitEventMock1->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-//        $floodlightSubscriber->onPageHit($pageHitEventMock1);
+        //        $this->updateApikey('pro_123');
+        //
+        //        $lead = $this->createLead();
+        //        $hit = $this->createHit($lead);
+        //
+        //        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit,false);
+        //        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+        //
+        //        $lead = $this->createLead();
+        //        $request = new \Symfony\Component\HttpFoundation\Request();
+        //        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
+        //        $pageHitEventMock1->expects($this->exactly(1))->method('getRequest')->willReturn($request);
+        //        $floodlightSubscriber->onPageHit($pageHitEventMock1);
 
+        //        $hit2 = $this->createHit($lead);
+        //        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit2);
+        //        $request = new \Symfony\Component\HttpFoundation\Request();
+        //        $request->server->set('REMOTE_ADDR', '8.8.8.8');
+        //        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+        //        $pageHitEventMock2->expects($this->exactly(4))->method('getHit')->willReturn($hit2);
+        //        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
+        //        $floodlightSubscriber->onPageHit($pageHitEventMock2);
 
-//        $hit2 = $this->createHit($lead);
-//        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit2);
-//        $request = new \Symfony\Component\HttpFoundation\Request();
-//        $request->server->set('REMOTE_ADDR', '8.8.8.8');
-//        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-//        $pageHitEventMock2->expects($this->exactly(4))->method('getHit')->willReturn($hit2);
-//        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-//        $floodlightSubscriber->onPageHit($pageHitEventMock2);
-
-//        $all = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-//        $leadDomainsHit2 = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-//        $companyDomainsHit2 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit2[0]->getDomain()]);
-//        $companies2 = $this->em->getRepository(Company::class)->findAll();
-//        $this->assertNotEmpty($leadDomainsHit2);
-//        $this->assertCount(1, $leadDomainsHit2);
-//        $this->assertSame(1, $leadDomainsHit2[0]->getCount());
-//        $this->assertEquals('le-non.de', $leadDomainsHit2[0]->getDomain());
-//        $this->assertNotEmpty($companies2);
-//        $this->assertCount(1, $companies2);
-//        $this->assertSame($companies2[0]->getId(), $companyDomainsHit2[0]->getCompany()->getId());
-
+        //        $all = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        //        $leadDomainsHit2 = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        //        $companyDomainsHit2 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit2[0]->getDomain()]);
+        //        $companies2 = $this->em->getRepository(Company::class)->findAll();
+        //        $this->assertNotEmpty($leadDomainsHit2);
+        //        $this->assertCount(1, $leadDomainsHit2);
+        //        $this->assertSame(1, $leadDomainsHit2[0]->getCount());
+        //        $this->assertEquals('le-non.de', $leadDomainsHit2[0]->getDomain());
+        //        $this->assertNotEmpty($companies2);
+        //        $this->assertCount(1, $companies2);
+        //        $this->assertSame($companies2[0]->getId(), $companyDomainsHit2[0]->getCompany()->getId());
     }
 
-    private function createFloodlightSubescriberInstance($hit,$check=true)
+    private function createFloodlightSubescriberInstance($hit, $check=true)
     {
-        $ipLookupRulesHelperMock = $this->createIpRulesServiceMock($hit,$check);
-        $floodlightSubscriber = new FloodlightSubscriber(
+        $ipLookupRulesHelperMock = $this->createIpRulesServiceMock($hit, $check);
+        $floodlightSubscriber    = new FloodlightSubscriber(
             $ipLookupRulesHelperMock,
             self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class),
             self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
@@ -426,25 +420,26 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
             self::getContainer()->get('mautic.lead.model.company'),
             self::getContainer()->get('mautic.lead.model.lead'),
             self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
-
         );
+
         return $floodlightSubscriber;
     }
 
-    private function createIpRulesServiceMock($hit,$check=true): \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper
+    private function createIpRulesServiceMock($hit, $check=true): \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper
     {
         $floodlightCompanyDomains = new FloodlightCompanyDomains();
-        $floodlightCompanyDomains->setCompany(new \Mautic\LeadBundle\Entity\Company());
+        $floodlightCompanyDomains->setCompany(new Company());
         $floodlightCompanyDomains->setDomain('google.com');
         $floodlightCompanyDomains->setDomain('google.pt');
         $floodlightCompanyDomains->setDateModified(new \DateTime());
+        $floodlightCompanyDomains->setEnrichmentDate(new \DateTime());
         $floodlightCompanyDomains->setDateAdded(new \DateTime());
 
         $ipLookupRulesHelper = $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class);
         $ipLookupRulesHelper->expects($this->exactly(1))->method('check')->willReturn($check);
-        $dataDomain = json_decode(file_get_contents(__DIR__.'/../../fixtures/floodlight.json'), true);
+        $dataDomain    = json_decode(file_get_contents(__DIR__.'/../../fixtures/floodlight.json'), true);
         $flooglightDTO = new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO($dataDomain);
-        $getDomain = [
+        $getDomain     = [
             'status'  => 'valid',
             'domain'  => $flooglightDTO->getCompanyPrimaryDomain(),
             'details' => [
@@ -457,7 +452,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         assert($ipLookupRulesHelperFunctional instanceof \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper);
         // Real object
 
-        $resultGetDomain = $ipLookupRulesHelperFunctional->evaluate($hit,$getDomain);
+        $resultGetDomain                                     = $ipLookupRulesHelperFunctional->evaluate($hit, $getDomain);
         $resultGetDomain['result']['companyDomains']['isNew']=false;
 
         $ipLookupRulesHelper->expects($this->once())->method('getDomain')->willReturn($getDomain);

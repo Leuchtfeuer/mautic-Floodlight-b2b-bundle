@@ -106,67 +106,6 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $this->assertSame($domain, $companyDomain->getDomain());
     }
 
-    //    public function testNewCompanySetLeadPrimaryCompany()
-    //    {
-    //        $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
-    //        assert($floodlightLeadDomainsModel instanceof FloodlightCompanyDomainsModel);
-    //        $domain     = 'leuchtfeuer.com';
-    //        $lead       = $this->addLead();
-    //        $dataDomain = [
-    //            'domain'  => $domain,
-    //            'status'  => 'valid',
-    //            'details' => [
-    //                'hostname' => $domain,
-    //            ],
-    //        ];
-    //        $companyDomain = $this->em->getRepository(FloodlightCompanyDomains::class)->findOneBy(['domain' => $domain]);
-    //        $this->assertNull($companyDomain);
-    //        $result = $floodlightLeadDomainsModel->newCompanySetLeadPrimaryCompany($domain, $lead, $dataDomain);
-    //        $this->assertNotNull($result);
-    //        $this->assertInstanceOf(Company::class, $result['company']);
-    //        $this->assertInstanceOf(Lead::class, $result['lead']);
-    //        $this->assertSame($result['company'], $result['lead']->getPrimaryCompany());
-    //    }
-
-    //    public function testUpdatePrimaryCompany()
-    //    {
-    //        $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
-    //        assert($floodlightLeadDomainsModel instanceof FloodlightCompanyDomainsModel);
-    //        $domain  = 'leuchtfeuer.com';
-    //        $lead    = $this->addLead();
-    //        $company = new Company();
-    //        $company->setName('Test Company');
-    //        $company->setDateAdded(new \DateTime());
-    //        $company->setDateModified(new \DateTime());
-    //        $this->em->persist($company);
-    //        $this->em->flush();
-    //
-    //        $lead->setPrimaryCompany($company);
-    //        $this->em->persist($lead);
-    //        $this->em->flush();
-    //
-    //        $this->assertInstanceOf(Company::class, $company);
-    //        $this->assertInstanceOf(Lead::class, $lead);
-    //        $this->assertSame($company, $lead->getPrimaryCompany());
-    //
-    //        $dataDomain = [
-    //            'domain'  => $domain,
-    //            'status'  => 'valid',
-    //            'details' => [
-    //                'hostname' => $domain,
-    //            ],
-    //        ];
-    //
-    //        $companyDomain = $this->em->getRepository(FloodlightCompanyDomains::class)->findOneBy(['domain' => $domain]);
-    //        $this->assertNull($companyDomain);
-    //        $result = $floodlightLeadDomainsModel->newCompanySetLeadPrimaryCompany($domain, $lead, $dataDomain);
-    //        $this->assertNotNull($result);
-    //        $this->assertInstanceOf(Company::class, $result['company']);
-    //        $this->assertInstanceOf(Lead::class, $result['lead']);
-    //        $this->assertSame($result['company'], $result['lead']->getPrimaryCompany());
-    //        $this->assertSame($company, $result['lead']->getPrimaryCompany());
-    //    }
-
     private function activePlugin(bool $isPublished = true): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);

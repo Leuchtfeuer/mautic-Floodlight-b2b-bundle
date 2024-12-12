@@ -26,6 +26,8 @@ class FloodlightLeadDomains
 
     private ?Lead $contact;
 
+    private ?\DateTime $enrichmentDate = null;
+
     public static function loadMetadata(ORM\ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
@@ -57,6 +59,11 @@ class FloodlightLeadDomains
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')
             ->columnName('date_modified')
+            ->nullable()
+            ->build();
+
+        $builder->createField('enrichmentDate', 'datetime')
+            ->columnName('enrichment_date')
             ->nullable()
             ->build();
     }
@@ -94,6 +101,7 @@ class FloodlightLeadDomains
                     'count',
                     'dateAdded',
                     'dateModified',
+                    'enrichmentDate',
                 ]
             )
             ->addProperties(
@@ -105,6 +113,7 @@ class FloodlightLeadDomains
                     'count',
                     'dateAdded',
                     'dateModified',
+                    'enrichmentDate',
                 ]
             )
             ->build();
@@ -188,5 +197,15 @@ class FloodlightLeadDomains
     public function setType(string $type): void
     {
         $this->type = $type;
+    }
+
+    public function getEnrichmentDate(): ?\DateTime
+    {
+        return $this->enrichmentDate;
+    }
+
+    public function setEnrichmentDate(?\DateTime $enrichmentDate): void
+    {
+        $this->enrichmentDate = $enrichmentDate;
     }
 }

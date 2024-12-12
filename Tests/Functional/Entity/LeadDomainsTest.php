@@ -19,6 +19,7 @@ class LeadDomainsTest extends MauticMysqlTestCase
         $leadDomain->setCount(1);
         $leadDomain->setDateAdded(new \DateTime());
         $leadDomain->setDateModified(new \DateTime());
+        $leadDomain->setEnrichmentDate(new \DateTime());
         $leadDomain->setIpHash('local');
         $lead = new Lead();
         $lead->setId(1);

@@ -94,7 +94,6 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
 
     public function testUpdateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomainWithFloodlight(): void
     {
-
         $floodlightCompanyDomainModel = new FloodlightCompanyDomainsModel(
             $this->em,
             self::getContainer()->get('mautic.security'),

@@ -21,13 +21,13 @@ use Symfony\Component\HttpFoundation\Request;
 class FloodlightSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private IpLookupRulesHelper           $ipLookupRulesHelper,
-        private Config                        $config,
+        private IpLookupRulesHelper $ipLookupRulesHelper,
+        private Config $config,
         private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel,
-        private LoggerInterface               $logger,
-        private FieldHelper                   $fieldHelper,
-        private CompanyModel                  $companyModel,
-        private LeadModel                     $leadModel,
+        private LoggerInterface $logger,
+        private FieldHelper $fieldHelper,
+        private CompanyModel $companyModel,
+        private LeadModel $leadModel,
         private readonly FloodlightLeadDomainsModel $floodlightLeadDomainsModel
     ) {
     }
@@ -51,7 +51,6 @@ class FloodlightSubscriber implements EventSubscriberInterface
     {
         $isValid = $this->ipLookupRulesHelper->check($event->getHit());
 
-
         if (false === $isValid) {
             return;
         }
@@ -64,7 +63,6 @@ class FloodlightSubscriber implements EventSubscriberInterface
      */
     private function saveDomains(PageHitEvent $event): ?array
     {
-
         $request = $event->getRequest();
         assert($request instanceof Request);
 
@@ -97,14 +95,11 @@ class FloodlightSubscriber implements EventSubscriberInterface
         // TODO: Implement updateCompanyCompanyDomains test
         if (!$result['result']['companyDomains']['isNew']) {
             $floodlightCompanyDomain = $this->updateCompanyCompanyDomains($dataDomain, $companyDomains, $event->getHit()->getLead());
-            $companyDomains = $floodlightCompanyDomain;
+            $companyDomains          = $floodlightCompanyDomain;
             $this->floodlightLeadDomainsModel->recalculateLeadPrimaryCompany($event->getHit()->getLead());
-
         }
 
         return $companyDomains;
-
-
     }
 
     /**
@@ -125,7 +120,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
                 $company = $floodlightDTO->fillCompany($company);
                 $this->companyModel->saveEntity($company);
                 $tempResult = $floodlightDTO->fillCompaniesDomain($this->floodlightCompanyDomainsModel, $company);
-                $result = array_merge($result, $tempResult);
+                $result     = array_merge($result, $tempResult);
             }
             if (!empty($result)) {
                 $this->floodlightCompanyDomainsModel->saveEntities($result);
@@ -137,7 +132,6 @@ class FloodlightSubscriber implements EventSubscriberInterface
         foreach ($floodCompanyDomains as $companyDomain) {
             assert($companyDomain instanceof FloodlightCompanyDomains);
             $this->leadModel->addToCompany($lead, $companyDomain->getCompany());
-            $companyDomain->setDateModified(new \DateTime());
             $result[] = $companyDomain;
         }
         if (!empty($result)) {

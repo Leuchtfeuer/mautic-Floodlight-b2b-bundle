@@ -127,12 +127,11 @@ class FloodlightCompanyDomainsModel extends FormModel
         // Update fields values properties from FloodlightDTO
         $this->fieldHelper->updateProperties($floodlightDTO);
 
-        $company = $this->companiesModel->getEntity();
+        $company       = $this->companiesModel->getEntity();
         $company       = $floodlightDTO->fillCompany($company);
         $this->companiesModel->saveEntity($company);
 
         $this->logger->info('Company data for IP: '.$company->getName().' was successfully retrieved with id '.$company->getId());
-
 
         if (null !== $lead) {
             $this->leadModel->addToCompany($lead, $company);
@@ -205,10 +204,6 @@ class FloodlightCompanyDomainsModel extends FormModel
     private function newCompanyDomain(?string $domain, ?Lead $lead, array $details = []): array
     {
         if (!empty($details) && array_key_exists('floodlight', $details)) {
-            // Create test to result 202
-            //{
-            //     "ip_hash": "f7bb85bc2a65e38d5106cb1cb9c430852035a544"
-            //}
             return $this->newCompanyDomainByFloodlight($details, $lead);
         }
 
@@ -238,7 +233,6 @@ class FloodlightCompanyDomainsModel extends FormModel
      */
     public function newCompanyByGetHostByAddrOrPythonWhois(string $domain, ?Lead $lead, array $details): ?Company
     {
-
         $userIds       = $this->notificationUserHelper->getAdminUsers();
         $user          = $this->userModel->getEntity($userIds[0]);
 
@@ -267,11 +261,11 @@ class FloodlightCompanyDomainsModel extends FormModel
 
     public function getCompanyDomains(?Lead $lead, array $dataDomain): array|false
     {
-        if (null === $lead ) {
+        if (null === $lead) {
             return false;
         }
         $companyDomain = null;
-        if ($dataDomain['domain'] !== null) {
+        if (null !== $dataDomain['domain']) {
             $companyDomain = $this->getRepository()->findBy(
                 [
                     'domain' => $dataDomain['domain'],
@@ -279,11 +273,10 @@ class FloodlightCompanyDomainsModel extends FormModel
             );
         }
 
-
         if (!empty($companyDomain)) {
             return [
                 'isNew' => false,
-                'data' => $companyDomain,
+                'data'  => $companyDomain,
             ];
         }
 
@@ -292,9 +285,10 @@ class FloodlightCompanyDomainsModel extends FormModel
             && IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED !== $dataDomain['status']
         ) {
             $companyDomain = $this->newCompanyDomain($dataDomain['domain'], $lead, $dataDomain['details']);
+
             return [
                 'isNew' => true,
-                'data' => $companyDomain,
+                'data'  => $companyDomain,
             ];
         }
 

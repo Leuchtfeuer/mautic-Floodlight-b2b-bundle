@@ -8,7 +8,6 @@ use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Model\CompanyModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
@@ -102,8 +101,8 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
                 }
             }
 
-            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && empty($leadDomain->getDateModified())) {
-                $leadDomain->setDateModified((new \DateTime(self::DATE_DEFAULT))->format('Y-m-d H:i:s'));
+            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && empty($leadDomain->getEnrichmentDate())) {
+                $leadDomain->setEnrichmentDate(new \DateTime(self::DATE_DEFAULT));
                 $this->floodlightLeadDomainsModel->saveEntity($leadDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     $output->writeln('<info>Lead domain '.$leadDomain->getDomain().' with request 202 by second time</info>');
@@ -111,8 +110,8 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
                 continue;
             }
 
-            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && self::DATE_DEFAULT == $leadDomain->getDateModified()) {
-                $leadDomain->setDateModified((new \DateTime())->format('Y-m-d H:i:s'));
+            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && (new \DateTime(self::DATE_DEFAULT)) == $leadDomain->getEnrichmentDate()) {
+                $leadDomain->setEnrichmentDate(new \DateTime());
                 $this->floodlightLeadDomainsModel->saveEntity($leadDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     $output->writeln('<error>Lead domain '.$leadDomain->getDomain().' with request 202 by third time</error>');
@@ -133,7 +132,7 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             if (empty($domain) && !empty($floodlightDTO->getDomains())) {
                 $domain = $floodlightDTO->getDomains()[0];
             }
-            if(!empty($domain)){
+            if (!empty($domain)) {
                 $floodlightCompanyDomains = $this->flCompanyDomainsModel->getRepository()->findBy(['domain' => $domain]);
                 if (!empty($floodlightCompanyDomains)) {
                     foreach ($floodlightCompanyDomains as $floodlightCompanyDomain) {
@@ -141,7 +140,7 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
                         $company = $floodlightDTO->fillCompany($company);
                         $this->companyModel->saveEntity($company);
                         $tempResult = $floodlightDTO->fillCompaniesDomain($this->flCompanyDomainsModel, $company);
-                        $result = array_merge($result, $tempResult);
+                        $result     = array_merge($result, $tempResult);
                     }
                 }
                 $output->writeln('<error>Domain is blacklisted</error>');
@@ -152,7 +151,6 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             $company = $floodlightDTO->fillCompany($company);
             $this->companyModel->saveEntity($company);
 
-            // how find company domain? by lead get primary company and get domain. is it ok?
             $floodlightCompanyDomains = $floodlightDTO->fillCompaniesDomain($this->flCompanyDomainsModel, $company);
             if (!empty($floodlightCompanyDomains)) {
                 $this->flCompanyDomainsModel->saveEntities($floodlightCompanyDomains);
@@ -161,7 +159,6 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
                         $output->writeln('Company domain data for IP: '.$company->getName().' was successfully retrieved with id '.$floodlightCompanyDomain->getId());
                     }
                 }
-
             }
 
             $leadDomainLookup = $floodlightDTO->fillLeadDomainLookUp();

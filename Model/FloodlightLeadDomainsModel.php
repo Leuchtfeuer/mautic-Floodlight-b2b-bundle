@@ -80,7 +80,6 @@ class FloodlightLeadDomainsModel extends FormModel
      */
     public function addNewLeadDomainOrCountPlusOneInLeadDomain(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
-
         $leadDomain = $this->getRepository()->findOneBy(
             [
                 'contact'   => $lead,
@@ -103,7 +102,6 @@ class FloodlightLeadDomainsModel extends FormModel
             }
         }
         assert($leadDomain instanceof FloodlightLeadDomains);
-        //        $leadDomain->setDateModified(new \DateTime());
         $leadDomain->setCount($leadDomain->getCount() + 1);
         $this->em->persist($leadDomain);
         $this->em->flush();
@@ -119,10 +117,10 @@ class FloodlightLeadDomainsModel extends FormModel
         $qb = $this->getRepository()->createQueryBuilder('l');
         $qb->where('l.ipHash <> :local')
             ->andWhere('l.domain IS NULL')
-            ->andWhere('l.dateModified IS NULL OR l.dateModified = :date_modified')
+            ->andWhere('l.enrichmentDate IS NULL OR l.enrichmentDate = :enrichmentDate')
             ->setParameter('local', 'local')
-            ->setParameter('date_modified', '1970-01-01 00:00:00')
-            ->orderBy('l.dateModified', 'ASC');
+            ->setParameter('enrichmentDate', '1970-01-01 00:00:00')
+            ->orderBy('l.dateAdded', 'ASC');
 
         return $qb->getQuery()->getResult();
     }
