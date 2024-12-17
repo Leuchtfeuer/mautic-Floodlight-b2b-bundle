@@ -34,25 +34,28 @@ class FloodlightService implements FloodlightServiceInterface
         return $this->handleResult($response);
     }
 
+    /**
+     * @return array<string,mixed>
+     */
     private function handleResult(ResponseInterface $response): array
     {
-        $result     = [];
+        $result     = [
+            'statusRequestCode' => 0,
+        ];
+
         $statusCode = $response->getStatusCode();
 
         if (200 === $statusCode || 202 === $statusCode) {
             $content = $response->getBody()->getContents();
 
-            $this->logger->error('FloodlightService get success with content : '.$content);
             $result = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
-            $this->logger->error('FloodlightService get success with content sanitaze: '.json_encode($result));
-            $this->logger->error('FloodlightService get success with content sanitaze jhon throw '.json_last_error_msg());
+            $this->logger->debug('FloodlightService get success with content sanitaze jhon throw '.json_last_error_msg());
 
             if (null === $result) {
                 $result = json_decode($content, false, 512, JSON_THROW_ON_ERROR);
                 $result = (array) $result;
-                $this->logger->error('FloodlightService get success with content sanitaze2: '.json_encode($result));
-                $this->logger->error('FloodlightService get success with content sanitaze jhon throw2 '.json_last_error_msg());
+                $this->logger->debug('FloodlightService get success with content sanitaze jhon throw2 '.json_last_error_msg());
             }
         }
 
@@ -61,7 +64,7 @@ class FloodlightService implements FloodlightServiceInterface
         return $result;
     }
 
-    private function makeRequest(string $url)
+    private function makeRequest(string $url): ResponseInterface|false
     {
         try {
             return $this->client->getClient()->request('GET', $url);
@@ -77,7 +80,7 @@ class FloodlightService implements FloodlightServiceInterface
         return false;
     }
 
-    private function getCompanyByIp(string $ip): ResponseInterface|bool
+    private function getCompanyByIp(string $ip): ResponseInterface|false
     {
         $url = sprintf('%s/%s/companies/ip/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ip);
 

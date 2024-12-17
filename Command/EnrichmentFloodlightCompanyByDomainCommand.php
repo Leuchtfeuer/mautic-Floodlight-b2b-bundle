@@ -5,12 +5,10 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Command;
 use Mautic\CoreBundle\Command\ModeratedCommand;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\PathsHelper;
-use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Model\CompanyModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
@@ -56,71 +54,56 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             return 0;
         }
 
-        $leadDomains = $this->floodlightLeadDomainsModel->getLeadDomainToEnrichement();
-        if (empty($leadDomains)) {
+        $companyDomains = $this->flCompanyDomainsModel->getCompanyDomainToEnrichment();
+        if (empty($companyDomains)) {
             $output->writeln('<info>No companies to enrich</info>');
 
             return 0;
         }
 
-        foreach ($leadDomains as $leadDomain) {
-            $ipHash = $leadDomain->getIpHash();
+        foreach ($companyDomains as $companyDomain) {
+            assert($companyDomain instanceof FloodlightCompanyDomains);
+            $domain = $companyDomain->getDomain();
             if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                 $output->writeln('<comment>===============================================================</comment>');
-                $output->writeln('<comment> IP hash: '.$ipHash.'</comment>');
+                $output->writeln('<comment> Domain : '.$companyDomain->getDomain().'</comment>');
                 $output->writeln('<comment>===============================================================</comment>');
             }
-            $result = $this->flooglightService->getByIpHash($ipHash);
+
+            $result = $this->flooglightService->getByDomain($domain);
+            $companyDomain->setCodeStatusRequest($result['statusRequestCode']);
 
             if (Response::HTTP_NOT_FOUND === $result['statusRequestCode']) {
-                $lead = $leadDomain->getContact();
-
-                $leadFailed = $this->floodlightLeadDomainsModel->getRepository()->findOneBy(
-                    [
-                        'contact' => $lead,
-                        'domain'  => IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE,
-                    ]
-                );
-
-                if (!empty($leadFailed)) {
-                    assert($leadFailed instanceof FloodlightLeadDomains);
-                    $leadFailed->setCount($leadFailed->getCount() + 1);
-                    $this->floodlightLeadDomainsModel->saveEntity($leadFailed);
-                    if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                        $output->writeln('<error>Lead domain of Lead '.$lead->getName().' with request 404 counting fail</error>');
-                    }
-
-                    continue;
-                }
-
-                $leadDomain->setDomain(IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE);
-                $leadDomain->setCount(1);
-                $this->floodlightLeadDomainsModel->saveEntity($leadDomain);
+                // Confirm if it is correct to set the enrichment date here
+                $companyDomain->setEnrichmentDate(new \DateTime());
+                $this->flCompanyDomainsModel->saveEntity($companyDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    $output->writeln('<error>Lead domain of Lead '.$lead->getName().' with request 404</error>');
-                }
-            }
-
-            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && empty($leadDomain->getEnrichmentDate())) {
-                $leadDomain->setEnrichmentDate(new \DateTime(self::DATE_DEFAULT));
-                $this->floodlightLeadDomainsModel->saveEntity($leadDomain);
-                if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    $output->writeln('<info>Lead domain '.$leadDomain->getDomain().' with request 202 by second time</info>');
+                    $output->writeln('<error>Domain not found (404) : '.$companyDomain->getDomain().'</error>');
                 }
                 continue;
             }
 
-            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && (new \DateTime(self::DATE_DEFAULT)) == $leadDomain->getEnrichmentDate()) {
-                $leadDomain->setEnrichmentDate(new \DateTime());
-                $this->floodlightLeadDomainsModel->saveEntity($leadDomain);
+            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && empty($companyDomain->getEnrichmentDate())) {
+                $companyDomain->setEnrichmentDate(new \DateTime(self::DATE_DEFAULT));
+                $this->flCompanyDomainsModel->saveEntity($companyDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    $output->writeln('<error>Lead domain '.$leadDomain->getDomain().' with request 202 by third time</error>');
+                    $output->writeln('<info>Company domain '.$companyDomain->getDomain().' with request 202 by second time</info>');
+                }
+                continue;
+            }
+
+            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && (new \DateTime(self::DATE_DEFAULT)) == $companyDomain->getEnrichmentDate()) {
+                $companyDomain->setEnrichmentDate(new \DateTime());
+                $this->flCompanyDomainsModel->saveEntity($companyDomain);
+                if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
+                    $output->writeln('<error>Lead domain '.$companyDomain->getDomain().' with request 202 by third time</error>');
                 }
                 continue;
             }
 
             if (Response::HTTP_OK !== $result['statusRequestCode']) {
-                $output->writeln('<error>Error '.$lead->getName().' status  '.$result['statusRequestCode'].'</error>');
+                $this->flCompanyDomainsModel->saveEntity($companyDomain);
+                $output->writeln('<error>Error '.$companyDomain->getDomain().' status  '.$result['statusRequestCode'].'</error>');
                 $output->writeln('<comment>-----------------------------------------------------------------</comment>');
 
                 continue;
@@ -128,46 +111,18 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
 
             $floodlightDTO = new FloodlightDTO($result);
             $this->fieldHelper->updateProperties($floodlightDTO);
-            $domain  = $floodlightDTO->getCompanyPrimaryDomain();
-            if (empty($domain) && !empty($floodlightDTO->getDomains())) {
-                $domain = $floodlightDTO->getDomains()[0];
-            }
-            if (!empty($domain)) {
-                $floodlightCompanyDomains = $this->flCompanyDomainsModel->getRepository()->findBy(['domain' => $domain]);
-                if (!empty($floodlightCompanyDomains)) {
-                    foreach ($floodlightCompanyDomains as $floodlightCompanyDomain) {
-                        $company = $floodlightCompanyDomain->getCompany();
-                        $company = $floodlightDTO->fillCompany($company);
-                        $this->companyModel->saveEntity($company);
-                        $tempResult = $floodlightDTO->fillCompaniesDomain($this->flCompanyDomainsModel, $company);
-                        $result     = array_merge($result, $tempResult);
-                    }
-                }
-                $output->writeln('<error>Domain is blacklisted</error>');
-                continue;
-            }
-
-            $company = $lead->getPrimaryCompany();
+            $company = $companyDomain->getCompany();
             $company = $floodlightDTO->fillCompany($company);
             $this->companyModel->saveEntity($company);
 
-            $floodlightCompanyDomains = $floodlightDTO->fillCompaniesDomain($this->flCompanyDomainsModel, $company);
-            if (!empty($floodlightCompanyDomains)) {
-                $this->flCompanyDomainsModel->saveEntities($floodlightCompanyDomains);
-                if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    foreach ($floodlightCompanyDomains as $floodlightCompanyDomain) {
-                        $output->writeln('Company domain data for IP: '.$company->getName().' was successfully retrieved with id '.$floodlightCompanyDomain->getId());
-                    }
-                }
-            }
+            $companyDomain->setCodeStatusRequest($result['statusRequestCode']);
+            $companyDomain->setEnrichmentDate(new \DateTime());
+            $this->flCompanyDomainsModel->saveEntity($companyDomain);
 
-            $leadDomainLookup = $floodlightDTO->fillLeadDomainLookUp();
-            $this->floodlightLeadDomainsModel->saveEntity($leadDomainLookup);
-            $lead = $leadDomain->getContact();
+            $output->writeln('<info>Company data updated '.$company->getName().'</info>');
+            $output->writeln('<info>CompanyDomain '.$companyDomain->getDomain().' data updated</info>');
 
-            $output->writeln('<info>Company data updated</info>');
-
-            $output->writeln('<info>Company(s) domain(s) data updated</info>');
+            $output->writeln('<info>Company and Company domain data updated</info>');
             $output->writeln(PHP_EOL);
         }
 

@@ -70,9 +70,8 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
                 'command' => 'leuchtfeuer:floodlight:enrich:address',
             ]);
             $greetInput->setInteractive(false);
-            $returnCode = $this->getApplication()->doRun($greetInput, $output);
 
-            return 0;
+            return $this->getApplication()->doRun($greetInput, $output);
         }
 
         if ($input->getOption('by-domain')) {
@@ -81,9 +80,8 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
                 'command' => 'leuchtfeuer:floodlight:enrich:domain',
             ]);
             $greetInput->setInteractive(false);
-            $returnCode = $this->getApplication()->doRun($greetInput, $output);
 
-            return 0;
+            return $this->getApplication()->doRun($greetInput, $output);
         }
 
         return 1;

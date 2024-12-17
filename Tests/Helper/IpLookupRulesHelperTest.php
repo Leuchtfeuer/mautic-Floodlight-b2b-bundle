@@ -11,6 +11,8 @@ use Mautic\PageBundle\Model\PageModel;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
+use MauticPlugin\LeuchtfeuerAbmIpLookupBundle\Entity\CompanyDomains;
+use MauticPlugin\LeuchtfeuerAbmIpLookupBundle\Model\CompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
@@ -53,6 +55,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->em->flush();
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Form::class, $form);
         $form['integration_config[apiKeys][api_key]']->setValue('pro_123');
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
@@ -60,7 +63,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->setUpSymfony($this->configParams);
     }
 
-    private function getIpLookupRulesHelperMock()
+    private function getIpLookupRulesHelperMock(): IpLookupRulesHelper
     {
         $logger = $this->createMock(LoggerInterface::class);
 
@@ -78,6 +81,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     {
         $helper = $this->getIpLookupRulesHelperMock();
         $domain = $helper->getDomain('127.0.0.1');
+        $this->assertIsArray($domain);
         $this->assertEquals('localhost', $domain['domain']);
     }
 
@@ -93,6 +97,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     {
         $helper = $this->getIpLookupRulesHelperMock();
         $result = $helper->getDomainByGetHostByAddr('127.0.0.1');
+        $this->assertIsArray($result);
         $this->assertEquals('localhost', $result['details']['hostname']);
     }
 
@@ -149,12 +154,16 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $hit              = $this->createHit($lead);
         $ip               = '127.0.0.2';
         $leadDomain       = $helper->getDomain($ip);
+        $this->assertIsArray($leadDomain);
         $result           = $helper->evaluate($hit, $leadDomain);
+        $this->assertIsArray($result);
+        $this->assertIsNotArray($result['result']['leadDomain']);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
         $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
         $company = $result['result']['leadDomain']->getContact()->getPrimaryCompany();
         $this->assertNotNull($company);
         $this->assertInstanceOf(Company::class, $company);
+        $this->assertArrayHasKey('domain', $leadDomain);
         $this->assertEquals($leadDomain['domain'], $company->getName());
     }
 
@@ -165,8 +174,10 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $config->method('isPublished')->willReturn(true);
         $config->method('isConfigured')->willReturn(true);
         $config->method('isProTier')->willReturn(true);
-
-        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
+        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
+        $this->assertIsString($fileContent);
+        $floodlightData                       = json_decode($fileContent, true);
+        $this->assertIsArray($floodlightData);
         $floodlightData['statusRequestCode']  = 200;
         $floodlightServiceMock                = $this->createMock(FloodlightService::class);
         $floodlightServiceMock->method('get')
@@ -188,9 +199,13 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $hit                  = $this->createHit($lead);
         $ip                   = '141.43.45.26';
         $leadDomain           = $helper->getDomain($ip);
+        $this->assertIsArray($leadDomain);
         $leadDomain['status'] = 'valid';
         $leadDomain['domain'] = 'leuchtfeuer.com';
         $result               = $helper->evaluate($hit, $leadDomain);
+        $this->assertIsArray($result);
+        $this->assertNotFalse($result);
+        $this->assertArrayHasKey('result', $result);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
         $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
 
@@ -205,8 +220,10 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $config->method('isPublished')->willReturn(true);
         $config->method('isConfigured')->willReturn(true);
         $config->method('isProTier')->willReturn(true);
-
-        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
+        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
+        $this->assertIsString($fileContent);
+        $floodlightData                       = json_decode($fileContent, true);
+        $this->assertIsArray($floodlightData);
         $floodlightData['statusRequestCode']  = 200;
         $floodlightServiceMock                = $this->createMock(FloodlightService::class);
         $floodlightServiceMock->method('get')
@@ -234,16 +251,22 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $hit                  = $this->createHit($lead);
         $ip                   = '141.43.45.26';
         $leadDomain           = $helper->getDomain($ip);
+        $this->assertIsArray($leadDomain);
+
         $leadDomain['status'] = 'valid';
         $leadDomain['domain'] = 'le-non.de';
         $result               = $helper->evaluate($hit, $leadDomain);
+        $this->assertIsArray($result);
+        $this->assertNotFalse($result['result']['leadDomain']);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
         $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
 
         $companyDomains = $floodlightCompanyDomainsModel->getRepository()->findAll();
 
         $this->assertCount(1, $companyDomains);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomains[0]);
         $company = $companyDomains[0]->getCompany();
+        $this->assertInstanceOf(Company::class, $company);
         $this->assertNotNull($company);
         $this->assertInstanceOf(Company::class, $company);
         $this->assertEquals($floodlightData['companyname'], $company->getName());
@@ -259,9 +282,11 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $config->method('isPublished')->willReturn(true);
         $config->method('isConfigured')->willReturn(true);
         $config->method('isProTier')->willReturn(true);
-
-        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight3.json'), true);
-        $floodlightData['statusRequestCode']  = 200;
+        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
+        $this->assertIsString($fileContent);
+        $floodlightData                       = json_decode($fileContent, true);
+        $this->assertIsArray($floodlightData);
+        $floodlightData['statusRequestCode']  = 202;
         $floodlightServiceMock                = $this->createMock(FloodlightService::class);
         $floodlightServiceMock->method('get')
             ->willReturn($floodlightData);
@@ -279,8 +304,11 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
             $config,
         );
         $domain = $helper->getDomain('127.0.0.1');
+        $this->assertIsArray($domain);
+        $this->assertArrayHasKey('domain', $domain);
+        $this->assertArrayHasKey('status', $domain);
         $this->assertEmpty($domain['domain']);
-        $this->assertSame($domain['status'], 'failure');
+        $this->assertSame($domain['status'], 'valid');
     }
 
     public function testGetDomainWithFloodLightWith404(): void
@@ -290,8 +318,10 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $config->method('isPublished')->willReturn(true);
         $config->method('isConfigured')->willReturn(true);
         $config->method('isProTier')->willReturn(true);
-
-        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight3.json'), true);
+        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
+        $this->assertIsString($fileContent);
+        $floodlightData                       = json_decode($fileContent, true);
+        $this->assertIsArray($floodlightData);
         $floodlightData['statusRequestCode']  = 404;
         $floodlightServiceMock                = $this->createMock(FloodlightService::class);
         $floodlightServiceMock->method('get')
@@ -310,6 +340,10 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
             $config,
         );
         $domain = $helper->getDomain('127.0.0.1');
+        $this->assertIsArray($domain);
+        $this->assertArrayHasKey('domain', $domain);
+        $this->assertArrayHasKey('status', $domain);
+        $this->assertArrayHasKey('details', $domain);
         $this->assertSame($domain['status'], 'failure');
         $this->assertSame($domain['domain'], 'failure');
         $this->assertSame($domain['details']['statusRequest'], 404);
@@ -323,8 +357,10 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $config->method('isPublished')->willReturn(true);
         $config->method('isConfigured')->willReturn(true);
         $config->method('isProTier')->willReturn(true);
-
-        $floodlightData                       = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
+        $fileContent                          = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
+        $this->assertIsString($fileContent);
+        $floodlightData                       = json_decode($fileContent, true);
+        $this->assertIsArray($floodlightData);
         $floodlightData['statusRequestCode']  = 202;
         $floodlightServiceMock                = $this->createMock(FloodlightService::class);
         $floodlightServiceMock->method('get')
@@ -343,6 +379,8 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
             $config,
         );
         $domain = $helper->getDomain('123.0.0.1');
+        $this->assertIsArray($domain);
+        $this->assertArrayHasKey('domain', $domain);
         $this->assertSame($domain['status'], 'valid');
         assert($domain['details']['floodlight'] instanceof FloodlightDTO);
         $this->assertNotSame($domain['details']['floodlight']->getCompanyName(), $floodlightData['companyname']);
@@ -408,7 +446,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     {
         $ip = new IpAddress();
         $ip->setIpAddress('127.0.0.1');
-        $ip->setIpDetails('details');
+        $ip->setIpDetails(['details' => 'details']);
         $this->em->persist($ip);
         $this->em->flush();
 

@@ -12,6 +12,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsMo
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
+use Symfony\Component\HttpFoundation\Response;
 
 class IpLookupRulesHelper
 {
@@ -150,10 +151,10 @@ class IpLookupRulesHelper
 
         if (self::LEAD_DOMAINS_STATUS_BLACKLISTED === $status) {
             $domain = $status;
-        } elseif (404 === $data['statusRequestCode']) {
+        } elseif (Response::HTTP_NOT_FOUND === $data['statusRequestCode']) {
             $domain          = self::LEAD_DOMAINS_STATUS_FAILURE;
             $status          = self::LEAD_DOMAINS_STATUS_FAILURE;
-        } elseif (202 === $data['statusRequestCode']) {
+        } elseif (Response::HTTP_ACCEPTED === $data['statusRequestCode']) {
             $newFloodlightDTO = new FloodlightDTO([]);
             $newFloodlightDTO->setIpHash($floodlightDTO->getIpHash());
             $newFloodlightDTO->setDomains([]);

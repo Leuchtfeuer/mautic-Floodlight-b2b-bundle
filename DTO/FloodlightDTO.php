@@ -118,6 +118,8 @@ class FloodlightDTO implements DTOInterface
 
     private string $ipHash;
 
+    private ?int $statusHttpRequest = null;
+
     /**
      * BigPictureDTO constructor.
      *
@@ -126,6 +128,16 @@ class FloodlightDTO implements DTOInterface
     public function __construct(private array $pureData)
     {
         $this->load($pureData);
+    }
+
+    public function getStatusHttpRequest(): ?int
+    {
+        return $this->statusHttpRequest;
+    }
+
+    public function setStatusHttpRequest(?int $statusHttpRequest): void
+    {
+        $this->statusHttpRequest = $statusHttpRequest;
     }
 
     public function getCompanyStateCode(): string
@@ -643,7 +655,7 @@ class FloodlightDTO implements DTOInterface
         if (!empty($flCompanyData['primarydomain']) && !is_array($flCompanyData['primarydomain'])) {
             $this->setDomains([$flCompanyData['primarydomain']]);
         }
-
+        $this->setStatusHttpRequest($flCompanyData['statusRequestCode'] ?? null);
         $this->setCompanyName($flCompanyData['companyname'] ?? '');
         $this->setCompanyFloodlightId($flCompanyData['companyfloodlight_id'] ?? '');
         $this->setBigPictureId($flCompanyData['bigpicture_id'] ?? '');
@@ -957,9 +969,18 @@ class FloodlightDTO implements DTOInterface
                 $companyDomain->setIsPrimaryDomain(true);
             }
 
+            if (null !== $this->getStatusHttpRequest()) {
+                $companyDomain->setCodeStatusRequest($this->getStatusHttpRequest());
+            }
+
+            if (200 === $this->getStatusHttpRequest()) {
+                $companyDomain->setEnrichmentDate(new \DateTime());
+            }
+
             $companyDomain->setDateAdded(new \DateTime());
             $companyDomain->setDateModified(new \DateTime());
-            $companyDomain->setEnrichmentDate(new \DateTime());
+
+            $companyDomain->setCodeStatusRequest(null);
             $result[] = $companyDomain;
         }
 

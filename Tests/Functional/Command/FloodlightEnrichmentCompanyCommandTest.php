@@ -63,7 +63,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertStringContainsString('Plugin isn\'t pro tier', $commandTester->getDisplay());
     }
 
-    private function addLead($name='Test Lead', $email='test@example.com'): Lead
+    private function addLead(string $name='Test Lead', string $email='test@example.com'): Lead
     {
         $lead = new Lead();
         $lead->setFirstName($name);
@@ -76,7 +76,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         return $lead;
     }
 
-    private function addLeadDomain(?Lead $lead, string $domain='', $ipHash=''): FloodlightLeadDomains
+    private function addLeadDomain(?Lead $lead, string $domain='', string $ipHash=''): FloodlightLeadDomains
     {
         if (empty($ipHash)) {
             $ipHash = 'iphash'.random_int(1, 10000000);
@@ -115,12 +115,16 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         // Create a mock for the FloodlightService
         $floodlightServiceMock         = $this->createMock(FloodlightService::class);
-        $response                      = json_decode(file_get_contents(__DIR__.'/../../fixtures/floodlight.json'), true);
+        $fileContent                   = file_get_contents(__DIR__.'/../../fixtures/floodlight.json');
+        $this->assertIsString($fileContent);
+        $response                      = json_decode($fileContent, true);
+        $this->assertIsArray($response);
         $response['statusRequestCode'] = 200;
         $floodlightServiceMock->expects($this->exactly(2))->method('getByIpHash')->willReturn($response);
 
         // Boot the Symfony kernel
         $kernel = self::bootKernel();
+        $this->assertInstanceOf(\Symfony\Component\HttpKernel\Kernel::class, $kernel);
 
         // Replace the original service in the container with the mock service
         $container = $kernel->getContainer();
@@ -130,9 +134,15 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(2, $newLeadDomains);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[1]);
         $this->assertEquals($leadDomain1->getId(), $newLeadDomains[0]->getId());
         $this->assertNotSame($leadDomain1->getDomain(), $newLeadDomains[0]->getDomain());
         $this->assertNotSame($leadDomain1->getDomain(), $newLeadDomains[1]->getDomain());
+        $this->assertArrayHasKey('primarydomain', $response);
+        $this->assertArrayHasKey('companyname', $response);
+        $this->assertArrayHasKey('companycountry', $response);
+
         $this->assertSame($newLeadDomains[0]->getDomain(), $response['primarydomain']);
         $this->assertSame($newLeadDomains[1]->getDomain(), $response['primarydomain']);
         $this->assertNotEmpty($newLeadDomains[0]->getDateModified());
@@ -146,11 +156,13 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         $newLeadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
         $this->assertCount(1, $newLeadCompaniesDomains);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newLeadCompaniesDomains[0]);
+        $this->assertInstanceOf(Company::class, $newCompanies[0]);
         $this->assertSame($newLeadCompaniesDomains[0]->getDomain(), $response['primarydomain']);
         $this->assertSame($newLeadCompaniesDomains[0]->getCompany()->getId(), $newCompanies[0]->getId());
     }
 
-    public function testByAddressWithLeadDomainsCompanyAndCompanyDomainRegisteredWithOneDomainInRequestWithRequest202And200()
+    public function testByAddressWithLeadDomainsCompanyAndCompanyDomainRegisteredWithOneDomainInRequestWithRequest202And200(): void
     {
         $this->activePlugin(true, 'pro_123');
         $lead          = $this->addLead('Test Lead', 'test11@example.com');
@@ -160,15 +172,22 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         // Create a mock for the FloodlightService
         $floodlightServiceMock          = $this->createMock(FloodlightService::class);
-        $response                       = json_decode(file_get_contents(__DIR__.'/../../fixtures/floodlight.json'), true);
+        $fileContent1                   = file_get_contents(__DIR__.'/../../fixtures/floodlight.json');
+        $this->assertIsString($fileContent1);
+        $response                       = json_decode($fileContent1, true);
+        $this->assertIsArray($response);
         $response['statusRequestCode']  = 200;
-        $response2                      = json_decode(file_get_contents(__DIR__.'/../../fixtures/floodlight5.json'), true);
+        $fileContent2                   = file_get_contents(__DIR__.'/../../fixtures/floodlight5.json');
+        $this->assertIsString($fileContent2);
+        $response2                      = json_decode($fileContent2, true);
+        $this->assertIsArray($response2);
         $response2['statusRequestCode'] = 200;
 
         $floodlightServiceMock->expects($this->exactly(3))->method('getByIpHash')->willReturnOnConsecutiveCalls(['statusRequestCode' => 202], $response, $response2);
 
         // Boot the Symfony kernel
         $kernel = static::getContainer()->get('kernel');
+        $this->assertInstanceOf(\Symfony\Component\HttpKernel\Kernel::class, $kernel);
 
         // Replace the original service in the container with the mock service
         $container = $kernel->getContainer();
@@ -203,6 +222,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findBy([], ['id' => 'ASC']);
         $this->assertCount(2, $newLeadDomains);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
         $this->assertEquals($leadDomain1->getId(), $newLeadDomains[0]->getId());
         $this->assertEquals($leadDomain1->getDomain(), $newLeadDomains[0]->getDomain());
         $this->assertNull($newLeadDomains[0]->getDomain());
@@ -210,12 +230,23 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertNull($newLeadDomains[0]->getDomain());
         $this->assertNotEmpty($newLeadDomains[0]->getEnrichmentDate());
         $defaultDate = new \DateTime(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT);
+        $this->assertNotNull($newLeadDomains[0]->getEnrichmentDate());
         $this->assertSame($defaultDate->format('Y-m-d H:i:s'), $newLeadDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[1]);
+        $this->assertNotNull($newLeadDomains[1]->getEnrichmentDate());
         $this->assertNotSame($defaultDate->format('Y-m-d H:i:s'), $newLeadDomains[1]->getEnrichmentDate()->format('Y-m-d H:i:s'));
         $this->assertSame($newLeadDomains[1]->getDomain(), $response['primarydomain']);
 
         $companies = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $companies);
+        $this->assertArrayHasKey('companyname', $response);
+        $this->assertArrayHasKey('companystate_code', $response);
+        $this->assertArrayHasKey('companyfloodlight_id', $response);
+        $this->assertArrayHasKey('companyindustry_icb_industry', $response);
+        $this->assertArrayHasKey('companydescription_long', $response);
+        $this->assertArrayHasKey('companyname_legal', $response);
+        $this->assertArrayHasKey('companyindustry_linkedin', $response);
+        $this->assertInstanceOf(Company::class, $companies[0]);
         $this->assertSame($companies[0]->getName(), $response['companyname']);
         $this->assertSame($companies[0]->getId(), $companyDomain->getCompany()->getId());
         $this->assertSame($companies[0]->getFieldValue('f4b_companystate_code'), $response['companystate_code']);
@@ -227,6 +258,8 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
         $this->assertCount(1, $companyDomains);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomains[0]);
+        $this->assertArrayHasKey('primarydomain', $response);
         $this->assertSame($companyDomains[0]->getDomain(), $response['primarydomain']);
         $this->assertSame($companyDomains[0]->getCompany()->getId(), $companies[0]->getId());
         $this->assertNull($newLeadDomains[0]->getDomain());
@@ -236,13 +269,24 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $commandTester->execute(['--by-address' => 1]);
         $newLeadDomains2 = $this->em->getRepository(FloodlightLeadDomains::class)->findBy([], ['id' => 'ASC']);
         $this->assertCount(2, $newLeadDomains2);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains2[0]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains2[1]);
         $this->assertEquals($leadDomain1->getId(), $newLeadDomains2[0]->getId());
+        $this->assertArrayHasKey('primarydomain', $response2);
+
         $this->assertSame($newLeadDomains2[0]->getDomain(), $response2['primarydomain']);
         $this->assertSame($newLeadDomains2[1]->getDomain(), $response['primarydomain']);
+        $this->assertNotNull($newLeadDomains2[0]->getEnrichmentDate());
         $this->assertNotSame($defaultDate->format('Y-m-d H:i:s'), $newLeadDomains2[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
 
         $companies = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(2, $companies);
+        $this->assertInstanceOf(Company::class, $companies[0]);
+        $this->assertInstanceOf(Company::class, $companies[1]);
+        $this->assertArrayHasKey('companyname', $response2);
+        $this->assertArrayHasKey('companystate_code', $response2);
+        $this->assertArrayHasKey('companyfloodlight_id', $response2);
+        $this->assertArrayHasKey('companyindustry_icb_industry', $response2);
         $this->assertSame($companies[1]->getName(), $response2['companyname']);
         $this->assertSame($companies[1]->getFieldValue('f4b_companystate_code'), $response2['companystate_code']);
         $this->assertSame($companies[1]->getFieldValue('f4b_companyfloodlight_id'), $response2['companyfloodlight_id']);
@@ -250,11 +294,12 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
         $this->assertCount(2, $companyDomains);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomains[1]);
         $this->assertSame($companyDomains[1]->getDomain(), $response2['primarydomain']);
         $this->assertSame($companyDomains[1]->getCompany()->getId(), $companies[1]->getId());
     }
 
-    public function testByAddressWithLeadDomainsCompanyAndCompanyDomainRegisteredWithOneDomainInRequestWithRequest404()
+    public function testByAddressWithLeadDomainsCompanyAndCompanyDomainRegisteredWithOneDomainInRequestWithRequest404(): void
     {
         $this->activePlugin(true, 'pro_123');
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
@@ -267,6 +312,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         // Boot the Symfony kernel
         $kernel = static::getContainer()->get('kernel');
+        $this->assertInstanceOf(\Symfony\Component\HttpKernel\Kernel::class, $kernel);
 
         // Replace the original service in the container with the mock service
         $container = $kernel->getContainer();
@@ -301,6 +347,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findBy([], ['id' => 'ASC']);
         $this->assertCount(1, $newLeadDomains);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
         $this->assertEquals($leadDomain1->getId(), $newLeadDomains[0]->getId());
         $this->assertSame($newLeadDomains[0]->getDomain(), IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE);
         $this->assertNotEmpty($newLeadDomains[0]->getEnrichmentDate());
@@ -311,12 +358,11 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
      * @throws OptimisticLockException
      * @throws NotSupported
      */
-    private function activePlugin($isPublished = true, $apiKey = 'PRO_123'): void
+    private function activePlugin(bool $isPublished = true, string $apiKey = 'PRO_123'): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         assert($reloadFacade instanceof ReloadFacade);
         $reloadFacade->reloadPlugins();
-        //        $this->client->request('GET', '/s/plugins/reload');
         $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME]);
         if (empty($integration)) {
             $plugin      = $this->em->getRepository(Plugin::class)->findOneBy(['bundle' => 'LeuchtfeuerFloodlightB2BBundle']);
@@ -351,6 +397,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->em->persist($company);
         $this->em->flush();
         $company = $this->em->getRepository(Company::class)->findOneBy(['name' => 'Test Company']);
+        $this->assertInstanceOf(Company::class, $company);
 
         $companyDomains = new FloodlightCompanyDomains();
         $companyDomains->setCompany($company);

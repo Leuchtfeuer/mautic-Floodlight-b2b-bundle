@@ -56,7 +56,13 @@ class FloodlightCompanyDomainsModel extends FormModel
             return new FloodlightCompanyDomains();
         }
 
-        return parent::getEntity($id);
+        $entity = parent::getEntity($id);
+
+        if (null === $entity) {
+            return new FloodlightCompanyDomains();
+        }
+
+        return $entity;
     }
 
     /**
@@ -141,7 +147,6 @@ class FloodlightCompanyDomainsModel extends FormModel
         $companiesDomains = $floodlightDTO->fillCompaniesDomain($this, $company);
 
         if (!empty($companiesDomains)) {
-            $this->saveEntities($companiesDomains);
             foreach ($companiesDomains as $companiesDomain) {
                 $companiesDomain->setDomain($this->cleanDomain($companiesDomain->getDomain()));
                 $this->logger->info('Company domain data for IP: '.$company->getName().' was successfully retrieved with domain ');
@@ -222,6 +227,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         if (!empty($company->getId())) {
             $companyDomain->setCompany($company);
         }
+        $companyDomain->setCodeStatusRequest(9999);
 
         $this->saveEntity($companyDomain);
 
@@ -311,8 +317,8 @@ class FloodlightCompanyDomainsModel extends FormModel
     {
         $qb = $this->getRepository()->createQueryBuilder('cd');
         $qb->select('cd')
-            ->where('enrichmentDate IS NULL')
-            ->orWhere('enrichmentDate = :enrichmentDate')
+            ->where('cd.enrichmentDate IS NULL OR  cd.enrichmentDate = :enrichmentDate')
+            ->andWhere('cd.domain IS NOT NULL')
             ->setParameter('enrichmentDate', '1970-01-01 00:00:00');
 
         return $qb->getQuery()->getResult();

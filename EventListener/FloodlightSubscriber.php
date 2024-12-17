@@ -85,7 +85,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
 
                 return null;
             }
-            $this->logger->error('No domaind found');
+            $this->logger->error('Domain not found');
 
             return null;
         }

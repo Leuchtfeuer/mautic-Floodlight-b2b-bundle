@@ -22,6 +22,8 @@ class FloodlightCompanyDomains
 
     private ?\DateTime $enrichmentDate = null;
 
+    private ?int $codeStatusRequest = null;
+
     public static function loadMetadata(ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
@@ -42,6 +44,10 @@ class FloodlightCompanyDomains
             ->build();
         $builder->createField('enrichmentDate', 'datetime')
             ->columnName('enrichment_date')
+            ->nullable()
+            ->build();
+        $builder->createField('codeStatusRequest', 'integer')
+            ->columnName('code_status_request')
             ->nullable()
             ->build();
         $builder->createField('isPrimaryDomain', 'boolean')->columnName('is_primary_domain')->build();
@@ -72,6 +78,7 @@ class FloodlightCompanyDomains
                     'enrichmentDate',
                     'dateAdded',
                     'dateModified',
+                    'codeStatusRequest',
                 ]
             )
             ->addProperties(
@@ -82,6 +89,7 @@ class FloodlightCompanyDomains
                     'enrichmentDate',
                     'dateAdded',
                     'dateModified',
+                    'codeStatusRequest',
                 ]
             )
             ->build();
@@ -155,5 +163,15 @@ class FloodlightCompanyDomains
     public function setEnrichmentDate(?\DateTime $enrichmentDate): void
     {
         $this->enrichmentDate = $enrichmentDate;
+    }
+
+    public function getCodeStatusRequest(): ?int
+    {
+        return $this->codeStatusRequest;
+    }
+
+    public function setCodeStatusRequest(?int $codeStatusRequest): void
+    {
+        $this->codeStatusRequest = $codeStatusRequest;
     }
 }
