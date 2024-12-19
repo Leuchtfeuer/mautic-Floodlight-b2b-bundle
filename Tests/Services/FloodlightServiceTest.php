@@ -66,6 +66,8 @@ class FloodlightServiceTest extends TestCase
 
         $service = new FloodlightService($client, $logger);
         $result  = $service->get('12.1.1.3');
+        $this->assertIsArray($result);
+        $this->assertIsNotBool($result['statusRequestCode']);
         self::assertSame(202, $result['statusRequestCode']);
     }
 
@@ -89,6 +91,8 @@ class FloodlightServiceTest extends TestCase
         $service = new FloodlightService($client, $logger);
 
         $result  = $service->get('1.2.3.4');
+        $this->assertIsArray($result);
+        $this->assertIsNotBool($result['statusRequestCode']);
         self::assertSame(404, $result['statusRequestCode']);
     }
 

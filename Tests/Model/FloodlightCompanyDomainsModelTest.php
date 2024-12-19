@@ -2,12 +2,8 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Model;
 
-use Doctrine\ORM\EntityManagerInterface;
-use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\UserHelper;
-use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
-use Mautic\CoreBundle\Translation\Translator;
 use Mautic\IntegrationsBundle\Sync\Notification\Helper\UserHelper as NotificationUserHelper;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\Lead;
@@ -15,12 +11,9 @@ use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
@@ -85,10 +78,16 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
                 'domain' => $dataDomainFloodlightService['domain'],
             ]
         );
-
-        assert($resultFloodlightCompanyDomain['data'][0] instanceof FloodlightCompanyDomains);
+        $this->assertIsArray($resultFloodlightCompanyDomain);
+        $this->assertArrayHasKey('data', $resultFloodlightCompanyDomain);
+        $this->assertIsArray($resultFloodlightCompanyDomain['data']);
+        //        $this->assertArrayHasKey(0, $resultFloodlightCompanyDomain['data']);
+        $this->assertArrayHasKey(0, $resultFloodlightCompanyDomain['data']);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $resultFloodlightCompanyDomain['data'][0]);
         $this->assertNotNull($companyDomain2);
         $this->assertNotNull($resultFloodlightCompanyDomain['data'][0]);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $resultFloodlightCompanyDomain['data'][0]);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomain2);
         $this->assertSame($companyDomain2->getDomain(), $resultFloodlightCompanyDomain['data'][0]->getDomain());
     }
 
@@ -109,9 +108,11 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
             self::getContainer()->get('mautic.user.model.user'),
             self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.field')
         );
-        $lead = $this->createLead();
-
-        $dataJson      = json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
+        $lead        = $this->createLead();
+        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
+        $this->assertIsString($fileContent);
+        $dataJson      = json_decode($fileContent, true);
+        $this->assertIsArray($dataJson);
         $dataDTO       = new FloodlightDTO($dataJson);
         $companyDomain = new FloodlightCompanyDomains();
         $companyDomain->setDomain('le-non.de');
@@ -147,10 +148,16 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
             ]
         );
         $this->assertNotNull($companyDomain2);
-
-        assert($resultsCompanyDomain['data'][0] instanceof FloodlightCompanyDomains);
+        $this->assertIsArray($resultsCompanyDomain);
+        $this->assertArrayHasKey('data', $resultsCompanyDomain);
+        $this->assertNotEmpty($resultsCompanyDomain['data']);
+        $this->assertIsArray($resultsCompanyDomain['data']);
+        $this->assertNotEmpty($resultsCompanyDomain['data'][0]);
+        $this->assertNotNull($resultsCompanyDomain['data'][0]);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $resultsCompanyDomain['data'][0]);
         $this->assertNotNull($resultsCompanyDomain['data'][0]);
         $this->assertCount(1, $resultsCompanyDomain['data']);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomain2);
         $this->assertSame($companyDomain2->getDomain(), $resultsCompanyDomain['data'][0]->getDomain());
 
         // Has no Company Domain and domain is valid ( not blacklisted and not failed ) add count to lead domain
@@ -176,101 +183,5 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $lead;
-    }
-
-    private function loadModel(): FloodlightCompanyDomainsModel
-    {
-        $mockCompanyDomainRepository = $this->getMockBuilder(FloodlightCompanyDomainsRepository::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['findOneBy'])
-            ->getMock();
-
-        $mockCompanyDomainRepository->expects($this->once())
-            ->method('findOneBy')
-            ->willReturn([]);
-
-        $entityManager = $this->getMockBuilder(EntityManagerInterface::class)->getMock();
-        $entityManager->expects($this->any())
-            ->method('getRepository')
-            ->willReturn($mockCompanyDomainRepository);
-
-        $security = $this->getMockBuilder(CorePermissions::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $userHelper = $this->getMockBuilder(UserHelper::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $user = $this->em->getRepository(\Mautic\UserBundle\Entity\User::class)->find(1);
-
-        $leadEntity = new Lead();
-        $leadEntity->setId(1);
-        $leadEntity->setDateAdded(new \DateTime());
-        $leadEntity->setDateModified(new \DateTime());
-        $leadEntity->setIsPublished(true);
-        $leadEntity->setCreatedBy($user);
-        $leadEntity->setModifiedBy($user);
-        $leadEntity->setOwner($user);
-
-        $companyModelMock = $this->getMockBuilder(\Mautic\LeadBundle\Model\CompanyModel::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $companyEntity = new Company();
-        $companyEntity->setName('Wien Energie GmbH');
-        $companyEntity->setDateAdded(new \DateTime());
-        $companyEntity->setDateModified(new \DateTime());
-        $companyEntity->setIsPublished(true);
-        $companyEntity->setCreatedBy($user);
-        $companyEntity->setModifiedBy($user);
-        $companyEntity->setOwner($user);
-        $companyModelMock->expects($this->any())
-            ->method('getEntity')
-            ->willReturn($companyEntity);
-
-        $leadMock = $this->getMockBuilder(\Mautic\LeadBundle\Model\LeadModel::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $leadMock->expects($this->once())
-            ->method('getCompanies')
-            ->willReturn([
-                [
-                    'company_id' => $companyEntity->getId(),
-                ],
-            ]);
-
-        $notificationUserHelper = $this->getMockBuilder(NotificationUserHelper::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $notificationUserHelper->expects($this->once())
-            ->method('getAdminUsers')
-            ->willReturn([1]);
-
-        $userModel = $this->getMockBuilder(\Mautic\UserBundle\Model\UserModel::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $userModel->expects($this->once())
-            ->method('getEntity')
-            ->willReturn($user);
-
-        return new FloodlightCompanyDomainsModel(
-            $entityManager,
-            $security,
-            $this->createMock(EventDispatcherInterface::class),
-            $this->createMock(UrlGeneratorInterface::class),
-            $this->createMock(Translator::class),
-            $userHelper,
-            $this->createMock(LoggerInterface::class),
-            $this->createMock(CoreParametersHelper::class),
-            $companyModelMock,
-            $leadMock,
-            $notificationUserHelper,
-            $userModel,
-            $this->createMock(FloodlightLeadDomainsModel::class)
-        );
     }
 }

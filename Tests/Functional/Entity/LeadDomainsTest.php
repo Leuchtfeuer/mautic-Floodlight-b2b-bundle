@@ -4,22 +4,23 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Entity;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Lead;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 
 class LeadDomainsTest extends MauticMysqlTestCase
 {
     public const TABLE_NAME = 'test_f4b_lead_ip_lookups';
 
-    private $leadDomain;
+    private FloodlightLeadDomains $leadDomain;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $leadDomain = new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains();
+        $leadDomain = new FloodlightLeadDomains();
         $leadDomain->setDomain('test');
         $leadDomain->setCount(1);
         $leadDomain->setDateAdded(new \DateTime());
         $leadDomain->setDateModified(new \DateTime());
-        $leadDomain->setEnrichmentDate(new \DateTime());
+        $leadDomain->setDateLastLookup(new \DateTime());
         $leadDomain->setIpHash('local');
         $lead = new Lead();
         $lead->setId(1);
@@ -36,7 +37,7 @@ class LeadDomainsTest extends MauticMysqlTestCase
         /**
          * Check if table was created with especified columns and joins.
          */
-        $tables = $this->em->getConnection()->getSchemaManager()->listTableNames();
+        $tables = $this->em->getConnection()->createSchemaManager()->listTableNames();
         $this->assertContains(self::TABLE_NAME, $tables);
     }
 
@@ -72,7 +73,7 @@ class LeadDomainsTest extends MauticMysqlTestCase
 
     public function testSetLead(): void
     {
-        $leadDomain = new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains();
+        $leadDomain = new FloodlightLeadDomains();
         $leadDomain->setContact($this->createMock(Lead::class));
         $this->assertInstanceOf(Lead::class, $leadDomain->getContact());
     }
@@ -89,7 +90,7 @@ class LeadDomainsTest extends MauticMysqlTestCase
         $this->assertEquals(2, $this->leadDomain->getCount());
     }
 
-    public function testSetDateAdded()
+    public function testSetDateAdded(): void
     {
         $this->leadDomain->setDateAdded(new \DateTime());
         $this->assertInstanceOf(\DateTime::class, $this->leadDomain->getDateAdded());

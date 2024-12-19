@@ -35,7 +35,7 @@ class FloodlightService implements FloodlightServiceInterface
     }
 
     /**
-     * @return array<string,mixed>
+     * @return array<string,string|int>
      */
     private function handleResult(ResponseInterface $response): array
     {
@@ -52,14 +52,15 @@ class FloodlightService implements FloodlightServiceInterface
 
             $this->logger->debug('FloodlightService get success with content sanitaze jhon throw '.json_last_error_msg());
 
-            if (null === $result) {
+            if (empty($result)) {
                 $result = json_decode($content, false, 512, JSON_THROW_ON_ERROR);
                 $result = (array) $result;
                 $this->logger->debug('FloodlightService get success with content sanitaze jhon throw2 '.json_last_error_msg());
             }
         }
-
-        $result['statusRequestCode'] = $statusCode;
+        if (is_array($result)) {
+            $result['statusRequestCode'] = $statusCode;
+        }
 
         return $result;
     }

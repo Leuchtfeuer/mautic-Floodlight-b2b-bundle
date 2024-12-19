@@ -55,7 +55,7 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
         }
 
         $companyDomains = $this->flCompanyDomainsModel->getCompanyDomainToEnrichment();
-        if (empty($companyDomains)) {
+        if (empty($companyDomains) || !is_array($companyDomains)) {
             $output->writeln('<info>No companies to enrich</info>');
 
             return 0;
@@ -64,14 +64,22 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
         foreach ($companyDomains as $companyDomain) {
             assert($companyDomain instanceof FloodlightCompanyDomains);
             $domain = $companyDomain->getDomain();
+            if (null === $domain) {
+                $output->writeln('<error>Domain is empty </error>');
+                continue;
+            }
+
             if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                 $output->writeln('<comment>===============================================================</comment>');
                 $output->writeln('<comment> Domain : '.$companyDomain->getDomain().'</comment>');
                 $output->writeln('<comment>===============================================================</comment>');
             }
-
             $result = $this->flooglightService->getByDomain($domain);
-            $companyDomain->setCodeStatusRequest($result['statusRequestCode']);
+
+            if (is_bool($result)) {
+                $output->writeln('<error>Domain '.$companyDomain->getDomain().' without statusRequestCode</error>');
+                continue;
+            }
 
             if (Response::HTTP_NOT_FOUND === $result['statusRequestCode']) {
                 // Confirm if it is correct to set the enrichment date here
@@ -115,7 +123,7 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             $company = $floodlightDTO->fillCompany($company);
             $this->companyModel->saveEntity($company);
 
-            $companyDomain->setCodeStatusRequest($result['statusRequestCode']);
+            //            $companyDomain->setCodeStatusRequest($result['statusRequestCode']);
             $companyDomain->setEnrichmentDate(new \DateTime());
             $this->flCompanyDomainsModel->saveEntity($companyDomain);
 

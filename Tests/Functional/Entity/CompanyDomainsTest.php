@@ -3,19 +3,20 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Entity;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 
 class CompanyDomainsTest extends MauticMysqlTestCase
 {
     public const TABLE_NAME = 'test_f4b_company_domains';
 
-    private $companyDomain;
+    private FloodlightCompanyDomains $companyDomain;
 
-    public function testIfTableIsCreated()
+    public function testIfTableIsCreated(): void
     {
         /**
          * Check if table was created with especified columns and joins.
          */
-        $tables = $this->em->getConnection()->getSchemaManager()->listTableNames();
+        $tables = $this->em->getConnection()->createSchemaManager()->listTableNames();
         $this->assertContains(self::TABLE_NAME, $tables);
     }
 
@@ -23,7 +24,7 @@ class CompanyDomainsTest extends MauticMysqlTestCase
     {
         $domain = 'localhost';
         parent::setUp();
-        $companyDomain = new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains();
+        $companyDomain = new FloodlightCompanyDomains();
         $companyDomain->setDomain($domain);
         $company = new \Mautic\LeadBundle\Entity\Company();
         $company->setCreatedBy();

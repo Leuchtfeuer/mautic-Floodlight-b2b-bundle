@@ -70,6 +70,9 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
                 'command' => 'leuchtfeuer:floodlight:enrich:address',
             ]);
             $greetInput->setInteractive(false);
+            if (null === $this->getApplication()) {
+                throw new \RuntimeException('The application is null');
+            }
 
             return $this->getApplication()->doRun($greetInput, $output);
         }
@@ -80,6 +83,9 @@ class EnrichmentFloodlightCompanyCommand extends ModeratedCommand
                 'command' => 'leuchtfeuer:floodlight:enrich:domain',
             ]);
             $greetInput->setInteractive(false);
+            if (null === $this->getApplication()) {
+                throw new \RuntimeException('The application is null');
+            }
 
             return $this->getApplication()->doRun($greetInput, $output);
         }

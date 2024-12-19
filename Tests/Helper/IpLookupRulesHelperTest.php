@@ -11,8 +11,6 @@ use Mautic\PageBundle\Model\PageModel;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
-use MauticPlugin\LeuchtfeuerAbmIpLookupBundle\Entity\CompanyDomains;
-use MauticPlugin\LeuchtfeuerAbmIpLookupBundle\Model\CompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
@@ -55,7 +53,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->em->flush();
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Form::class, $form);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_key]']);
         $form['integration_config[apiKeys][api_key]']->setValue('pro_123');
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
@@ -98,6 +96,9 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $helper = $this->getIpLookupRulesHelperMock();
         $result = $helper->getDomainByGetHostByAddr('127.0.0.1');
         $this->assertIsArray($result);
+        $this->assertArrayHasKey('details', $result);
+        $this->assertIsArray($result['details']);
+        $this->assertIsString($result['details']['hostname']);
         $this->assertEquals('localhost', $result['details']['hostname']);
     }
 
@@ -105,6 +106,10 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     {
         $helper = $this->getIpLookupRulesHelperMock();
         $result = $helper->getDomainByGetHostByAddr('8.8.8.8');
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('details', $result);
+        $this->assertIsArray($result['details']);
+        $this->assertIsString($result['details']['hostname']);
         $this->assertEquals('dns.google', $result['details']['hostname']);
     }
 
@@ -112,6 +117,10 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     {
         $helper = $this->getIpLookupRulesHelperMock();
         $result = $helper->getDomainByGetHostByAddr('127.0.0.1');
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('details', $result);
+        $this->assertIsArray($result['details']);
+        $this->assertIsString($result['details']['hostname']);
         $this->assertEquals('localhost', $result['details']['hostname']);
     }
 
@@ -157,7 +166,10 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertIsArray($leadDomain);
         $result           = $helper->evaluate($hit, $leadDomain);
         $this->assertIsArray($result);
-        $this->assertIsNotArray($result['result']['leadDomain']);
+        $this->assertArrayHasKey('result', $result);
+        //        $this->assertIsNotArray($result['result']['leadDomain']);
+        $this->assertIsArray($result['result']);
+        $this->assertArrayHasKey('leadDomain', $result['result']);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
         $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
         $company = $result['result']['leadDomain']->getContact()->getPrimaryCompany();
@@ -206,6 +218,8 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertIsArray($result);
         $this->assertNotFalse($result);
         $this->assertArrayHasKey('result', $result);
+        $this->assertIsArray($result['result']);
+        $this->assertArrayHasKey('leadDomain', $result['result']);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
         $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
 
@@ -257,6 +271,9 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $leadDomain['domain'] = 'le-non.de';
         $result               = $helper->evaluate($hit, $leadDomain);
         $this->assertIsArray($result);
+        $this->assertArrayHasKey('result', $result);
+        $this->assertIsArray($result['result']);
+        $this->assertArrayHasKey('leadDomain', $result['result']);
         $this->assertNotFalse($result['result']['leadDomain']);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
         $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
@@ -346,6 +363,8 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertArrayHasKey('details', $domain);
         $this->assertSame($domain['status'], 'failure');
         $this->assertSame($domain['domain'], 'failure');
+        $this->assertIsArray($domain['details']);
+        $this->assertArrayHasKey('statusRequest', $domain['details']);
         $this->assertSame($domain['details']['statusRequest'], 404);
         assert($domain['details']['floodlight'] instanceof FloodlightDTO);
     }
@@ -382,6 +401,8 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertIsArray($domain);
         $this->assertArrayHasKey('domain', $domain);
         $this->assertSame($domain['status'], 'valid');
+        $this->assertIsArray($domain['details']);
+        $this->assertArrayHasKey('floodlight', $domain['details']);
         assert($domain['details']['floodlight'] instanceof FloodlightDTO);
         $this->assertNotSame($domain['details']['floodlight']->getCompanyName(), $floodlightData['companyname']);
         $this->assertNotSame($domain['details']['floodlight']->getIpHash(), 'local');

@@ -7,6 +7,8 @@ use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\LeadBundle\Model\CompanyModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
@@ -63,7 +65,13 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
         }
 
         foreach ($leadDomains as $leadDomain) {
+            assert($leadDomain instanceof FloodlightLeadDomains);
             $ipHash = $leadDomain->getIpHash();
+            if (null === $ipHash) {
+                $output->writeln('<error>Lead domain '.$leadDomain->getDomain().' without IP hash</error>');
+
+                continue;
+            }
             if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                 $output->writeln('<comment>===============================================================</comment>');
                 $output->writeln('<comment> IP hash: '.$ipHash.'</comment>');
@@ -71,6 +79,13 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
             }
 
             $result = $this->flooglightService->getByIpHash($ipHash);
+
+            // test it
+            if (is_bool($result)) {
+                $output->writeln('<error>Lead domain '.$leadDomain->getDomain().' without request code</error>');
+                continue;
+            }
+
             if (Response::HTTP_TOO_MANY_REQUESTS === $result['statusRequestCode']) {
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     // Create tests for this
@@ -83,9 +98,15 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
 
             $lead = $leadDomain->getContact();
 
+            // test it
+            if (null === $lead) {
+                $output->writeln('<error>Lead domain '.$leadDomain->getDomain().' without lead</error>');
+                continue;
+            }
+
             if (Response::HTTP_NOT_FOUND === $result['statusRequestCode']) {
                 $leadDomain->setDomain(IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE);
-                $leadDomain->setEnrichmentDate(new \DateTime());
+                $leadDomain->setDateLastLookup(new \DateTime());
                 $leadDomain->setCount($leadDomain->getCount() + 1);
                 $this->floodlightLeadDomainsModel->saveEntity($leadDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
@@ -95,9 +116,9 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
 
             if (
                 Response::HTTP_ACCEPTED === $result['statusRequestCode']
-                && empty($leadDomain->getEnrichmentDate())
+                && empty($leadDomain->getDateLastLookup())
             ) {
-                $leadDomain->setEnrichmentDate(new \DateTime(self::DATE_DEFAULT));
+                $leadDomain->setDateLastLookup(new \DateTime(self::DATE_DEFAULT));
                 $this->floodlightLeadDomainsModel->saveEntity($leadDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     $output->writeln('<info>Lead domain '.$leadDomain->getDomain().' with request 202 by second time</info>');
@@ -107,9 +128,9 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
 
             if (
                 Response::HTTP_ACCEPTED === $result['statusRequestCode']
-                && $leadDomain->getEnrichmentDate() === (new \DateTime(self::DATE_DEFAULT))
+                && $leadDomain->getDateLastLookup() === (new \DateTime(self::DATE_DEFAULT))
             ) {
-                $leadDomain->setEnrichmentDate((new \DateTime())->format('Y-m-d H:i:s'));
+                $leadDomain->setDateLastLookup(new \DateTime());
                 $this->floodlightLeadDomainsModel->saveEntity($leadDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     $output->writeln('<error>Lead domain '.$leadDomain->getDomain().' with request 202 by third time</error>');
@@ -149,6 +170,7 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
                 $this->flCompanyDomainsModel->saveEntities($floodlightCompanyDomains);
             } else {
                 foreach ($floodlightCompanyDomains as $floodlightCompanyDomain) {
+                    assert($floodlightCompanyDomain instanceof FloodlightCompanyDomains);
                     $company = $floodlightCompanyDomain->getCompany();
                     $company = $floodlightDTO->fillCompany($company);
                     $this->companyModel->saveEntity($company);
@@ -158,7 +180,7 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
             }
             $leadDomain->setDomain($domain);
             $leadDomain->setCount($leadDomain->getCount() + 1);
-            $leadDomain->setEnrichmentDate(new \DateTime());
+            $leadDomain->setDateLastLookup(new \DateTime());
             $this->floodlightLeadDomainsModel->saveEntity($leadDomain);
 
             $output->writeln('<info>Company data updated</info>');

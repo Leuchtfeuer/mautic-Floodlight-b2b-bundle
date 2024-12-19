@@ -22,7 +22,7 @@ class FloodlightCompanyDomains
 
     private ?\DateTime $enrichmentDate = null;
 
-    private ?int $codeStatusRequest = null;
+    //    private ?int $codeStatusRequest = null;
 
     public static function loadMetadata(ClassMetadata $metadata): void
     {
@@ -46,10 +46,10 @@ class FloodlightCompanyDomains
             ->columnName('enrichment_date')
             ->nullable()
             ->build();
-        $builder->createField('codeStatusRequest', 'integer')
-            ->columnName('code_status_request')
-            ->nullable()
-            ->build();
+        //        $builder->createField('codeStatusRequest', 'integer')
+        //            ->columnName('code_status_request')
+        //            ->nullable()
+        //            ->build();
         $builder->createField('isPrimaryDomain', 'boolean')->columnName('is_primary_domain')->build();
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')->columnName('date_modified')->build();
@@ -78,7 +78,7 @@ class FloodlightCompanyDomains
                     'enrichmentDate',
                     'dateAdded',
                     'dateModified',
-                    'codeStatusRequest',
+                    //                    'codeStatusRequest',
                 ]
             )
             ->addProperties(
@@ -89,13 +89,13 @@ class FloodlightCompanyDomains
                     'enrichmentDate',
                     'dateAdded',
                     'dateModified',
-                    'codeStatusRequest',
+                    //                    'codeStatusRequest',
                 ]
             )
             ->build();
     }
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -165,13 +165,13 @@ class FloodlightCompanyDomains
         $this->enrichmentDate = $enrichmentDate;
     }
 
-    public function getCodeStatusRequest(): ?int
-    {
-        return $this->codeStatusRequest;
-    }
-
-    public function setCodeStatusRequest(?int $codeStatusRequest): void
-    {
-        $this->codeStatusRequest = $codeStatusRequest;
-    }
+    //    public function getCodeStatusRequest(): ?int
+    //    {
+    //        return $this->codeStatusRequest;
+    //    }
+    //
+    //    public function setCodeStatusRequest(?int $codeStatusRequest): void
+    //    {
+    //        $this->codeStatusRequest = $codeStatusRequest;
+    //    }
 }

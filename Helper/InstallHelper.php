@@ -28,11 +28,11 @@ class InstallHelper
         $outputInstall = [];
         $error         = false;
 
-        if (!str_contains($outputList, 'python-whois')) {
+        if (is_string($outputList) && !str_contains($outputList, 'python-whois')) {
             $outputInstall[] = shell_exec('pip install python-whois --break-system-packages');
         }
 
-        if (!str_contains($outputList, 'ipwhois')) {
+        if (is_string($outputList) && !str_contains($outputList, 'ipwhois')) {
             $outputInstall[] = shell_exec('pip install ipwhois --break-system-packages');
         }
 
@@ -41,7 +41,7 @@ class InstallHelper
         }
 
         foreach ($outputInstall as $output) {
-            if (!str_contains($output, 'Successfully installed')) {
+            if (is_string($output) && !str_contains($output, 'Successfully installed')) {
                 $error = true;
                 break;
             }
@@ -53,6 +53,9 @@ class InstallHelper
         return true;
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     public function installFields(string $alias, string $name, string $type, array $options =[]): void
     {
         $this->fieldHelper->createField($alias, $name, $type, $options);

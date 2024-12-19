@@ -48,7 +48,7 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $this->assertTrue($isNewIpTrue);
     }
 
-    public function testGetCompanyDomainsWithLeadNull()
+    public function testGetCompanyDomainsWithLeadNull(): void
     {
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
         assert($floodlightLeadDomainsModel instanceof FloodlightCompanyDomainsModel);
@@ -56,11 +56,14 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $this->assertFalse($result);
     }
 
-    public function testGetCompanyDomainsByFloodLight()
+    public function testGetCompanyDomainsByFloodLight(): void
     {
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
         assert($floodlightLeadDomainsModel instanceof FloodlightCompanyDomainsModel);
-        $dataJson      = json_decode(file_get_contents(__DIR__.'/../../fixtures/floodlight.json'), true);
+        $fileContent   = file_get_contents(__DIR__.'/../../fixtures/floodlight.json');
+        $this->assertIsString($fileContent);
+        $dataJson      = json_decode($fileContent, true);
+        $this->assertIsArray($dataJson);
         $floodlightDTO = new FloodlightDTO($dataJson);
         $domain        = 'le-non.de';
         $dataDomain    = [
@@ -81,7 +84,7 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $this->assertSame($domain, $companyDomain->getDomain());
     }
 
-    public function testgetCompanyDomainsByGetHostByAddres()
+    public function testgetCompanyDomainsByGetHostByAddres(): void
     {
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
         assert($floodlightLeadDomainsModel instanceof FloodlightCompanyDomainsModel);
@@ -100,6 +103,9 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $this->assertNull($companyDomain);
         $result = $floodlightLeadDomainsModel->getCompanyDomains($lead, $dataDomain);
         $this->assertNotNull($result);
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('data', $result);
+        $this->assertIsArray($result['data']);
         $this->assertCount(1, $result['data']);
         $companyDomain = $this->em->getRepository(FloodlightCompanyDomains::class)->findOneBy(['domain' => $domain]);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomain);

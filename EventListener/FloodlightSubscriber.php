@@ -58,10 +58,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
         $this->saveDomains($event);
     }
 
-    /**
-     * @return array<FloodlightCompanyDomains>|null
-     */
-    private function saveDomains(PageHitEvent $event): ?array
+    private function saveDomains(PageHitEvent $event): void
     {
         $request = $event->getRequest();
         assert($request instanceof Request);
@@ -71,7 +68,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
         if (!$dataDomain) {
             $this->logger->error('Domain not found');
 
-            return null;
+            return;
         }
 
         $result           = $this->ipLookupRulesHelper->evaluate($event->getHit(), $dataDomain);
@@ -83,11 +80,17 @@ class FloodlightSubscriber implements EventSubscriberInterface
             if (false !== $result) {
                 $this->logger->error('Domain is blacklisted or failed to evaluate: Domain. '.$result['domain'].' status '.$result['status']);
 
-                return null;
+                return;
             }
             $this->logger->error('Domain not found');
 
-            return null;
+            return;
+        }
+
+        if (!is_array($result['result']) || !is_array($result['result']['companyDomains'])) {
+            $this->logger->error('Evaluation failed');
+
+            return;
         }
 
         $companyDomains = $result['result']['companyDomains']['data'];
@@ -98,11 +101,10 @@ class FloodlightSubscriber implements EventSubscriberInterface
             $companyDomains          = $floodlightCompanyDomain;
             $this->floodlightLeadDomainsModel->recalculateLeadPrimaryCompany($event->getHit()->getLead());
         }
-
-        return $companyDomains;
     }
 
     /**
+     * @param array<string, mixed>            $dataDomain
      * @param array<FloodlightCompanyDomains> $floodCompanyDomains
      *
      * @return array<FloodlightCompanyDomains>
@@ -110,7 +112,10 @@ class FloodlightSubscriber implements EventSubscriberInterface
     private function updateCompanyCompanyDomains(array $dataDomain, array $floodCompanyDomains, Lead $lead): array
     {
         $result = [];
-        if (isset($dataDomain['details']['floodlight']) && $dataDomain['details']['floodlight'] instanceof FloodlightDTO) {
+        if (
+            isset($dataDomain['details']['floodlight'])
+            && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
+        ) {
             $floodlightDTO = $dataDomain['details']['floodlight'];
             assert($floodlightDTO instanceof FloodlightDTO);
             $this->fieldHelper->updateProperties($floodlightDTO);

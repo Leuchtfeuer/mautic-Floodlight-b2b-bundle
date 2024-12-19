@@ -10,7 +10,10 @@ use Symfony\Component\Validator\Mapping\ClassMetadata as ValidatorClassMetadata;
 
 class FloodlightLeadDomains
 {
-    private ?int $id = null;
+    /**
+     * @var int
+     */
+    private $id;
 
     private ?string $domain = null;
 
@@ -26,7 +29,7 @@ class FloodlightLeadDomains
 
     private ?Lead $contact;
 
-    private ?\DateTime $enrichmentDate = null;
+    private ?\DateTime $dateLastLookup = null;
 
     public static function loadMetadata(ORM\ClassMetadata $metadata): void
     {
@@ -62,10 +65,15 @@ class FloodlightLeadDomains
             ->nullable()
             ->build();
 
-        $builder->createField('enrichmentDate', 'datetime')
-            ->columnName('enrichment_date')
+        $builder->createField('dateLastLookup', 'datetime')
+            ->columnName('date_last_lookup')
             ->nullable()
             ->build();
+
+        //        $builder->createField('enrichmentDate', 'datetime')
+        //            ->columnName('enrichment_date')
+        //            ->nullable()
+        //            ->build();
     }
 
     public static function loadValidatorMetadata(ValidatorClassMetadata $metadata): void
@@ -101,25 +109,29 @@ class FloodlightLeadDomains
                     'count',
                     'dateAdded',
                     'dateModified',
-                    'enrichmentDate',
+                    'dateLastLookup',
                 ]
             )
             ->addProperties(
                 [
-                    'id',
                     'domain',
                     'type',
                     'contact',
                     'count',
                     'dateAdded',
                     'dateModified',
-                    'enrichmentDate',
+                    'dateLastLookup',
                 ]
             )
             ->build();
     }
 
-    public function getId(): ?int
+    /**
+     * Get id.
+     *
+     * @return int
+     */
+    public function getId()
     {
         return $this->id;
     }
@@ -199,13 +211,23 @@ class FloodlightLeadDomains
         $this->type = $type;
     }
 
-    public function getEnrichmentDate(): ?\DateTime
+    //    public function getEnrichmentDate(): ?\DateTime
+    //    {
+    //        return $this->enrichmentDate;
+    //    }
+    //
+    //    public function setEnrichmentDate(?\DateTime $enrichmentDate): void
+    //    {
+    //        $this->enrichmentDate = $enrichmentDate;
+    //    }
+
+    public function getDateLastLookup(): ?\DateTime
     {
-        return $this->enrichmentDate;
+        return $this->dateLastLookup;
     }
 
-    public function setEnrichmentDate(?\DateTime $enrichmentDate): void
+    public function setDateLastLookup(?\DateTime $dateLastLookup): void
     {
-        $this->enrichmentDate = $enrichmentDate;
+        $this->dateLastLookup = $dateLastLookup;
     }
 }

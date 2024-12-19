@@ -6,7 +6,7 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 
 class LeuchtfeuerFloodlightB2BExtensionTest extends MauticMysqlTestCase
 {
-    public function testLoad()
+    public function testLoad(): void
     {
         $this->markTestSkipped('This test is not yet implemented.');
     }

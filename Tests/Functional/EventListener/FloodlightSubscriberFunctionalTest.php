@@ -49,6 +49,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_key]']);
         $form['integration_config[apiKeys][api_key]']->setValue($key);
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
@@ -387,109 +388,109 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame($currentLead->getPrimaryCompany()->getId(), $company4[1]->getId());
     }
 
-//    public function testOnPageHitSaveWithFloodlight()
-//    {
-        //        $this->updateApikey('pro_123');
-        //
-        //        $lead = $this->createLead();
-        //        $hit = $this->createHit($lead);
-        //
-        //        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit,false);
-        //        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        //
-        //        $lead = $this->createLead();
-        //        $request = new \Symfony\Component\HttpFoundation\Request();
-        //        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
-        //        $pageHitEventMock1->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-        //        $floodlightSubscriber->onPageHit($pageHitEventMock1);
+    //    public function testOnPageHitSaveWithFloodlight()
+    //    {
+    //        $this->updateApikey('pro_123');
+    //
+    //        $lead = $this->createLead();
+    //        $hit = $this->createHit($lead);
+    //
+    //        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit,false);
+    //        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+    //
+    //        $lead = $this->createLead();
+    //        $request = new \Symfony\Component\HttpFoundation\Request();
+    //        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
+    //        $pageHitEventMock1->expects($this->exactly(1))->method('getRequest')->willReturn($request);
+    //        $floodlightSubscriber->onPageHit($pageHitEventMock1);
 
-        //        $hit2 = $this->createHit($lead);
-        //        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit2);
-        //        $request = new \Symfony\Component\HttpFoundation\Request();
-        //        $request->server->set('REMOTE_ADDR', '8.8.8.8');
-        //        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        //        $pageHitEventMock2->expects($this->exactly(4))->method('getHit')->willReturn($hit2);
-        //        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-        //        $floodlightSubscriber->onPageHit($pageHitEventMock2);
+    //        $hit2 = $this->createHit($lead);
+    //        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit2);
+    //        $request = new \Symfony\Component\HttpFoundation\Request();
+    //        $request->server->set('REMOTE_ADDR', '8.8.8.8');
+    //        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+    //        $pageHitEventMock2->expects($this->exactly(4))->method('getHit')->willReturn($hit2);
+    //        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
+    //        $floodlightSubscriber->onPageHit($pageHitEventMock2);
 
-        //        $all = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        //        $leadDomainsHit2 = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        //        $companyDomainsHit2 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit2[0]->getDomain()]);
-        //        $companies2 = $this->em->getRepository(Company::class)->findAll();
-        //        $this->assertNotEmpty($leadDomainsHit2);
-        //        $this->assertCount(1, $leadDomainsHit2);
-        //        $this->assertSame(1, $leadDomainsHit2[0]->getCount());
-        //        $this->assertEquals('le-non.de', $leadDomainsHit2[0]->getDomain());
-        //        $this->assertNotEmpty($companies2);
-        //        $this->assertCount(1, $companies2);
-        //        $this->assertSame($companies2[0]->getId(), $companyDomainsHit2[0]->getCompany()->getId());
-//    }
+    //        $all = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+    //        $leadDomainsHit2 = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+    //        $companyDomainsHit2 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit2[0]->getDomain()]);
+    //        $companies2 = $this->em->getRepository(Company::class)->findAll();
+    //        $this->assertNotEmpty($leadDomainsHit2);
+    //        $this->assertCount(1, $leadDomainsHit2);
+    //        $this->assertSame(1, $leadDomainsHit2[0]->getCount());
+    //        $this->assertEquals('le-non.de', $leadDomainsHit2[0]->getDomain());
+    //        $this->assertNotEmpty($companies2);
+    //        $this->assertCount(1, $companies2);
+    //        $this->assertSame($companies2[0]->getId(), $companyDomainsHit2[0]->getCompany()->getId());
+    //    }
 
-//    private function createFloodlightSubescriberInstance($hit, $check=true)
-//    {
-//        $ipLookupRulesHelperMock = $this->createIpRulesServiceMock($hit, $check);
-//        $floodlightSubscriber    = new FloodlightSubscriber(
-//            $ipLookupRulesHelperMock,
-//            self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class),
-//            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
-//            self::getContainer()->get('logger'),
-//            self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper::class),
-//            self::getContainer()->get('mautic.lead.model.company'),
-//            self::getContainer()->get('mautic.lead.model.lead'),
-//            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
-//        );
-//
-//        return $floodlightSubscriber;
-//    }
+    //    private function createFloodlightSubescriberInstance($hit, $check=true)
+    //    {
+    //        $ipLookupRulesHelperMock = $this->createIpRulesServiceMock($hit, $check);
+    //        $floodlightSubscriber    = new FloodlightSubscriber(
+    //            $ipLookupRulesHelperMock,
+    //            self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class),
+    //            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
+    //            self::getContainer()->get('logger'),
+    //            self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper::class),
+    //            self::getContainer()->get('mautic.lead.model.company'),
+    //            self::getContainer()->get('mautic.lead.model.lead'),
+    //            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
+    //        );
+    //
+    //        return $floodlightSubscriber;
+    //    }
 
-//    private function createIpRulesServiceMock($hit, $check=true): \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper
-//    {
-//        $floodlightCompanyDomains = new FloodlightCompanyDomains();
-//        $floodlightCompanyDomains->setCompany(new Company());
-//        $floodlightCompanyDomains->setDomain('google.com');
-//        $floodlightCompanyDomains->setDomain('google.pt');
-//        $floodlightCompanyDomains->setDateModified(new \DateTime());
-//        $floodlightCompanyDomains->setCodeStatusRequest(null);
-//        $floodlightCompanyDomains->setEnrichmentDate(new \DateTime());
-//        $floodlightCompanyDomains->setDateAdded(new \DateTime());
-//
-//        $ipLookupRulesHelper = $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class);
-//        $ipLookupRulesHelper->expects($this->exactly(1))->method('check')->willReturn($check);
-//        $dataDomain    = json_decode(file_get_contents(__DIR__.'/../../fixtures/floodlight.json'), true);
-//        $flooglightDTO = new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO($dataDomain);
-//        $getDomain     = [
-//            'status'  => 'valid',
-//            'domain'  => $flooglightDTO->getCompanyPrimaryDomain(),
-//            'details' => [
-//                'floodlight'        => $flooglightDTO,
-//                'statusRequestCode' => 200,
-//                'companyDomains'    => [$floodlightCompanyDomains],
-//            ],
-//        ];
-//        $ipLookupRulesHelperFunctional = self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class);
-//        assert($ipLookupRulesHelperFunctional instanceof \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper);
-//        // Real object
-//
-//        $resultGetDomain                                     = $ipLookupRulesHelperFunctional->evaluate($hit, $getDomain);
-//        $resultGetDomain['result']['companyDomains']['isNew']=false;
-//
-//        $ipLookupRulesHelper->expects($this->once())->method('getDomain')->willReturn($getDomain);
-//        $ipLookupRulesHelper->expects($this->any())->method('isIp')->willReturn(true);
-//        $fakeGetDomain = [
-//            'domain' => 'google.com',
-//            'result' => [
-//                'leadDomain'     => new FloodlightLeadDomains(),
-//                'companyDomains' => [
-//                    'isNew' => true,
-//                    'data'  => [$floodlightCompanyDomains],
-//                ],
-//            ],
-//            'status' => 'valid',
-//        ];
-//        $ipLookupRulesHelper->expects($this->once())->method('evaluate')->willReturn($resultGetDomain);
-//
-//        return $ipLookupRulesHelper;
-//    }
+    //    private function createIpRulesServiceMock($hit, $check=true): \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper
+    //    {
+    //        $floodlightCompanyDomains = new FloodlightCompanyDomains();
+    //        $floodlightCompanyDomains->setCompany(new Company());
+    //        $floodlightCompanyDomains->setDomain('google.com');
+    //        $floodlightCompanyDomains->setDomain('google.pt');
+    //        $floodlightCompanyDomains->setDateModified(new \DateTime());
+    //        $floodlightCompanyDomains->setCodeStatusRequest(null);
+    //        $floodlightCompanyDomains->setEnrichmentDate(new \DateTime());
+    //        $floodlightCompanyDomains->setDateAdded(new \DateTime());
+    //
+    //        $ipLookupRulesHelper = $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class);
+    //        $ipLookupRulesHelper->expects($this->exactly(1))->method('check')->willReturn($check);
+    //        $dataDomain    = json_decode(file_get_contents(__DIR__.'/../../fixtures/floodlight.json'), true);
+    //        $flooglightDTO = new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO($dataDomain);
+    //        $getDomain     = [
+    //            'status'  => 'valid',
+    //            'domain'  => $flooglightDTO->getCompanyPrimaryDomain(),
+    //            'details' => [
+    //                'floodlight'        => $flooglightDTO,
+    //                'statusRequestCode' => 200,
+    //                'companyDomains'    => [$floodlightCompanyDomains],
+    //            ],
+    //        ];
+    //        $ipLookupRulesHelperFunctional = self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class);
+    //        assert($ipLookupRulesHelperFunctional instanceof \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper);
+    //        // Real object
+    //
+    //        $resultGetDomain                                     = $ipLookupRulesHelperFunctional->evaluate($hit, $getDomain);
+    //        $resultGetDomain['result']['companyDomains']['isNew']=false;
+    //
+    //        $ipLookupRulesHelper->expects($this->once())->method('getDomain')->willReturn($getDomain);
+    //        $ipLookupRulesHelper->expects($this->any())->method('isIp')->willReturn(true);
+    //        $fakeGetDomain = [
+    //            'domain' => 'google.com',
+    //            'result' => [
+    //                'leadDomain'     => new FloodlightLeadDomains(),
+    //                'companyDomains' => [
+    //                    'isNew' => true,
+    //                    'data'  => [$floodlightCompanyDomains],
+    //                ],
+    //            ],
+    //            'status' => 'valid',
+    //        ];
+    //        $ipLookupRulesHelper->expects($this->once())->method('evaluate')->willReturn($resultGetDomain);
+    //
+    //        return $ipLookupRulesHelper;
+    //    }
 
     private function createHit(Lead $lead): Hit
     {

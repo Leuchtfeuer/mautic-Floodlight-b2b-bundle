@@ -30,7 +30,7 @@ class FloodlightSubscriberUniTest extends TestCase
 
     private FloodlightLeadDomainsModel $floodlightLeadDomainsModel;
 
-    private FloodlightService $floodlightService;
+    //    private FloodlightService $floodlightService;
 
     private LoggerInterface $logger;
 
@@ -46,14 +46,13 @@ class FloodlightSubscriberUniTest extends TestCase
         $this->ipLookupRulesHelper             = $this->setipLookupRulesHelper();
         $this->floodlightCompanyDomainsModel   = $this->setFloodlightCompanyDomainModel();
         $this->floodlightLeadDomainsModel      = $this->setFloodlightLeadDomainLookupModel();
-        $this->floodlightService               = $this->setFloodlightService();
         $this->logger                          = $this->setLogger();
         $this->fieldHelper                     = $this->setFieldHelper();
         $this->companyModel                    = $this->setCompanyModel();
         $this->leadModel                       = $this->getLeadModel();
     }
 
-    private function getLeadModel()
+    private function getLeadModel(): LeadModel
     {
         return $this->createMock(LeadModel::class);
     }
@@ -74,7 +73,7 @@ class FloodlightSubscriberUniTest extends TestCase
         $floodlightSubscriber->onPageHit($pageHitEvent);
     }
 
-    public function testOnPageUpdate()
+    public function testOnPageUpdate(): void
     {
         $floodlightSubscriber = new FloodlightSubscriber(
             $this->ipLookupRulesHelper,
@@ -134,6 +133,7 @@ class FloodlightSubscriberUniTest extends TestCase
         $ipLookupRulesHelper = $this->createMock(IpLookupRulesHelper::class);
         $ipLookupRulesHelper->expects($this->once())->method('check')->willReturn(true);
         $dataDomain = json_decode($this->dataJsonFromFloodlight(), true);
+        $this->assertIsArray($dataDomain);
         $ipLookupRulesHelper->expects($this->once())->method('getDomain')->willReturn([
             'status'  => 'valid',
             'domain'  => 'google.com',
@@ -202,7 +202,7 @@ class FloodlightSubscriberUniTest extends TestCase
         return $floodlightService;
     }
 
-    private function setLogger()
+    private function setLogger(): LoggerInterface
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->any())->method('error');
@@ -215,7 +215,7 @@ class FloodlightSubscriberUniTest extends TestCase
         return $this->createMock(FieldHelper::class);
     }
 
-    private function setCompanyModel()
+    private function setCompanyModel(): CompanyModel
     {
         $companyModel = $this->createMock(CompanyModel::class);
         $companyModel->expects($this->any())->method('getEntity')->willReturn(new \Mautic\LeadBundle\Entity\Company());
@@ -223,7 +223,7 @@ class FloodlightSubscriberUniTest extends TestCase
         return $companyModel;
     }
 
-    private function dataJsonFromFloodlight()
+    private function dataJsonFromFloodlight(): string
     {
         return '{
   "ip_hash": "d01ca441ca0b204738175c5f364ea0c210855417",

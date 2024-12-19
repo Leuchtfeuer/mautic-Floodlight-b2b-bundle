@@ -34,17 +34,9 @@ class IpLookupRulesHelper
     }
 
     /**
-     * @param array{
-     *     domain: string,
-     *     status: string,
-     *     details: array<string, mixed>
-     * }
+     * @param array<string, mixed> $dataDomain
      *
-     * @return array{
-     *     domain: string,
-     *     result: FloodlightLeadDomains,
-     *     status: string
-     * }|false
+     * @return array<string, mixed>|false
      */
     public function evaluate(Hit $hit, array $dataDomain): array|false
     {
@@ -101,6 +93,8 @@ class IpLookupRulesHelper
             return true;
         }
 
+        assert($result instanceof FloodlightLeadDomains);
+
         $hour = $this->parameterLoader->getParameterBag()->get('minimum_hour_to_new_entry', 2);
         if ($result->getDateModified() > (new \DateTime())->modify('-'.$hour.' hour')) {
             return false;
@@ -109,20 +103,15 @@ class IpLookupRulesHelper
         return true;
     }
 
-    private function checkMoreThan2($leadId): bool
+    private function checkMoreThan2(int $leadId): bool
     {
         $result = $this->pageModel->getHitRepository()->findBy(['lead' => $leadId]);
 
         return count($result) > 1;
     }
 
-    /*
-     * @param string $remoteAddr
-     * @return array{
-     *   status: string,
-     *  domain: string,
-     *  details: array<string, FloodlightDTO>
-    * }|bool
+    /**
+     * @return array<string, mixed>|bool
      */
     private function getDataDomainByFloodlight(string $remoteAddr): array|bool
     {
@@ -138,7 +127,11 @@ class IpLookupRulesHelper
             '200',
         ];
 
-        if (false === $data || !in_array($data['statusRequestCode'], $handleStatusRequest)) {
+        if (
+            false === $data
+            || !is_array($data)
+            || !in_array($data['statusRequestCode'], $handleStatusRequest)
+        ) {
             return false;
         }
 
@@ -189,14 +182,10 @@ class IpLookupRulesHelper
         return $domain;
     }
 
-    /*
-     * @param string $remoteAddr
-     * @return {
-     *    status: string,
-     *    domain: string,
-     *    details: array<string, string|Floodlight>
+    /**
+     * @return array<string, mixed>|false
      */
-    public function getDomain(string $remoteAddr): array|bool
+    public function getDomain(string $remoteAddr): array|false
     {
         if ($this->config->isProTier()) {
             $floodlightData = $this->getDataDomainByFloodlight($remoteAddr);
@@ -218,17 +207,15 @@ class IpLookupRulesHelper
         return false;
     }
 
-    /*
-     * @param string $remoteAddr
-     * @return array{
-     *  status: string,
-     *  domain: string,
-     *  details: array<string, string>
-     * }
+    /**
+     * @return array<string, mixed>
      */
     public function getDomainByGetHostByAddr(string $remoteAddr): array
     {
         $domain      = gethostbyaddr($remoteAddr);
+        if (false === $domain) {
+            $domain = null;
+        }
         $status      = $this->getStatusDomain($domain);
         if (self::LEAD_DOMAINS_STATUS_BLACKLISTED === $status) {
             $domain = $status;
@@ -241,9 +228,8 @@ class IpLookupRulesHelper
         ];
     }
 
-    /*
-     * @param string $remoteAddr
-     * @return array<string,string|array>
+    /**
+     * @return array<string,mixed>
      */
     public function getDomainByWhoisPyService(string $remoteAddr): array
     {
@@ -272,7 +258,7 @@ class IpLookupRulesHelper
      *
      * @return self::LEAD_DOMAINS_STATUS_BLACKLISTED|self::LEAD_DOMAINS_STATUS_FAILURE|self::LEAD_DOMAINS_STATUS_VALID
      */
-    private function getStatusDomain(string $domain): string
+    private function getStatusDomain(?string $domain): string
     {
         if (empty($domain) || $this->isIp($domain)) {
             return self::LEAD_DOMAINS_STATUS_FAILURE;

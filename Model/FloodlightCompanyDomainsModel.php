@@ -61,12 +61,13 @@ class FloodlightCompanyDomainsModel extends FormModel
         if (null === $entity) {
             return new FloodlightCompanyDomains();
         }
+        assert($entity instanceof FloodlightCompanyDomains);
 
         return $entity;
     }
 
     /**
-     * @param array<string,array|FloodlightDTO|string> $details
+     * @param array<mixed> $details
      *
      * @return array<FloodlightCompanyDomains>
      */
@@ -82,6 +83,8 @@ class FloodlightCompanyDomainsModel extends FormModel
             return $this->newCompanyDomain($domain, $lead, $details);
         }
 
+        assert($companyDomain instanceof FloodlightCompanyDomains);
+
         if (!empty($details) && isset($details['pyservice'])) {
             $this->updateFieldWhoisDetails($companyDomain, $details);
         }
@@ -89,6 +92,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         if (null !== $lead) {
             $this->leadModel->addToCompany($lead, $companyDomain->getCompany());
         }
+
         $companyDomain->setIsPrimaryDomain(true);
 
         $this->saveEntity($companyDomain);
@@ -123,6 +127,8 @@ class FloodlightCompanyDomainsModel extends FormModel
     }
 
     /**
+     * @param array<string,mixed> $floodlightData
+     *
      * @return array<FloodlightCompanyDomains>
      */
     private function newCompanyDomainByFloodlight(array $floodlightData, ?Lead $lead): array
@@ -174,35 +180,8 @@ class FloodlightCompanyDomainsModel extends FormModel
         return $domain;
     }
 
-    public function recalculatePrimaryDomainDomain(Company $company): void
-    {
-        $companyDomains = $this->getRepository()->findBy(
-            [
-                'company' => $company,
-            ]
-        );
-
-        $primaryCompanyDomain = null;
-        $count                = 0;
-        foreach ($companyDomains as $companyDomain) {
-            if (null === $primaryCompanyDomain && 0 === $count) {
-                $primaryCompanyDomain = $companyDomain;
-                $count                = $companyDomain->getCount();
-            }
-            if ($companyDomain->getCount() > $count) {
-                $primaryCompanyDomain = $companyDomain;
-                $count                = $companyDomain->getCount();
-            }
-        }
-
-        if (null !== $primaryCompanyDomain) {
-            $primaryCompanyDomain->setIsPrimaryDomain(true);
-            $this->saveEntity($primaryCompanyDomain);
-        }
-    }
-
     /**
-     * @param array<string,array|FloodlightDTO> $details
+     * @param array<string,mixed> $details
      *
      * @return array<FloodlightCompanyDomains>
      */
@@ -219,6 +198,10 @@ class FloodlightCompanyDomainsModel extends FormModel
 
         $company = $this->newCompanyByGetHostByAddrOrPythonWhois($domain, $lead, $details);
 
+        if (empty($company)) {
+            return [];
+        }
+
         $companyDomain = new FloodlightCompanyDomains();
         $companyDomain->setDomain($domain);
         $companyDomain->setDateAdded(new \DateTime());
@@ -227,7 +210,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         if (!empty($company->getId())) {
             $companyDomain->setCompany($company);
         }
-        $companyDomain->setCodeStatusRequest(9999);
+        //        $companyDomain->setCodeStatusRequest(9999);
 
         $this->saveEntity($companyDomain);
 
@@ -235,7 +218,7 @@ class FloodlightCompanyDomainsModel extends FormModel
     }
 
     /**
-     * @param array<string,string|array> $details
+     * @param array<string,mixed> $details
      */
     public function newCompanyByGetHostByAddrOrPythonWhois(string $domain, ?Lead $lead, array $details): ?Company
     {
@@ -250,7 +233,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         $company->setModifiedBy($user);
         $company->setOwner($user);
 
-        if (!empty($details) && isset($details['pyservice'])) {
+        if (!empty($details) && isset($details['pyservice']) && is_array($details['pyservice'])) {
             $company->addUpdatedField('iplookup_whois_json', json_encode($this->transformDetails($details['pyservice']), JSON_THROW_ON_ERROR));
         }
 
@@ -265,11 +248,17 @@ class FloodlightCompanyDomainsModel extends FormModel
         return $company;
     }
 
+    /**
+     * @param array<string,mixed> $dataDomain
+     *
+     * @return array<string,mixed>|false
+     */
     public function getCompanyDomains(?Lead $lead, array $dataDomain): array|false
     {
         if (null === $lead) {
             return false;
         }
+
         $companyDomain = null;
         if (null !== $dataDomain['domain']) {
             $companyDomain = $this->getRepository()->findBy(
@@ -289,6 +278,8 @@ class FloodlightCompanyDomainsModel extends FormModel
         if (
             IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE !== $dataDomain['status']
             && IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED !== $dataDomain['status']
+            && is_string($dataDomain['domain'])
+            && is_array($dataDomain['details'])
         ) {
             $companyDomain = $this->newCompanyDomain($dataDomain['domain'], $lead, $dataDomain['details']);
 
@@ -302,17 +293,8 @@ class FloodlightCompanyDomainsModel extends FormModel
     }
 
     /**
-     * @param array<FloodlightCompanyDomains> $companyDomains
+     * @return array<FloodlightCompanyDomains>|mixed|null
      */
-    public function updateCompanyDomains(array $companyDomains, array $dataDomain): void
-    {
-        foreach ($companyDomains as $companyDomain) {
-            $companyDomain->setDateModified(new \DateTime());
-            $companyDomain->setCount($companyDomain->getCount() + 1);
-            $this->saveEntity($companyDomain);
-        }
-    }
-
     public function getCompanyDomainToEnrichment()
     {
         $qb = $this->getRepository()->createQueryBuilder('cd');

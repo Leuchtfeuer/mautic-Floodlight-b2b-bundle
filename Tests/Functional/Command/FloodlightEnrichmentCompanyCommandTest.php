@@ -228,13 +228,13 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertNull($newLeadDomains[0]->getDomain());
 
         $this->assertNull($newLeadDomains[0]->getDomain());
-        $this->assertNotEmpty($newLeadDomains[0]->getEnrichmentDate());
+        $this->assertNotEmpty($newLeadDomains[0]->getDateLastLookup());
         $defaultDate = new \DateTime(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT);
-        $this->assertNotNull($newLeadDomains[0]->getEnrichmentDate());
-        $this->assertSame($defaultDate->format('Y-m-d H:i:s'), $newLeadDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotNull($newLeadDomains[0]->getDateLastLookup());
+        $this->assertSame($defaultDate->format('Y-m-d H:i:s'), $newLeadDomains[0]->getDateLastLookup()->format('Y-m-d H:i:s'));
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[1]);
-        $this->assertNotNull($newLeadDomains[1]->getEnrichmentDate());
-        $this->assertNotSame($defaultDate->format('Y-m-d H:i:s'), $newLeadDomains[1]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotNull($newLeadDomains[1]->getDateLastLookup());
+        $this->assertNotSame($defaultDate->format('Y-m-d H:i:s'), $newLeadDomains[1]->getDateLastLookup()->format('Y-m-d H:i:s'));
         $this->assertSame($newLeadDomains[1]->getDomain(), $response['primarydomain']);
 
         $companies = $this->em->getRepository(Company::class)->findAll();
@@ -276,8 +276,8 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
         $this->assertSame($newLeadDomains2[0]->getDomain(), $response2['primarydomain']);
         $this->assertSame($newLeadDomains2[1]->getDomain(), $response['primarydomain']);
-        $this->assertNotNull($newLeadDomains2[0]->getEnrichmentDate());
-        $this->assertNotSame($defaultDate->format('Y-m-d H:i:s'), $newLeadDomains2[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotNull($newLeadDomains2[0]->getDateLastLookup());
+        $this->assertNotSame($defaultDate->format('Y-m-d H:i:s'), $newLeadDomains2[0]->getDateLastLookup()->format('Y-m-d H:i:s'));
 
         $companies = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(2, $companies);
@@ -350,7 +350,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
         $this->assertEquals($leadDomain1->getId(), $newLeadDomains[0]->getId());
         $this->assertSame($newLeadDomains[0]->getDomain(), IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE);
-        $this->assertNotEmpty($newLeadDomains[0]->getEnrichmentDate());
+        $this->assertNotEmpty($newLeadDomains[0]->getDateLastLookup());
     }
 
     /**
@@ -376,6 +376,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->em->flush();
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_key]']);
         $form['integration_config[apiKeys][api_key]']->setValue($apiKey);
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());

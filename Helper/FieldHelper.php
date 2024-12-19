@@ -66,7 +66,7 @@ class FieldHelper
         $field->setIsUniqueIdentifier(self::DEFAULT_VALUES['is_unique_identifier']);
         $field->setIsIndex(self::DEFAULT_VALUES['is_index']);
 
-        if (!empty($properties)) {
+        if (!empty($properties) && is_array($properties)) {
             $result = $this->fieldModel->setFieldProperties($field, $properties);
         }
 
@@ -81,6 +81,9 @@ class FieldHelper
     {
         $fieldsAllowedToBeUpdated = $this->getFieldsPropertiesAllowToBeUpdated();
         $fieldsToUpdate           = $this->getFieldsWithPropertiesToUpdate($fieldsAllowedToBeUpdated, $floodlightDTO);
+        if (false === $fieldsToUpdate) {
+            return;
+        }
         foreach ($fieldsToUpdate as $key => $values) {
             $field = $this->fieldModel->getRepository()->findOneBy(['alias' => $key]);
             if (!$field instanceof LeadField) {
@@ -91,16 +94,19 @@ class FieldHelper
     }
 
     /**
-     * @param array<array> $fieldsAllowedToBeUpdated
+     * @param array<string|mixed> $fieldsAllowedToBeUpdated
      *
-     * @return array<array>
+     * @return array<string,array<string>>|false
      */
-    private function getFieldsWithPropertiesToUpdate(array $fieldsAllowedToBeUpdated, FloodlightDTO $dataFloodlight): array
+    private function getFieldsWithPropertiesToUpdate(array $fieldsAllowedToBeUpdated, FloodlightDTO $dataFloodlight): array|false
     {
         $requestDataFloodlight = $dataFloodlight->getPureData();
 
         $result = [];
         foreach ($fieldsAllowedToBeUpdated as $key => $fieldAllowedToBeUpdated) {
+            if (!is_array($fieldAllowedToBeUpdated) || !array_key_exists('alias', $fieldAllowedToBeUpdated)) {
+                continue;
+            }
             $externalAlias = $this->getExternalAlias($fieldAllowedToBeUpdated['alias']);
             if (!array_key_exists($externalAlias, $requestDataFloodlight)) {
                 continue;
@@ -114,21 +120,34 @@ class FieldHelper
                 $result[$key] = $valuesField;
                 continue;
             }
+
+            if (!is_array($valuesField)) {
+                continue;
+            }
+
             $listValues = $this->getListFieldValues($fieldAllowedToBeUpdated['properties']['list']);
+
             foreach ($valuesField as $value) {
                 $value = html_entity_decode($value);
                 if (in_array($value, $listValues)) {
                     continue;
                 }
+                if (!isset($result[$key])) {
+                    $result[$key] = [];
+                }
                 $result[$key][] = $value;
             }
+        }
+
+        if (empty($result)) {
+            return false;
         }
 
         return $result;
     }
 
     /**
-     * @param array<array> $list
+     * @param array<array<string>> $list
      *
      * @return array<string>
      */
@@ -152,7 +171,7 @@ class FieldHelper
     }
 
     /**
-     * @return array<string,array>
+     * @return array<string,array<string>>
      */
     private function getFieldsPropertiesAllowToBeUpdated(): array
     {
@@ -175,6 +194,7 @@ class FieldHelper
     public function addProperties(LeadField $field, array $properties): void
     {
         $newProperties = $field->getProperties();
+        assert(is_array($newProperties));
         if (!isset($newProperties['list'])) {
             $newProperties['list'] = [];
         }

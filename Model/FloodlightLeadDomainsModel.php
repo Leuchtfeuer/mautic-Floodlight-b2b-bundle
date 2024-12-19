@@ -57,12 +57,21 @@ class FloodlightLeadDomainsModel extends FormModel
             return new FloodlightLeadDomains();
         }
 
-        return parent::getEntity($id);
+        $entity = parent::getEntity($id);
+
+        if (null === $entity) {
+            return new FloodlightLeadDomains();
+        }
+
+        assert($entity instanceof FloodlightLeadDomains);
+
+        return $entity;
     }
 
     public function isBlackListed(string $domain): bool
     {
         $blacklist = (new DomainBlacklistHelper())->get();
+
         if (!empty($blacklist) && in_array($domain, $blacklist, true)) {
             return true;
         }
@@ -76,7 +85,7 @@ class FloodlightLeadDomainsModel extends FormModel
     }
 
     /**
-     * @param array<> $domainDetails
+     * @param array<string,string|mixed> $dataDomain
      */
     public function addNewLeadDomainOrCountPlusOneInLeadDomain(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
@@ -90,12 +99,17 @@ class FloodlightLeadDomainsModel extends FormModel
         if (empty($leadDomain)) {
             $leadDomain = $this->getEntity();
             $leadDomain->setContact($lead);
-            $leadDomain->setDomain($dataDomain['domain']);
+            if (is_string($dataDomain['domain'])) {
+                $leadDomain->setDomain($dataDomain['domain']);
+            }
             $leadDomain->setDateAdded(new \DateTime());
             $leadDomain->setCount(0);
             $leadDomain->setIpHash('local');
             if (
-                array_key_exists('floodlight', $dataDomain['details'])
+                is_array($dataDomain)
+                && array_key_exists('details', $dataDomain)
+                && is_array($dataDomain['details'])
+                && array_key_exists('floodlight', $dataDomain['details'])
                 && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
             ) {
                 $leadDomain->setIpHash($dataDomain['details']['floodlight']->getIpHash());
@@ -110,19 +124,29 @@ class FloodlightLeadDomainsModel extends FormModel
     }
 
     /**
-     * @return array<string,array|FloodlightLeadDomains> $details
+     * @return array<FloodlightLeadDomains>
      */
     public function getLeadDomainToEnrichement(): array
     {
         $qb = $this->getRepository()->createQueryBuilder('l');
-        $qb->where('l.ipHash <> :local')
+        $qb->where('l.ipHash <> :local AND l.ipHash IS NOT NULL')
             ->andWhere('l.domain IS NULL')
-            ->andWhere('l.enrichmentDate IS NULL OR l.enrichmentDate = :enrichmentDate')
+            ->andWhere('l.dateLastLookup IS NULL OR l.dateLastLookup = :dateLastLookup')
             ->setParameter('local', 'local')
-            ->setParameter('enrichmentDate', '1970-01-01 00:00:00')
+            ->setParameter('dateLastLookup', '1970-01-01 00:00:00')
             ->orderBy('l.dateAdded', 'ASC');
 
-        return $qb->getQuery()->getResult();
+        $result = $qb->getQuery()->getResult();
+        if (empty($result) || !is_array($result)) {
+            return [];
+        }
+        $leadDomains = [];
+        foreach ($result as $leadDomain) {
+            assert($leadDomain instanceof FloodlightLeadDomains);
+            $leadDomains[] = $leadDomain;
+        }
+
+        return $leadDomains;
     }
 
     public function recalculateLeadPrimaryCompany(Lead $lead): void
@@ -134,12 +158,26 @@ class FloodlightLeadDomainsModel extends FormModel
 
         $leadDomains = $qb->getQuery()->getResult();
 
+        if (empty($leadDomains)) {
+            return;
+        }
+
         $maxCount      = 0;
-        $maxLeadDomain = null;
+        $maxLeadDomain = 0;
+        $isFirst       = true;
+
+        // test it
+        if (!is_array($leadDomains)) {
+            return;
+        }
+
         foreach ($leadDomains as $leadDomain) {
-            if (0 === $maxCount && null === $maxLeadDomain) {
+            assert($leadDomain instanceof FloodlightLeadDomains);
+            if ($isFirst) {
+                $isFirst       = false;
                 $maxLeadDomain = $leadDomain;
                 $maxCount      = $leadDomain->getCount();
+                continue;
             }
 
             if ($leadDomain->getCount() > $maxCount) {
@@ -162,6 +200,7 @@ class FloodlightLeadDomainsModel extends FormModel
         }
 
         assert($companyDomain instanceof FloodlightCompanyDomains);
+        $this->logger->info('Update set primary domain company to '.$companyDomain->getCompany()->getName().' for lead '.$lead->getId());
         $company = $companyDomain->getCompany();
         $lead->setPrimaryCompany($company);
         $this->leadModel->saveEntity($lead);

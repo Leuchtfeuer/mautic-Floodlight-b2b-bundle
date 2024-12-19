@@ -94,14 +94,19 @@ class PluginInstallSubscriberTest extends MauticMysqlTestCase
         $this->baseTestFields('f4b_companytwitter_handle', ['Text']);
     }
 
-    private function baseTestFields(string $alias, array $finds)
+    /**
+     * @param array<string> $finds
+     */
+    private function baseTestFields(string $alias, array $finds): void
     {
         $this->client->request('GET', '/s/plugins/reload');
         $this->useCleanupRollback = false;
         $resultFieldCompanyType   = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => $alias]);
+        $this->assertInstanceOf(LeadField::class, $resultFieldCompanyType);
         $this->client->request('GET', '/s/contacts/fields/edit/'.$resultFieldCompanyType->getId());
         $content = $this->client->getResponse()->getContent();
         foreach ($finds as $find) {
+            $this->assertIsString($content);
             $this->assertStringContainsString($find, $content);
         }
     }

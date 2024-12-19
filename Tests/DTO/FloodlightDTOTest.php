@@ -33,13 +33,20 @@ class FloodlightDTOTest extends MauticMysqlTestCase
         $this->floodlightDTO = new FloodlightDTO($dataFake);
     }
 
+    /**
+     * @return array<string>
+     */
     private function fakeData(int $type=1): array
     {
+        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
         if (2 === $type) {
-            return json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight2.json'), true);
+            $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight2.json');
         }
+        $this->assertIsString($fileContent);
+        $data = json_decode($fileContent, true);
+        $this->assertIsArray($data);
 
-        return json_decode(file_get_contents(__DIR__.'/../fixtures/floodlight.json'), true);
+        return $data;
     }
 
     public function testGetCompanyEntity(): void
