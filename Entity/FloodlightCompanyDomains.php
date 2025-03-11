@@ -16,14 +16,18 @@ class FloodlightCompanyDomains
 
     private bool $isPrimaryDomain;
 
-    private string $domain;
+    private ?string $domain = null;
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
+
+    private ?\DateTime $enrichmentDate = null;
+
+    //    private ?int $codeStatusRequest = null;
 
     public static function loadMetadata(ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
-        $builder->setTable('fl_company_domains')
+        $builder->setTable('f4b_company_domains')
             ->setCustomRepositoryClass(FloodlightCompanyDomainsRepository::class)
             ->addIndex(['company_id'], 'company_domains_company_id')
             ->addIndex(['domain'], 'company_domains_domain');
@@ -34,7 +38,18 @@ class FloodlightCompanyDomains
             ->addJoinColumn('company_id', 'id', false, false, 'CASCADE')
             ->build();
 
-        $builder->createField('domain', 'string')->columnName('domain')->build();
+        $builder->createField('domain', 'string')
+            ->columnName('domain')
+            ->nullable()
+            ->build();
+        $builder->createField('enrichmentDate', 'datetime')
+            ->columnName('enrichment_date')
+            ->nullable()
+            ->build();
+        //        $builder->createField('codeStatusRequest', 'integer')
+        //            ->columnName('code_status_request')
+        //            ->nullable()
+        //            ->build();
         $builder->createField('isPrimaryDomain', 'boolean')->columnName('is_primary_domain')->build();
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')->columnName('date_modified')->build();
@@ -60,8 +75,10 @@ class FloodlightCompanyDomains
                     'id',
                     'domain',
                     'is_primary_domain',
+                    'enrichmentDate',
                     'dateAdded',
                     'dateModified',
+                    //                    'codeStatusRequest',
                 ]
             )
             ->addProperties(
@@ -69,14 +86,16 @@ class FloodlightCompanyDomains
                     'id',
                     'domain',
                     'is_primary_domain',
+                    'enrichmentDate',
                     'dateAdded',
                     'dateModified',
+                    //                    'codeStatusRequest',
                 ]
             )
             ->build();
     }
 
-    public function getId()
+    public function getId(): ?int
     {
         return $this->id;
     }
@@ -91,12 +110,12 @@ class FloodlightCompanyDomains
         $this->company = $company;
     }
 
-    public function getDomain(): string
+    public function getDomain(): ?string
     {
         return $this->domain;
     }
 
-    public function setDomain(string $domain): void
+    public function setDomain(?string $domain): void
     {
         $this->domain = $domain;
     }
@@ -135,4 +154,24 @@ class FloodlightCompanyDomains
     {
         return $this->isPrimaryDomain;
     }
+
+    public function getEnrichmentDate(): ?\DateTime
+    {
+        return $this->enrichmentDate;
+    }
+
+    public function setEnrichmentDate(?\DateTime $enrichmentDate): void
+    {
+        $this->enrichmentDate = $enrichmentDate;
+    }
+
+    //    public function getCodeStatusRequest(): ?int
+    //    {
+    //        return $this->codeStatusRequest;
+    //    }
+    //
+    //    public function setCodeStatusRequest(?int $codeStatusRequest): void
+    //    {
+    //        $this->codeStatusRequest = $codeStatusRequest;
+    //    }
 }

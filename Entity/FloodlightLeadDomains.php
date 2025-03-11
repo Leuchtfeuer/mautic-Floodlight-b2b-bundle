@@ -10,33 +10,70 @@ use Symfony\Component\Validator\Mapping\ClassMetadata as ValidatorClassMetadata;
 
 class FloodlightLeadDomains
 {
-    private ?int $id = null;
-    private ?Lead $lead;
-    private string $domain;
+    /**
+     * @var int
+     */
+    private $id;
+
+    private ?string $domain = null;
+
+    private ?string $type;
+
+    private ?string $ipHash;
+
     private int $count;
+
     private \DateTime $dateAdded;
-    private \DateTime $dateModified;
+
+    private ?\DateTime $dateModified = null;
+
+    private ?Lead $contact;
+
+    private ?\DateTime $dateLastLookup = null;
 
     public static function loadMetadata(ORM\ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
-        $builder->setTable('fl_lead_domains')
+        $builder->setTable('f4b_lead_ip_lookups')
             ->setCustomRepositoryClass(FloodlightLeadDomainsRepository::class)
-            ->addIndex(['lead_id'], 'lead_domains_lead_id')
+            ->addIndex(['contact_id'], 'lead_domains_lead_id')
             ->addIndex(['domain'], 'lead_domains_domain');
 
         $builder->addBigIntIdField();
-        $builder->addLead(true, 'CASCADE');
+        $builder->addContact(true, 'CASCADE');
         $builder->createField('domain', 'string')
             ->columnName('domain')
+            ->nullable()
             ->build();
+
         $builder->createField('count', 'integer')
             ->columnName('count')
             ->build();
+
+        $builder->createField('ipHash', 'string')
+            ->columnName('ip_hash')
+            ->build();
+
+        $builder->createField('type', 'string')
+            ->columnName('type')
+            ->nullable()
+            ->build();
+
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')
             ->columnName('date_modified')
+            ->nullable()
             ->build();
+
+        $builder->createField('dateLastLookup', 'datetime')
+            ->columnName('date_last_lookup')
+            ->nullable()
+            ->build();
+
+        //        $builder->createField('enrichmentDate', 'datetime')
+        //            ->columnName('enrichment_date')
+        //            ->nullable()
+        //            ->build();
     }
 
     public static function loadValidatorMetadata(ValidatorClassMetadata $metadata): void
@@ -49,55 +86,72 @@ class FloodlightLeadDomains
                 ]
             )
         );
+
+        $metadata->addPropertyConstraint(
+            'type',
+            new \Symfony\Component\Validator\Constraints\NotBlank(
+                [
+                    'message' => 'mautic.core.name.required',
+                ]
+            )
+        );
     }
 
     public static function loadApiMetadata(ApiMetadataDriver $metadata): void
     {
-        $metadata->setGroupPrefix('fl_lead_domains')
+        $metadata->setGroupPrefix('f4b_lead_domains')
             ->addListProperties(
                 [
                     'id',
-                    'lead',
+                    'contact',
                     'domain',
+                    'type',
                     'count',
                     'dateAdded',
                     'dateModified',
+                    'dateLastLookup',
                 ]
             )
             ->addProperties(
                 [
-                    'id',
                     'domain',
-                    'lead',
+                    'type',
+                    'contact',
                     'count',
                     'dateAdded',
                     'dateModified',
+                    'dateLastLookup',
                 ]
             )
             ->build();
     }
 
-    public function getId(): ?int
+    /**
+     * Get id.
+     *
+     * @return int
+     */
+    public function getId()
     {
         return $this->id;
     }
 
-    public function getLead(): ?Lead
+    public function getContact(): ?Lead
     {
-        return $this->lead;
+        return $this->contact;
     }
 
-    public function setLead(Lead $lead): void
+    public function setContact(Lead $contact): void
     {
-        $this->lead = $lead;
+        $this->contact = $contact;
     }
 
-    public function getDomain(): string
+    public function getDomain(): ?string
     {
         return $this->domain;
     }
 
-    public function setDomain(string $domain): void
+    public function setDomain(?string $domain): void
     {
         $this->domain = $domain;
     }
@@ -127,13 +181,53 @@ class FloodlightLeadDomains
         $this->dateAdded = $dateAdded;
     }
 
-    public function getDateModified(): \DateTime
+    public function getDateModified(): ?\DateTime
     {
         return $this->dateModified;
     }
 
-    public function setDateModified(\DateTime $dateModified): void
+    public function setDateModified(?\DateTime $dateModified): void
     {
         $this->dateModified = $dateModified;
+    }
+
+    public function getIpHash(): ?string
+    {
+        return $this->ipHash;
+    }
+
+    public function setIpHash(string $ipHash): void
+    {
+        $this->ipHash = $ipHash;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): void
+    {
+        $this->type = $type;
+    }
+
+    //    public function getEnrichmentDate(): ?\DateTime
+    //    {
+    //        return $this->enrichmentDate;
+    //    }
+    //
+    //    public function setEnrichmentDate(?\DateTime $enrichmentDate): void
+    //    {
+    //        $this->enrichmentDate = $enrichmentDate;
+    //    }
+
+    public function getDateLastLookup(): ?\DateTime
+    {
+        return $this->dateLastLookup;
+    }
+
+    public function setDateLastLookup(?\DateTime $dateLastLookup): void
+    {
+        $this->dateLastLookup = $dateLastLookup;
     }
 }

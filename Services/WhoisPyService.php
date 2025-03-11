@@ -6,20 +6,20 @@ use Psr\Log\LoggerInterface;
 
 class WhoisPyService
 {
-    protected $whoisPyPath;
-    protected $whoisPyPathFile;
-    protected $whoisPyFile;
+    protected string $whoisPyPath;
+    protected string $whoisPyPathFile;
+    protected string $whoisPyFile;
 
-    protected LoggerInterface $logger;
-
-    public function __construct(LoggerInterface $logger)
+    public function __construct(protected LoggerInterface $logger)
     {
         $this->whoisPyFile     = 'main.py';
         $this->whoisPyPath     = __DIR__.'/../Assets/scripts/';
         $this->whoisPyPathFile = __DIR__.'/../Assets/scripts/'.$this->whoisPyFile;
-        $this->logger          = $logger;
     }
 
+    /**
+     * @return array<mixed>
+     */
     public function getWhoisData(string $ip): array
     {
         if (!empty($ip) && !filter_var($ip, FILTER_VALIDATE_IP)) {
@@ -41,7 +41,7 @@ class WhoisPyService
 
             return [];
         }
-        $jsonResult = json_decode($output, true);
+        $jsonResult = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
 
         if (empty($jsonResult)) {
             $this->logger->error('WhoisPyService fail: '.$output);
@@ -68,10 +68,10 @@ class WhoisPyService
         return shell_exec($command);
     }
 
-    private function format(string $output): array|string
+    private function format(string $output): string
     {
         if (empty($output)) {
-            return [];
+            return '';
         }
 
         $replace = [
