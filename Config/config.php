@@ -20,8 +20,17 @@ return [
                     'monolog.logger.mautic',
                 ],
             ],
+            'mautic.leuchtfeuerfloodlightb2b.connection.credentials' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials::class,
+                'arguments' => [
+                    'mautic.integrations.helper',
+                ],
+            ],
             'mautic.leuchtfeuerfloodlightb2b.connection.apiclient' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.connection.credentials',
+                ],
             ],
         ],
         'helpers' => [

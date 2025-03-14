@@ -9,7 +9,7 @@ use Psr\Log\LoggerInterface;
 
 class FloodlightService implements FloodlightServiceInterface
 {
-    private const FLOODLIGHT_API  = 'https://api-dev.floodlight-b2b.com';
+    private const FLOODLIGHT_API  = 'https://api.floodlight-b2b.com';
 
     public function __construct(
         private ApiClient $client,
@@ -68,6 +68,7 @@ class FloodlightService implements FloodlightServiceInterface
     private function makeRequest(string $url): ResponseInterface|false
     {
         try {
+            $myClient = $this->client->getClient();
             return $this->client->getClient()->request('GET', $url);
         } catch (ClientException $e) {
             if ($e->hasResponse()) {
