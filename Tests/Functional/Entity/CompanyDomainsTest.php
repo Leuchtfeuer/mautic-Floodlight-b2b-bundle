@@ -42,11 +42,6 @@ class CompanyDomainsTest extends MauticMysqlTestCase
         $this->companyDomain = $companyDomain;
     }
 
-    public function testGetId(): void
-    {
-        $this->assertIsNumeric($this->companyDomain->getId());
-    }
-
     public function testGetCompany(): void
     {
         $this->assertInstanceOf(\Mautic\LeadBundle\Entity\Company::class, $this->companyDomain->getCompany());

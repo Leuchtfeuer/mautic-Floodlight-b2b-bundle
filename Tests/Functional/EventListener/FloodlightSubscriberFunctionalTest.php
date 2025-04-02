@@ -224,7 +224,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->client->request('GET', '/mtracking.gif');
         $lastItem          = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
         $lastCompany       = $this->companyRepo->findOneBy([], ['id' => 'DESC']);
-        $lastCompanyDomain = $this->companyDomainRepo->findOneBy([], ['id' => 'DESC']);
+        $lastCompanyDomain = $this->companyDomainRepo->findOneBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         assert($lastItem instanceof FloodlightLeadDomains);
         $this->assertEquals(1, $lastItem->getCount());
         $this->assertEquals('blacklisted', $lastItem->getDomain());
