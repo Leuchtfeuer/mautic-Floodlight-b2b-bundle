@@ -252,29 +252,23 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'externalKeyName' => 'companytimezone',
             ],
             [
-                'alias'           => 'f4b_bigpicture_id',
-                'name'            => 'Big Picture ID',
-                'type'            => 'text',
-                'externalKeyName' => 'bigpicture_id',
-            ],
-            [
                 'alias' => 'f4b_companycountry_code',
                 'name'  => 'Country Code',
                 'type'  => 'text',
                 'limit' => 2,
             ],
             [
-                'alias' => 'iplookup_whois_json',
+                'alias' => 'f4b_iplookup_whois_json',
                 'name'  => 'IP Lookup Whois',
                 'type'  => 'textarea',
             ],
             [
-                'alias' => 'enrichment_date',
+                'alias' => 'f4b_enrichment_date',
                 'name'  => 'Enrichment Date',
                 'type'  => 'datetime',
             ],
             [
-                'alias' => 'companyindustry_tags',
+                'alias' => 'f4b_companyindustry_tags',
                 'name'  => 'Industry Tags',
                 'type'  => 'textarea',
             ],

@@ -17,7 +17,7 @@ class FloodlightLeadDomains
 
     private ?string $domain = null;
 
-    private ?string $type;
+    private ?string $lookupType;
 
     private ?string $ipHash;
 
@@ -54,8 +54,8 @@ class FloodlightLeadDomains
             ->columnName('ip_hash')
             ->build();
 
-        $builder->createField('type', 'string')
-            ->columnName('type')
+        $builder->createField('lookupType', 'string')
+            ->columnName('lookup_type')
             ->nullable()
             ->build();
 
@@ -201,14 +201,14 @@ class FloodlightLeadDomains
         $this->ipHash = $ipHash;
     }
 
-    public function getType(): ?string
+    public function getLookupType(): ?string
     {
-        return $this->type;
+        return $this->lookupType;
     }
 
-    public function setType(string $type): void
+    public function setLookupType(string $lookupType): void
     {
-        $this->type = $type;
+        $this->lookupType = $lookupType;
     }
 
     //    public function getEnrichmentDate(): ?\DateTime

@@ -14,7 +14,7 @@ class FloodlightCompanyDomainsRepository extends CommonRepository
             ->from(MAUTIC_TABLE_PREFIX.'f4b_companies_leads', 'cl')
             ->join('cl', MAUTIC_TABLE_PREFIX.'companies', 'comp', 'comp.id = cl.company_id')
             ->leftJoin('comp', MAUTIC_TABLE_PREFIX.'f4b_company_domains', 'cd', 'cd.company_id = comp.id')
-            ->where('cl.contact_id = :leadId')
+            ->where('cl.lead_id = :leadId')
             ->setParameter('leadId', $leadId);
 
         if ($domain) {

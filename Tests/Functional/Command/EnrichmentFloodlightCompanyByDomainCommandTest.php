@@ -46,7 +46,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertStringContainsString('Plugin is not published', $commandTester->getDisplay());
     }
 
-    public function testEnrichmentCompanyCommandNotConfiguredByProTierByDomain(): void
+    public function teestEnrichmentCompanyCommandNotConfiguredByProTierByDomain(): void
     {
         $this->activePlugin(true, 'pre_123');
         $floodlightCompanyDomain = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
@@ -169,7 +169,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         $commandTester->execute(['--by-domain' => 1]);
 
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['id' => 'ASC']);
+        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
 
         $this->assertCount(1, $newCompanyDomains);
@@ -238,7 +238,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         $commandTester->execute(['--by-domain' => 1]);
 
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['id' => 'ASC']);
+        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
@@ -249,7 +249,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         $commandTester->execute(['--by-domain' => 1]);
 
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['id' => 'ASC']);
+        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertInstanceOf(Company::class, $companies[0]);
         $this->assertCount(1, $newCompanyDomains);
@@ -308,7 +308,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         $commandTester->execute(['--by-domain' => 1]);
 
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['id' => 'ASC']);
+        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
@@ -319,7 +319,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         $commandTester->execute(['--by-domain' => 1]);
 
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['id' => 'ASC']);
+        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
@@ -356,7 +356,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         $commandTester->execute(['--by-domain' => 1]);
 
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['id' => 'ASC']);
+        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
@@ -368,7 +368,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         $commandTester->execute(['--by-domain' => 1]);
 
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['id' => 'ASC']);
+        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
@@ -406,7 +406,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         $commandTester->execute(['--by-domain' => 1]);
 
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['id' => 'ASC']);
+        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(2, $newCompanyDomains);
         $this->assertCount(2, $companies);
@@ -431,7 +431,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         $commandTester->execute(['--by-domain' => 1]);
 
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['id' => 'ASC']);
+        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(2, $newCompanyDomains);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);

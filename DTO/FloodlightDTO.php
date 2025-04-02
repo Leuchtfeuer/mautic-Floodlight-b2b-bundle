@@ -1119,7 +1119,7 @@ class FloodlightDTO implements DTOInterface
             $domain = $this->getDomains()[0];
         }
         $ipLeadDomainLookups->setDomain($domain);
-        $ipLeadDomainLookups->setType($this->getCompanyType());
+        $ipLeadDomainLookups->setLookupType($this->getCompanyType());
         $ipLeadDomainLookups->setDateAdded(new \DateTime());
         $ipLeadDomainLookups->setDateLastLookup(new \DateTime());
         $ipLeadDomainLookups->setCount(1);
