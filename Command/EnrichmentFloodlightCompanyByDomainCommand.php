@@ -64,6 +64,8 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
         foreach ($companyDomains as $companyDomain) {
             assert($companyDomain instanceof FloodlightCompanyDomains);
             $domain = $companyDomain->getDomain();
+            $company = $companyDomain->getCompany();
+            $companyEnrichmentDate = $company->getFieldValue('f4b_enrichment_date');
             if (null === $domain) {
                 $output->writeln('<error>Domain is empty </error>');
                 continue;
@@ -81,28 +83,29 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
                 continue;
             }
 
+
             if (Response::HTTP_NOT_FOUND === $result['statusRequestCode']) {
                 // Confirm if it is correct to set the enrichment date here
-                $companyDomain->setEnrichmentDate(new \DateTime());
-                $this->flCompanyDomainsModel->saveEntity($companyDomain);
+                $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
+                //$this->flCompanyDomainsModel->saveEntity($companyDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     $output->writeln('<error>Domain not found (404) : '.$companyDomain->getDomain().'</error>');
                 }
                 continue;
             }
 
-            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && empty($companyDomain->getEnrichmentDate())) {
-                $companyDomain->setEnrichmentDate(new \DateTime(self::DATE_DEFAULT));
-                $this->flCompanyDomainsModel->saveEntity($companyDomain);
+            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && empty($companyEnrichmentDate)) {
+                $company->addUpdatedField('f4b_enrichment_date', (new \DateTime(self::DATE_DEFAULT))->format('Y-m-d H:i:s'));
+                //$this->flCompanyDomainsModel->saveEntity($companyDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     $output->writeln('<info>Company domain '.$companyDomain->getDomain().' with request 202 by second time</info>');
                 }
                 continue;
             }
 
-            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && (new \DateTime(self::DATE_DEFAULT)) == $companyDomain->getEnrichmentDate()) {
-                $companyDomain->setEnrichmentDate(new \DateTime());
-                $this->flCompanyDomainsModel->saveEntity($companyDomain);
+            if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && (new \DateTime(self::DATE_DEFAULT))->format('Y-m-d H:i:s') == $companyEnrichmentDate) {
+                $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
+                //$this->flCompanyDomainsModel->saveEntity($companyDomain);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     $output->writeln('<error>Lead domain '.$companyDomain->getDomain().' with request 202 by third time</error>');
                 }
@@ -119,12 +122,11 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
 
             $floodlightDTO = new FloodlightDTO($result);
             $this->fieldHelper->updateProperties($floodlightDTO);
-            $company = $companyDomain->getCompany();
             $company = $floodlightDTO->fillCompany($company);
             $this->companyModel->saveEntity($company);
 
             //            $companyDomain->setCodeStatusRequest($result['statusRequestCode']);
-            $companyDomain->setEnrichmentDate(new \DateTime());
+            //$companyDomain->setEnrichmentDate(new \DateTime());
             $this->flCompanyDomainsModel->saveEntity($companyDomain);
 
             $output->writeln('<info>Company data updated '.$company->getName().'</info>');

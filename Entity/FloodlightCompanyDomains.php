@@ -19,7 +19,6 @@ class FloodlightCompanyDomains
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
 
-    private ?\DateTime $enrichmentDate = null;
 
     //    private ?int $codeStatusRequest = null;
 
@@ -40,10 +39,6 @@ class FloodlightCompanyDomains
             ->columnName('domain')
             ->nullable()
             ->makePrimaryKey()
-            ->build();
-        $builder->createField('enrichmentDate', 'datetime')
-            ->columnName('enrichment_date')
-            ->nullable()
             ->build();
         //        $builder->createField('codeStatusRequest', 'integer')
         //            ->columnName('code_status_request')
@@ -73,7 +68,6 @@ class FloodlightCompanyDomains
                 [
                     'domain',
                     'is_primary_domain',
-                    'enrichmentDate',
                     'dateAdded',
                     'dateModified',
                 ]
@@ -82,7 +76,6 @@ class FloodlightCompanyDomains
                 [
                     'domain',
                     'is_primary_domain',
-                    'enrichmentDate',
                     'dateAdded',
                     'dateModified',
                 ]
@@ -143,16 +136,6 @@ class FloodlightCompanyDomains
     public function getIsPrimaryDomain(): bool
     {
         return $this->isPrimaryDomain;
-    }
-
-    public function getEnrichmentDate(): ?\DateTime
-    {
-        return $this->enrichmentDate;
-    }
-
-    public function setEnrichmentDate(?\DateTime $enrichmentDate): void
-    {
-        $this->enrichmentDate = $enrichmentDate;
     }
 
     //    public function getCodeStatusRequest(): ?int

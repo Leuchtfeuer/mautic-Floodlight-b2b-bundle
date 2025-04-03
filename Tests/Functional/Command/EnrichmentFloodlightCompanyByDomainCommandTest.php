@@ -175,8 +175,8 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotNull($newCompanyDomains[0]->getEnrichmentDate());
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotNull($company->getFieldValue('f4b_enrichment_date'));
+        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
         $newCompany = $newCompanyDomains[0]->getCompany();
         $this->assertArrayHasKey('companyname', $response);
         $this->assertArrayHasKey('companystate_code', $response);
@@ -244,8 +244,8 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $companies);
         $this->assertNotEmpty($companies);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($newCompanyDomains[0]->getEnrichmentDate());
-        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
+        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
 
         $commandTester->execute(['--by-domain' => 1]);
 
@@ -255,8 +255,8 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($newCompanyDomains[0]->getEnrichmentDate());
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
+        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
         $newCompany = $newCompanyDomains[0]->getCompany();
         $this->assertArrayHasKey('companyname', $response);
         $this->assertArrayHasKey('companystate_code', $response);
@@ -314,8 +314,8 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $companies);
         $this->assertNotEmpty($companies);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($newCompanyDomains[0]->getEnrichmentDate());
-        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
+        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
 
         $commandTester->execute(['--by-domain' => 1]);
 
@@ -324,8 +324,8 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($newCompanyDomains[0]->getEnrichmentDate());
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
+        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
         $newCompany = $newCompanyDomains[0]->getCompany();
         $this->assertSame($newCompany->getName(), $localCompany->getName());
         $this->assertEmpty($newCompany->getFieldValue('f4b_companystate_code'));
@@ -362,9 +362,9 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $companies);
         $this->assertNotEmpty($companies);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($newCompanyDomains[0]->getEnrichmentDate());
+        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
         //        $this->assertNotSame($newCompanyDomains[0]->getCodeStatusRequest(), 404);
-        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
 
         $commandTester->execute(['--by-domain' => 1]);
 
@@ -373,8 +373,8 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($newCompanyDomains[0]->getEnrichmentDate());
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
+        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
         //        $this->assertSame($newCompanyDomains[0]->getCodeStatusRequest(), 404);
     }
 
@@ -413,10 +413,10 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertNotEmpty($companies);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[1]);
-        $this->assertNotEmpty($newCompanyDomains[0]->getEnrichmentDate());
-        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
-        $this->assertNotEmpty($newCompanyDomains[1]->getEnrichmentDate());
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[1]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotEmpty($company1->getFieldValue('f4b_enrichment_date'));
+        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company1->getFieldValue('f4b_enrichment_date'));
+        $this->assertNotEmpty($company2->getFieldValue('f4b_enrichment_date'));
+        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company2->getFieldValue('f4b_enrichment_date'));
         $this->assertEmpty($newCompanyDomains[0]->getCompany()->getFieldValue('f4b_companyfloodlight_id'));
         $this->assertEmpty($newCompanyDomains[0]->getCompany()->getFieldValue('f4b_companystate_code'));
         $this->assertArrayHasKey('companyname', $response);
@@ -436,8 +436,8 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertCount(2, $newCompanyDomains);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
         //        $this->assertSame($newCompanyDomains[0]->getCodeStatusRequest(), 404);
-        $this->assertNotEmpty($newCompanyDomains[0]->getEnrichmentDate());
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $newCompanyDomains[0]->getEnrichmentDate()->format('Y-m-d H:i:s'));
+        $this->assertNotEmpty($company1->getFieldValue('f4b_enrichment_date'));
+        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company1->getFieldValue('f4b_enrichment_date'));
     }
 
     private function executeCommand(FloodlightService $floodlightServiceMock): CommandTester

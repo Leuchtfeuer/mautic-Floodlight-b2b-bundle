@@ -79,12 +79,6 @@ class CompanyDomainsTest extends MauticMysqlTestCase
         $this->assertInstanceOf(\DateTime::class, $this->companyDomain->getDateModified());
     }
 
-    public function testSetEnrichmentDate(): void
-    {
-        $this->companyDomain->setEnrichmentDate(new \DateTime());
-        $this->assertInstanceOf(\DateTime::class, $this->companyDomain->getEnrichmentDate());
-    }
-
     public function testSetDateAdded(): void
     {
         $this->companyDomain->setDateAdded(new \DateTime());
