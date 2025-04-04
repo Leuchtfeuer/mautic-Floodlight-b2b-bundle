@@ -128,4 +128,9 @@ class FloodlightService implements FloodlightServiceInterface
 
         return $this->makeRequest($url);
     }
+
+    public function getAuthorizationStatus(){
+        $url = sprintf('%s/%s/auth/usage', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION);
+        return $this->makeRequest($url);
+    }
 }

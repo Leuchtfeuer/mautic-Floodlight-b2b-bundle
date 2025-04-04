@@ -124,4 +124,62 @@ class FloodlightServiceTest extends TestCase
         self::assertSame([['foo' => 'bar'], 'statusRequestCode' => 200], $result);
         self::assertIsArray($result);
     }
+
+    public function testGetFloodlightKeyValidationStatusUnauthorized (){
+        $client            = $this->createMock(ApiClient::class);
+        $responseInterface = $this->createMock(ResponseInterface::class);
+        $guzzleClient      = $this->createMock(Client::class);
+        $logger            = $this->createMock(LoggerInterface::class);
+        $stream            = $this->createMock(StreamInterface::class);
+
+        $stream->expects(self::any())
+            ->method('getContents')
+            ->willReturn('{"statusCode": 401, "timestamp": "2025-04-04T06:46:53.840Z", "message": "Unauthorized", "path": "/v1/auth/usage"}');
+        $guzzleClient->expects(self::any())
+            ->method('request')
+            ->willReturn($responseInterface);
+        $client->expects(self::any())
+            ->method('getClient')
+            ->willReturn($guzzleClient);
+        $responseInterface->expects(self::any())
+            ->method('getStatusCode')
+            ->willReturn(401);
+        $responseInterface->expects(self::any())
+            ->method('getBody')
+            ->willReturn($stream);
+
+        $service = new FloodlightService($client, $logger);
+        $result  = $service->getAuthorizationStatus();
+
+        self::assertSame([
+            'statusCode' => 401,
+            'timestamp' => '2025-04-04T06:46:53.840Z',
+            'message' => 'Unauthorized',
+            'path' => '/v1/auth/usage',
+            'statusRequestCode' => 401
+        ], $result);
+    }
+
+    /*
+     * {
+    "statusCode": 401,
+    "timestamp": "2025-04-04T06:46:53.840Z",
+    "message": "Unauthorized",
+    "path": "/v1/auth/usage"
+    }
+    Valid:
+    {
+        "remaining": 996,
+        "limit": 1000,
+        "free": false,
+        "next_renewal": "2025-04-30T22:00:00.000Z"
+    }
+    Exeeded:
+    {
+        "remaining": 0,
+        "limit": 1000,
+        "free": false,
+        "next_renewal": "2025-04-30T22:00:00.000Z"
+    }
+     */
 }
