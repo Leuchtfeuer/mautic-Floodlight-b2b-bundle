@@ -11,7 +11,9 @@ Mautic.verifyFloodlightApiKey = function (btn) {
     //apiKeyValue bekommen
     //mQuery(btn).prop('disabled', true);
     //mQuery(btn).prop('disabled', false);
-    var apikey = mQuery('#integration_details_apiKeys_apikey').val();
+    console.log('verifyFloodlightApiKey');
+    var apikey = mQuery('#integration_config_apiKeys_api_key').val();
+    console.log('apiKeyValue: ' + apikey);
     this.makeValidationFloodlightRequest(apikey);
 
     //controller starten mit api key passed
@@ -25,7 +27,7 @@ Mautic.verifyFloodlightApiKey = function (btn) {
 };
 
 Mautic.makeValidationFloodlightRequest = function(apikey) {
-    var query = "action=plugin:leuchtfeuerEmailPresets:getThemeConfig&apiKey=" + apikey;
+    var query = "action=plugin:leuchtfeuerFloodlightB2B:verifyFloodlightApiKey&apiKey=" + apikey;
     mQuery.ajax({
         url: mauticAjaxUrl,
         type: "GET",
@@ -34,11 +36,9 @@ Mautic.makeValidationFloodlightRequest = function(apikey) {
         success: (response, status, error) => {
             if (error.status === 204) {
                 console.log('request done 204')
-                this.resetPresetFields()
             }
             else {
                 console.log('request done success')
-                this.fillPresetFields(response)
             }
         },
         error: (response) => {

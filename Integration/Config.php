@@ -75,4 +75,21 @@ class Config
     {
         return true;
     }
+    
+    /**
+     * Checks if strict GDPR mode is enabled
+     * 
+     * @return bool
+     */
+    public function isStrictGdprMode(): bool
+    {
+        try {
+            $integration = $this->getIntegrationEntity();
+            $featureSettings = $integration->getFeatureSettings();
+            
+            return !empty($featureSettings['integration']['strict_gdpr']) && (bool) $featureSettings['integration']['strict_gdpr'];
+        } catch (IntegrationNotFoundException) {
+            return false;
+        }
+    }
 }
