@@ -3,15 +3,13 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 
 use GuzzleHttp\Exception\ClientException;
-use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\HttpFactory;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\CredentialsIterface;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\FloodlightCredentialsIterface;
+use Symfony\Component\HttpFoundation\Response;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
+use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\HttpFactory;
 
 class FloodlightService implements FloodlightServiceInterface
 {
@@ -19,10 +17,8 @@ class FloodlightService implements FloodlightServiceInterface
 
     public function __construct(
         private ApiClient $client,
-        private LoggerInterface $logger,
-        private FloodlightCredentialsIterface $credentials
+        private LoggerInterface $logger
     ) {
-        $this->configureApiClient($this->credentials);
     }
 
     public function getAPIClient(): ApiClient
@@ -157,7 +153,7 @@ class FloodlightService implements FloodlightServiceInterface
     /**
      * Verarbeitet das Ergebnis der API-Key-Validierung und gibt eine entsprechende Meldung zurück
      */
-    private function handleAuthorizationResult(ResponseInterface $result): string
+    private function handleAuthorizationResult(ResponseInterface $result): JsonResponse
     {
         // Prüfe auf ungültigen API-Key (401 Unauthorized)
         $statusCode = $result->getStatusCode();
@@ -165,35 +161,29 @@ class FloodlightService implements FloodlightServiceInterface
             return new JsonResponse(['message' => 'API key invalid'], Response::HTTP_UNAUTHORIZED);
         }
 
-        // Prüfe auf vorhandene 'remaining' Property
-        if (!isset($result['remaining'])) {
-            return 'Validation did not work';
+        $contents = $result->getBody()->getContents();
+        $data = json_decode($contents, true);
+        // Limit exceeded
+        if ($statusCode === 200 && isset($data['remaining']) && $data['remaining'] === 0) {
+            return new JsonResponse(['message' => 'API key valid, but quota exceeded for this period.'], Response::HTTP_TOO_MANY_REQUESTS);
         }
 
-        // Prüfe auf überschrittenes Quota
-        if ($result['remaining'] === 0) {
-            return 'API key valid, but quota exceeded for this period.';
+        // Remaining requests left
+        if ($statusCode === 200 && isset($data['remaining']) && $data['remaining'] >= 0) {
+            return new JsonResponse(['message' => 'API key valid, '.$data['remaining'].' API calls remaining for this period.'], Response::HTTP_OK);
         }
 
-        // Gültiger API-Key mit verbleibenden Aufrufen
-        return sprintf(
-            'API key valid, %d API calls remaining for this period.',
-            $result['remaining']
-        );
+        //Non of the cases
+        return new JsonResponse(['message' => 'Something went wrong with your validation: '.$statusCode], Response::HTTP_BAD_REQUEST);
     }
 
     /**
      * Prüft den Status der API-Autorisierung und gibt eine lesbare Meldung zurück
      */
-    public function validateApiKey(): string
+    public function validateApiKey(): JsonResponse
     {
         //if ($this->isAPIKeySet())
         $result = $this->getAuthorizationStatus();
         return $this->handleAuthorizationResult($result);
-    }
-
-    public function configureApiClient(Credentials $credentials): void
-    {
-        $this->client->setClient((new HttpFactory())->getClient($credentials));
     }
 }

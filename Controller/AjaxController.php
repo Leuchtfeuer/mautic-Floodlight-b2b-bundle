@@ -2,7 +2,9 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Controller;
 
+use http\Env\Response;
 use Mautic\CoreBundle\Controller\AjaxController as CommonAjaxController;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ValidationCredentials;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,13 +17,15 @@ class AjaxController extends CommonAjaxController
      *
      * @return JsonResponse
      */
-    public function verifyFloodlightApiKeyAction(Request $request, FloodlightService $floodlightService): string
+    public function verifyFloodlightApiKeyAction(Request $request, FloodlightService $floodlightService, ValidationCredentials $credentials): JsonResponse
     {
 
         //$apiKey = $request->get('apikey');
         $apiKey = $request->query->get('apiKey');
-        $floodlightService->configureApiClient($apiKey);
-        return $floodlightService->validateApiKey($apiKey);
+        $credentials->setApiKey($apiKey);
+        $apiClient = $floodlightService->getAPIClient();
+        $apiClient->setCredentials($credentials);
+        return $floodlightService->validateApiKey();
 
         /*
         if (empty($apiKey)) {

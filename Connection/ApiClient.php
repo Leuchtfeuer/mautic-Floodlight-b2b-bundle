@@ -9,22 +9,29 @@ use Mautic\IntegrationsBundle\Exception\PluginNotConfiguredException;
 
 class ApiClient
 {
-    private ClientInterface $client;
+    public function __construct(
+        private Credentials $credentials
+    ) {
+    }
 
     /**
      * @throws PluginNotConfiguredException
      */
+    private function getCredentials(): AuthCredentialsInterface
+    {
+        return $this->credentials;
+    }
 
     /**
      * @throws PluginNotConfiguredException
      */
     public function getClient(): ClientInterface
     {
-        return $this->client;
+        return (new HttpFactory())->getClient($this->getCredentials());
     }
 
-    public function setClient(ClientInterface $client): void
+    public function setCredentials(Credentials $credentials): void
     {
-        $this->client = $client;
+        $this->credentials = $credentials;
     }
 }

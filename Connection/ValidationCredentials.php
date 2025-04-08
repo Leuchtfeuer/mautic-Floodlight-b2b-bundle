@@ -8,13 +8,9 @@ use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\Credentials\HeaderCredentials
 use Mautic\IntegrationsBundle\Helper\IntegrationsHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
-class ValidationCredentials implements HeaderCredentialsInterface
+class ValidationCredentials extends Credentials
 {
-    public function __construct(
-        private string $apiKey,
-    ) {
-    }
-
+    private string $apiKey;
     public function getKeyName(): string
     {
         return 'Authorization';
@@ -25,5 +21,10 @@ class ValidationCredentials implements HeaderCredentialsInterface
 
         
         return 'Bearer ' . $this->apiKey;
+    }
+
+    public function setApiKey(string $apiKey): void
+    {
+        $this->apiKey = $apiKey;
     }
 }
