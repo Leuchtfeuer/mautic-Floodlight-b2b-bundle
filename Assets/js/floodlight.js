@@ -8,22 +8,18 @@
  */
 
 Mautic.verifyFloodlightApiKey = function (btn) {
-    //apiKeyValue bekommen
-    //mQuery(btn).prop('disabled', true);
-    //mQuery(btn).prop('disabled', false);
-    //console.log('verifyFloodlightApiKey');
     var apikey = mQuery('#integration_config_apiKeys_api_key').val();
-    //console.log('apiKeyValue: ' + apikey);
+    
+    if (!apikey || apikey.trim() === '') {
+        mQuery('#integration_config_apiKeys_verify_floodlight_api_key').siblings('.api-validation-message').remove();
+        
+        mQuery('#integration_config_apiKeys_verify_floodlight_api_key').after(
+            '<div class="api-validation-message text-danger mt-2">No API key provided</div>'
+        );
+        return;
+    }
+    
     this.makeValidationFloodlightRequest(apikey);
-
-    //controller starten mit api key passed
-    //response
-    //make decision (3 cases)
-    //An ui geben
-    //ggf in Datenbank speichern
-
-
-    //firewall vorhanden (bruteforce) (kann wirklich jeder brwowser floodlight aufrufen)
 };
 
 Mautic.makeValidationFloodlightRequest = function(apikey) {

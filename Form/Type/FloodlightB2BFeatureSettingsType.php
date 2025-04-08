@@ -17,6 +17,7 @@ class FloodlightB2BFeatureSettingsType extends AbstractType
             'attr'  => [
                 'tooltip' => 'leuchtfeuerfloodlightb2b.form.config.floodlight.strict_gdpr_mode.tooltip',
             ],
+            'data' => false,
         ]);
     }
 }

@@ -36,7 +36,7 @@ class FloodlightB2BAuthType extends AbstractType
                 'label' => 'mautic.plugin.floodlight.verify_api',
                 'attr'  => [
                     'class'   => 'btn btn-primary',
-                    'style'   => 'margin-bottom: 10px',
+                    'style'   => 'margin-bottom: 10px; padding-left: 30px; padding-right: 30px;',
                     'onclick' => 'Mautic.verifyFloodlightApiKey(this)',
                 ],
             ]
