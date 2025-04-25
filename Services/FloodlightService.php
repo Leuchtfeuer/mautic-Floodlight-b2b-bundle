@@ -3,9 +3,13 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 
 use GuzzleHttp\Exception\ClientException;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials;
+use Symfony\Component\HttpFoundation\Response;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\HttpFactory;
 
 class FloodlightService implements FloodlightServiceInterface
 {
@@ -15,6 +19,11 @@ class FloodlightService implements FloodlightServiceInterface
         private ApiClient $client,
         private LoggerInterface $logger
     ) {
+    }
+
+    public function getAPIClient(): ApiClient
+    {
+        return $this->client;
     }
 
     public const FLOODLIGHT_VERSION = 'v1';
@@ -127,5 +136,54 @@ class FloodlightService implements FloodlightServiceInterface
         $url = sprintf('%s/%s/companies/domain/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ipHash);
 
         return $this->makeRequest($url);
+    }
+
+    /**
+     * Prüft den Status der API-Autorisierung
+     * 
+     * @return array<mixed>
+     */
+    public function getAuthorizationStatus(): ResponseInterface
+    {
+        $url = sprintf('%s/%s/auth/usage', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION);
+        $response = $this->makeRequest($url);
+        return $response;
+    }
+
+    /**
+     * Verarbeitet das Ergebnis der API-Key-Validierung und gibt eine entsprechende Meldung zurück
+     */
+    private function handleAuthorizationResult(ResponseInterface $result): JsonResponse
+    {
+        // Prüfe auf ungültigen API-Key (401 Unauthorized)
+        $statusCode = $result->getStatusCode();
+        if ($statusCode === 401) {
+            return new JsonResponse(['message' => 'API key invalid'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $contents = $result->getBody()->getContents();
+        $data = json_decode($contents, true);
+        // Limit exceeded
+        if ($statusCode === 200 && isset($data['remaining']) && $data['remaining'] === 0) {
+            return new JsonResponse(['message' => 'API key valid, but quota exceeded for this period.'], Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
+        // Remaining requests left
+        if ($statusCode === 200 && isset($data['remaining']) && $data['remaining'] >= 0) {
+            return new JsonResponse(['message' => 'API key valid, '.$data['remaining'].' API calls remaining for this period.'], Response::HTTP_OK);
+        }
+
+        //Non of the cases
+        return new JsonResponse(['message' => 'Something went wrong with your validation: '.$statusCode], Response::HTTP_BAD_REQUEST);
+    }
+
+    /**
+     * Prüft den Status der API-Autorisierung und gibt eine lesbare Meldung zurück
+     */
+    public function validateApiKey(): JsonResponse
+    {
+        //if ($this->isAPIKeySet())
+        $result = $this->getAuthorizationStatus();
+        return $this->handleAuthorizationResult($result);
     }
 }

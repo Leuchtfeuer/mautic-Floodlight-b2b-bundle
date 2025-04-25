@@ -29,4 +29,9 @@ class ApiClient
     {
         return (new HttpFactory())->getClient($this->getCredentials());
     }
+
+    public function setCredentials(Credentials $credentials): void
+    {
+        $this->credentials = $credentials;
+    }
 }
