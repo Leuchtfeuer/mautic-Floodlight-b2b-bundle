@@ -224,7 +224,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->client->request('GET', '/mtracking.gif');
         $lastItem          = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
         $lastCompany       = $this->companyRepo->findOneBy([], ['id' => 'DESC']);
-        $lastCompanyDomain = $this->companyDomainRepo->findOneBy([], ['id' => 'DESC']);
+        $lastCompanyDomain = $this->companyDomainRepo->findOneBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         assert($lastItem instanceof FloodlightLeadDomains);
         $this->assertEquals(1, $lastItem->getCount());
         $this->assertEquals('blacklisted', $lastItem->getDomain());
@@ -269,7 +269,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertNotEmpty($ipLeadDomains);
         $this->assertContains('id', $ipLeadDomains);
         $this->assertContains('date_added', $ipLeadDomains);
-        $this->assertContains('type', $ipLeadDomains);
+        $this->assertContains('lookup_type', $ipLeadDomains);
     }
 
     public function testIfTableIsInstalledCompanyDomains(): void
@@ -278,7 +278,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->client->request('GET', '/mtracking.gif');
         $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->getTableColumns();
         $this->assertNotEmpty($companyDomains);
-        $this->assertContains('id', $companyDomains);
         $this->assertContains('domain', $companyDomains);
         $this->assertContains('date_added', $companyDomains);
         $this->assertContains('date_modified', $companyDomains);

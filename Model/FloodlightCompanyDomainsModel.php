@@ -297,12 +297,32 @@ class FloodlightCompanyDomainsModel extends FormModel
      */
     public function getCompanyDomainToEnrichment()
     {
-        $qb = $this->getRepository()->createQueryBuilder('cd');
-        $qb->select('cd')
-            ->where('cd.enrichmentDate IS NULL OR  cd.enrichmentDate = :enrichmentDate')
-            ->andWhere('cd.domain IS NOT NULL')
-            ->setParameter('enrichmentDate', '1970-01-01 00:00:00');
-
-        return $qb->getQuery()->getResult();
+        // Verwende eine einfachere Zwei-Schritt-Methode
+        try {
+            // Schritt 1: Finde alle Company-IDs mit nativer SQL-Abfrage
+            $connection = $this->em->getConnection();
+            $query = $connection->createQueryBuilder()
+                ->select('id')
+                ->from(MAUTIC_TABLE_PREFIX.'companies', 'c')
+                ->where('c.f4b_enrichment_date IS NULL OR c.f4b_enrichment_date = :enrichmentDate')
+                ->setParameter('enrichmentDate', '1970-01-01 00:00:00');
+            
+            $companyIds = $query->executeQuery()->fetchFirstColumn();
+            
+            if (empty($companyIds)) {
+                return [];
+            }
+            
+            // Schritt 2: Nutze die Doctrine-Repository-Methode mit IN-Abfrage
+            return $this->getRepository()->createQueryBuilder('cd')
+                ->where('cd.company IN (:companyIds)')
+                ->andWhere('cd.domain IS NOT NULL')
+                ->setParameter('companyIds', $companyIds)
+                ->getQuery()
+                ->getResult();
+        } catch (\Exception $e) {
+            dump(['Error' => $e->getMessage()]);
+            throw $e;
+        }
     }
 }

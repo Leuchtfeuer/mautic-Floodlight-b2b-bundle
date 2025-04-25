@@ -42,11 +42,6 @@ class CompanyDomainsTest extends MauticMysqlTestCase
         $this->companyDomain = $companyDomain;
     }
 
-    public function testGetId(): void
-    {
-        $this->assertIsNumeric($this->companyDomain->getId());
-    }
-
     public function testGetCompany(): void
     {
         $this->assertInstanceOf(\Mautic\LeadBundle\Entity\Company::class, $this->companyDomain->getCompany());
@@ -82,12 +77,6 @@ class CompanyDomainsTest extends MauticMysqlTestCase
     {
         $this->companyDomain->setDateModified(new \DateTime());
         $this->assertInstanceOf(\DateTime::class, $this->companyDomain->getDateModified());
-    }
-
-    public function testSetEnrichmentDate(): void
-    {
-        $this->companyDomain->setEnrichmentDate(new \DateTime());
-        $this->assertInstanceOf(\DateTime::class, $this->companyDomain->getEnrichmentDate());
     }
 
     public function testSetDateAdded(): void

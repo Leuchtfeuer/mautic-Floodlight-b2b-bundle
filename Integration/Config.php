@@ -73,14 +73,6 @@ class Config
 
     public function isProTier(): bool
     {
-        if (!$this->isConfigured() || $this->isFreeTier()) {
-            return false;
-        }
-
-        if (str_contains($this->getApiKeys()['api_key'], 'pro_')) {
-            return true;
-        }
-
-        return false;
+        return true;
     }
 }

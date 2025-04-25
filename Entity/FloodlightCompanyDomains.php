@@ -11,7 +11,6 @@ use Symfony\Component\Validator\Mapping\ClassMetadata as ValidatorClassMetadata;
 
 class FloodlightCompanyDomains
 {
-    private ?int $id = null;
     private Company $company;
 
     private bool $isPrimaryDomain;
@@ -20,7 +19,6 @@ class FloodlightCompanyDomains
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
 
-    private ?\DateTime $enrichmentDate = null;
 
     //    private ?int $codeStatusRequest = null;
 
@@ -32,19 +30,15 @@ class FloodlightCompanyDomains
             ->addIndex(['company_id'], 'company_domains_company_id')
             ->addIndex(['domain'], 'company_domains_domain');
 
-        $builder->addId();
-
         $builder->createManyToOne('company', Company::class)
+            ->makePrimaryKey()
             ->addJoinColumn('company_id', 'id', false, false, 'CASCADE')
             ->build();
 
         $builder->createField('domain', 'string')
             ->columnName('domain')
             ->nullable()
-            ->build();
-        $builder->createField('enrichmentDate', 'datetime')
-            ->columnName('enrichment_date')
-            ->nullable()
+            ->makePrimaryKey()
             ->build();
         //        $builder->createField('codeStatusRequest', 'integer')
         //            ->columnName('code_status_request')
@@ -72,32 +66,21 @@ class FloodlightCompanyDomains
         $metadata->setGroupPrefix('company_domains')
             ->addListProperties(
                 [
-                    'id',
                     'domain',
                     'is_primary_domain',
-                    'enrichmentDate',
                     'dateAdded',
                     'dateModified',
-                    //                    'codeStatusRequest',
                 ]
             )
             ->addProperties(
                 [
-                    'id',
                     'domain',
                     'is_primary_domain',
-                    'enrichmentDate',
                     'dateAdded',
                     'dateModified',
-                    //                    'codeStatusRequest',
                 ]
             )
             ->build();
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
     }
 
     public function getCompany(): Company
@@ -153,16 +136,6 @@ class FloodlightCompanyDomains
     public function getIsPrimaryDomain(): bool
     {
         return $this->isPrimaryDomain;
-    }
-
-    public function getEnrichmentDate(): ?\DateTime
-    {
-        return $this->enrichmentDate;
-    }
-
-    public function setEnrichmentDate(?\DateTime $enrichmentDate): void
-    {
-        $this->enrichmentDate = $enrichmentDate;
     }
 
     //    public function getCodeStatusRequest(): ?int

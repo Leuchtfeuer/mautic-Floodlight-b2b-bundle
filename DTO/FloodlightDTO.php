@@ -1042,6 +1042,10 @@ class FloodlightDTO implements DTOInterface
             $newFields['f4b_companystate_code'] = $this->getCompanyStateCode();
             $company->addUpdatedField('f4b_companystate_code', $this->getCompanyStateCode());
         }
+        if (200 === $this->getStatusHttpRequest()) {
+            //$companyDomain->setEnrichmentDate(new \DateTime());
+            $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
+        }
 
         return $company;
     }
@@ -1080,10 +1084,6 @@ class FloodlightDTO implements DTOInterface
             //                $companyDomain->setCodeStatusRequest($this->getStatusHttpRequest());
             //            }
 
-            if (200 === $this->getStatusHttpRequest()) {
-                $companyDomain->setEnrichmentDate(new \DateTime());
-            }
-
             $companyDomain->setDateAdded(new \DateTime());
             $companyDomain->setDateModified(new \DateTime());
 
@@ -1119,7 +1119,7 @@ class FloodlightDTO implements DTOInterface
             $domain = $this->getDomains()[0];
         }
         $ipLeadDomainLookups->setDomain($domain);
-        $ipLeadDomainLookups->setType($this->getCompanyType());
+        $ipLeadDomainLookups->setLookupType($this->getCompanyType());
         $ipLeadDomainLookups->setDateAdded(new \DateTime());
         $ipLeadDomainLookups->setDateLastLookup(new \DateTime());
         $ipLeadDomainLookups->setCount(1);

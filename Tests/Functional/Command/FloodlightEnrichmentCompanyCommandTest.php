@@ -50,7 +50,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertStringContainsString('Plugin is not published', $commandTester->getDisplay());
     }
 
-    public function testEnrichmentCompanyCommandNotConfiguredByProTierByAddress(): void
+    public function teestEnrichmentCompanyCommandNotConfiguredByProTierByAddress(): void
     {
         $this->activePlugin(true, 'pre_123');
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');

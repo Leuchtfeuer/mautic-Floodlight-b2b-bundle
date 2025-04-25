@@ -9,7 +9,7 @@ use Psr\Log\LoggerInterface;
 
 class FloodlightService implements FloodlightServiceInterface
 {
-    private const FLOODLIGHT_API  = 'https://api-dev.floodlight-b2b.com';
+    private const FLOODLIGHT_API  = 'https://api.floodlight-b2b.com';
 
     public function __construct(
         private ApiClient $client,
@@ -68,6 +68,7 @@ class FloodlightService implements FloodlightServiceInterface
     private function makeRequest(string $url): ResponseInterface|false
     {
         try {
+            $myClient = $this->client->getClient();
             return $this->client->getClient()->request('GET', $url);
         } catch (ClientException $e) {
             if ($e->hasResponse()) {
@@ -89,37 +90,42 @@ class FloodlightService implements FloodlightServiceInterface
     }
 
     public function getByIpHash(string $ipHash): bool|array
+
     {
-        $response                      = json_decode(file_get_contents(__DIR__.'/../Tests/fixtures/floodlight.json'), true);
-        $response['statusRequestCode'] = 200;
+        $response   = $this->getCompanyByIpHash($ipHash);
 
-        return $response;
+        // Check if don't have response
 
-        //        $response   = $this->getCompanyByIpHash($ipHash);
-        //
-        //        // Check if don't have response
-        //        if (false === $response) {
-        //            return false;
-        //        }
-        //
-        //        return $this->handleResult($response);
+        if (false === $response) {
+            return false;
+        }
+
+        return $this->handleResult($response);
+    }
+
+    private function getCompanyByIpHash(string $ipHash): ResponseInterface|false
+    {
+        $url = sprintf('%s/%s/companies/hash/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ipHash);
+
+        return $this->makeRequest($url);
     }
 
     public function getByDomain(string $domain): bool|array
     {
-        // fake response
-        $response                      = json_decode(file_get_contents(__DIR__.'/../Tests/fixtures/floodlight.json'), true);
-        $response['statusRequestCode'] = 200;
 
-        return $response;
+        $response   = $this->getCompanyByDomain($domain);
+        // Check if don't have response
 
-        //        $response   = $this->getCompanyByDomain($domain);
-        //
-        //        // Check if don't have response
-        //        if (false === $response) {
-        //            return false;
-        //        }
-        //
-        //        return $this->handleResult($response);
+        if (false === $response) {
+            return false;
+        }
+        return $this->handleResult($response);
+    }
+
+    private function getCompanyByDomain(string $ipHash): ResponseInterface|false
+    {
+        $url = sprintf('%s/%s/companies/domain/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ipHash);
+
+        return $this->makeRequest($url);
     }
 }
