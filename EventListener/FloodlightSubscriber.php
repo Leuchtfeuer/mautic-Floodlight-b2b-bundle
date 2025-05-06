@@ -9,6 +9,7 @@ use Mautic\PageBundle\Event\PageHitEvent;
 use Mautic\PageBundle\PageEvents;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
@@ -74,8 +75,8 @@ class FloodlightSubscriber implements EventSubscriberInterface
         $result           = $this->ipLookupRulesHelper->evaluate($event->getHit(), $dataDomain);
         if (
             false === $result
-            || IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE === $result['status']
-            || IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED === $result['status']
+            || FloodlightLeadDomains::STATUS_BLACKLISTED === $result['status']
+            || FloodlightLeadDomains::STATUS_NO_DATA_FOUND === $result['status']
         ) {
             if (false !== $result) {
                 $this->logger->error('Domain is blacklisted or failed to evaluate: Domain. '.$result['domain'].' status '.$result['status']);

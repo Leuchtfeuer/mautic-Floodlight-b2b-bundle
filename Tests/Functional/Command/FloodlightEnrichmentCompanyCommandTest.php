@@ -349,7 +349,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
         $this->assertEquals($leadDomain1->getId(), $newLeadDomains[0]->getId());
-        $this->assertSame($newLeadDomains[0]->getDomain(), IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE);
+        $this->assertSame($newLeadDomains[0]->getDomain(), FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
         $this->assertNotEmpty($newLeadDomains[0]->getDateLastLookup());
     }
 

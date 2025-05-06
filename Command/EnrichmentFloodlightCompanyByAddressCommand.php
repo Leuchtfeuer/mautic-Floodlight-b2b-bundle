@@ -105,7 +105,7 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
             }
 
             if (Response::HTTP_NOT_FOUND === $result['statusRequestCode']) {
-                $leadDomain->setDomain(IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE);
+                $leadDomain->setDomain(FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
                 $leadDomain->setDateLastLookup(new \DateTime());
                 $leadDomain->setCount($leadDomain->getCount() + 1);
                 $this->floodlightLeadDomainsModel->saveEntity($leadDomain);

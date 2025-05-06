@@ -93,6 +93,8 @@ class FloodlightLeadDomainsModel extends FormModel
             [
                 'contact'   => $lead,
                 'domain'    => $dataDomain['domain'],
+                //ipHash
+                //status
             ]
         );
 
@@ -114,11 +116,39 @@ class FloodlightLeadDomainsModel extends FormModel
             ) {
                 $leadDomain->setIpHash($dataDomain['details']['floodlight']->getIpHash());
             }
+            $leadDomain->setStatus($dataDomain['status'] ?? FloodlightLeadDomains::STATUS_UNKNOWN_ERROR);
         }
         assert($leadDomain instanceof FloodlightLeadDomains);
         $leadDomain->setCount($leadDomain->getCount() + 1);
+        $leadDomain->setStatus($dataDomain['status'] ?? $leadDomain->getStatus());
         $this->em->persist($leadDomain);
         $this->em->flush();
+
+        if($leadDomain->getStatus() !== FloodlightLeadDomains::STATUS_RETRY) {
+            $domainToDelete = $this->getRepository()->findOneBy(
+                [
+                    'contact'   => $lead,
+                    'domain'    => $dataDomain['domain'],
+                    //status => FloodlightLeadDomains::STATUS_RETRY
+                ]
+            );
+
+            if (!empty($domainToDelete)) {
+                $this->getRepository()->deleteEntity($domainToDelete);
+            }
+        }
+
+        else {
+            if ($leadDomain->getCount() >= 3) {
+                $leadDomain->setStatus(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED);
+            }
+        }
+
+        //Status von aktuellem request checken
+        //Falls 404 oder 200
+            //Checken ob Eintrag für gleichen Contact und IP Hash mit Status retry existiert --> löschen
+        //Falls 200 und count <= 3
+            //Status auf retry limit exceeded setzen
 
         return $leadDomain;
     }

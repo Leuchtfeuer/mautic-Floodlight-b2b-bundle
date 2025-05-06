@@ -16,9 +16,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class IpLookupRulesHelper
 {
-    public const LEAD_DOMAINS_STATUS_BLACKLISTED = 'blacklisted';
-    public const LEAD_DOMAINS_STATUS_FAILURE     = 'failure';
-    public const LEAD_DOMAINS_STATUS_VALID       = 'valid';
+    //public const LEAD_DOMAINS_STATUS_BLACKLISTED = 'blacklisted';
+    //public const LEAD_DOMAINS_STATUS_FAILURE     = 'failure';
+    //public const LEAD_DOMAINS_STATUS_VALID       = 'valid';
 
     private ParameterLoader $parameterLoader;
 
@@ -140,19 +140,21 @@ class IpLookupRulesHelper
         if (empty($domain) && !empty($floodlightDTO->getDomains())) {
             $domain = $floodlightDTO->getDomains()[0];
         }
-        $status  = $this->getStatusDomain($domain);
+        
+        // Bestimme zuerst den allgemeinen Status basierend auf der Domain
+        $status = $this->getStatusDomain($domain);
 
-        if (self::LEAD_DOMAINS_STATUS_BLACKLISTED === $status) {
-            $domain = $status;
-        } elseif (Response::HTTP_NOT_FOUND === $data['statusRequestCode']) {
-            $domain          = self::LEAD_DOMAINS_STATUS_FAILURE;
-            $status          = self::LEAD_DOMAINS_STATUS_FAILURE;
+        // HTTP-Status überschreibt den Domain-Status bei Spezialfällen
+        if (Response::HTTP_NOT_FOUND === $data['statusRequestCode']) {
+            $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+            $domain = null;
         } elseif (Response::HTTP_ACCEPTED === $data['statusRequestCode']) {
+            $status = FloodlightLeadDomains::STATUS_RETRY;
             $newFloodlightDTO = new FloodlightDTO([]);
             $newFloodlightDTO->setIpHash($floodlightDTO->getIpHash());
             $newFloodlightDTO->setDomains([]);
             $floodlightDTO = $newFloodlightDTO;
-            $domain        = null;
+            $domain = null;
         }
 
         return [
@@ -194,13 +196,17 @@ class IpLookupRulesHelper
             }
         }
 
-        $hostByAddrData  = $this->getDomainByGetHostByAddr($remoteAddr);
-        if (self::LEAD_DOMAINS_STATUS_FAILURE !== $hostByAddrData['status']) {
+        $hostByAddrData = $this->getDomainByGetHostByAddr($remoteAddr);
+        if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $hostByAddrData['status']
+            //&& self::LEAD_DOMAINS_STATUS_FAILURE !== $hostByAddrData['status']
+        ) {
             return $hostByAddrData;
         }
 
         $pyServiceData = $this->getDomainByWhoisPyService($remoteAddr);
-        if (self::LEAD_DOMAINS_STATUS_FAILURE !== $pyServiceData['status']) {
+        if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $pyServiceData['status']
+            //&& self::LEAD_DOMAINS_STATUS_FAILURE !== $pyServiceData['status']
+        ) {
             return $pyServiceData;
         }
 
@@ -212,13 +218,13 @@ class IpLookupRulesHelper
      */
     public function getDomainByGetHostByAddr(string $remoteAddr): array
     {
-        $domain      = gethostbyaddr($remoteAddr);
+        $domain = gethostbyaddr($remoteAddr);
+        
         if (false === $domain) {
             $domain = null;
-        }
-        $status      = $this->getStatusDomain($domain);
-        if (self::LEAD_DOMAINS_STATUS_BLACKLISTED === $status) {
-            $domain = $status;
+            $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+        } else {
+            $status = $this->getStatusDomain($domain);
         }
 
         return [
@@ -236,14 +242,12 @@ class IpLookupRulesHelper
         $domainWhois = $this->whoisPyService->getWhoisData($remoteAddr);
         $domain      = '';
         $details     = [];
+        $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+        
         if (!empty($domainWhois) && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
-            $domain      = $domainWhois['company_domain'];
-            $details     = $domainWhois;
-        }
-
-        $status = $this->getStatusDomain($domain);
-        if (self::LEAD_DOMAINS_STATUS_BLACKLISTED === $status) {
-            $domain = $status;
+            $domain = $domainWhois['company_domain'];
+            $details = $domainWhois;
+            $status = $this->getStatusDomain($domain);
         }
 
         return [
@@ -256,18 +260,22 @@ class IpLookupRulesHelper
     /**
      * Returns if the domain is blacklisted, valid or failed.
      *
-     * @return self::LEAD_DOMAINS_STATUS_BLACKLISTED|self::LEAD_DOMAINS_STATUS_FAILURE|self::LEAD_DOMAINS_STATUS_VALID
+     * @return string
      */
     private function getStatusDomain(?string $domain): string
     {
-        if (empty($domain) || $this->isIp($domain)) {
-            return self::LEAD_DOMAINS_STATUS_FAILURE;
+        if (empty($domain)) {
+            return FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+        }
+        
+        if ($this->isIp($domain)) {
+            return FloodlightLeadDomains::STATUS_IP_DOMAIN;
         }
 
         if ($this->leadDomainsModel->isBlackListed($domain)) {
-            return self::LEAD_DOMAINS_STATUS_BLACKLISTED;
+            return FloodlightLeadDomains::STATUS_BLACKLISTED;
         }
 
-        return self::LEAD_DOMAINS_STATUS_VALID;
+        return FloodlightLeadDomains::STATUS_SUCCESS;
     }
 }
