@@ -45,7 +45,7 @@ class PluginInstallSubscriberTest extends MauticMysqlTestCase
             'f4b_companycrunchbase_handle',
             'f4b_companyfloodlight_id',
             'iplookup_whois_json',
-            //            'enrichment_date',
+            //'enrichment_date',
             'companyindustry_tags',
         ];
         foreach ($fields as $field) {

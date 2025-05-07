@@ -89,68 +89,55 @@ class FloodlightLeadDomainsModel extends FormModel
      */
     public function addNewLeadDomainOrCountPlusOneInLeadDomain(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
-        $leadDomain = $this->getRepository()->findOneBy(
-            [
-                'contact'   => $lead,
-                'domain'    => $dataDomain['domain'],
-                //ipHash
-                //status
-            ]
-        );
+        $leadDomain = $this->getLeadDomainByContactDomainStatusAndIphash($lead, $dataDomain);
 
-        if (empty($leadDomain)) {
-            $leadDomain = $this->getEntity();
-            $leadDomain->setContact($lead);
-            if (is_string($dataDomain['domain'])) {
-                $leadDomain->setDomain($dataDomain['domain']);
-            }
-            $leadDomain->setDateAdded(new \DateTime());
-            $leadDomain->setCount(0);
-            $leadDomain->setIpHash('local');
-            if (
-                is_array($dataDomain)
-                && array_key_exists('details', $dataDomain)
-                && is_array($dataDomain['details'])
-                && array_key_exists('floodlight', $dataDomain['details'])
-                && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
-            ) {
-                $leadDomain->setIpHash($dataDomain['details']['floodlight']->getIpHash());
-            }
-            $leadDomain->setStatus($dataDomain['status'] ?? FloodlightLeadDomains::STATUS_UNKNOWN_ERROR);
-        }
-        assert($leadDomain instanceof FloodlightLeadDomains);
-        $leadDomain->setCount($leadDomain->getCount() + 1);
-        $leadDomain->setStatus($dataDomain['status'] ?? $leadDomain->getStatus());
+        // $leadDomain->setStatus($dataDomain['status'] ?? $leadDomain->getStatus());
         $this->em->persist($leadDomain);
         $this->em->flush();
 
-        if($leadDomain->getStatus() !== FloodlightLeadDomains::STATUS_RETRY) {
+        if (FloodlightLeadDomains::STATUS_RETRY !== $leadDomain->getStatus()) {
             $domainToDelete = $this->getRepository()->findOneBy(
                 [
-                    'contact'   => $lead,
-                    'domain'    => $dataDomain['domain'],
-                    //status => FloodlightLeadDomains::STATUS_RETRY
+                    'contact'    => $lead,
+                    'ip_hash'    => $dataDomain['details']['floodlight']->getIpHash(),
+                    'status'     => FloodlightLeadDomains::STATUS_RETRY,
                 ]
             );
 
             if (!empty($domainToDelete)) {
                 $this->getRepository()->deleteEntity($domainToDelete);
             }
-        }
-
-        else {
+        } else {
             if ($leadDomain->getCount() >= 3) {
                 $leadDomain->setStatus(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED);
             }
         }
 
-        //Status von aktuellem request checken
-        //Falls 404 oder 200
-            //Checken ob Eintrag für gleichen Contact und IP Hash mit Status retry existiert --> löschen
-        //Falls 200 und count <= 3
-            //Status auf retry limit exceeded setzen
+        // Status von aktuellem request checken
+        // Falls 404 oder 200
+        // Checken ob Eintrag für gleichen Contact und IP Hash mit Status retry existiert --> löschen
+        // Falls 200 und count <= 3
+        // Status auf retry limit exceeded setzen
 
         return $leadDomain;
+    }
+
+    public function getLeadDomainByContactDomainStatusAndIphash(Lead $lead, array $dataDomain): FloodlightLeadDomains
+    {
+        $floodlightLeadDomain =  $this->getRepository()->findOneBy(
+            [
+                'contact'    => $lead,
+                'domain'     => $dataDomain['domain'],
+                'status'     => $dataDomain['status'],
+                'ip_hash'    => $dataDomain['details']['floodlight']->getIpHash(),
+            ]
+        );
+
+        if (empty($floodlightLeadDomain)) {
+            return $this->floodlightLeadDomainFactory($lead, $dataDomain);
+        }
+
+        return $floodlightLeadDomain;
     }
 
     /**
@@ -234,5 +221,30 @@ class FloodlightLeadDomainsModel extends FormModel
         $company = $companyDomain->getCompany();
         $lead->setPrimaryCompany($company);
         $this->leadModel->saveEntity($lead);
+    }
+
+    private function floodlightLeadDomainFactory($lead, $dataDomain): FloodlightLeadDomains
+    {
+        $leadDomain = $this->getEntity();
+        $leadDomain->setContact($lead);
+        if (is_string($dataDomain['domain'])) {
+            $leadDomain->setDomain($dataDomain['domain']);
+        }
+        $leadDomain->setDateAdded(new \DateTime());
+        $leadDomain->setCount(0);
+        $leadDomain->setIpHash('local');
+        if (
+            is_array($dataDomain)
+            && array_key_exists('details', $dataDomain)
+            && is_array($dataDomain['details'])
+            && array_key_exists('floodlight', $dataDomain['details'])
+            && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
+        ) {
+            $leadDomain->setIpHash($dataDomain['details']['floodlight']->getIpHash());
+        }
+        $leadDomain->setStatus($dataDomain['status'] ?? FloodlightLeadDomains::STATUS_UNKNOWN_ERROR);
+        assert($leadDomain instanceof FloodlightLeadDomains);
+        $leadDomain->setCount($leadDomain->getCount() + 1);
+        return $leadDomain;
     }
 }

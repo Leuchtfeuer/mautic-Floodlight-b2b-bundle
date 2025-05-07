@@ -125,6 +125,7 @@ class IpLookupRulesHelper
             '404',
             '202',
             '200',
+            //'401'
         ];
 
         if (
