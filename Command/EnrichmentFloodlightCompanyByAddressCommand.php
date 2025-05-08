@@ -50,12 +50,6 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
             return 0;
         }
 
-        if (!$this->config->isProTier()) {
-            $output->writeln('<error>Plugin isn\'t pro tier</error>');
-
-            return 0;
-        }
-
         $leadDomains = $this->floodlightLeadDomainsModel->getLeadDomainToEnrichement();
 
         if (empty($leadDomains)) {
@@ -78,7 +72,7 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
                 $output->writeln('<comment>===============================================================</comment>');
             }
 
-            $result = $this->flooglightService->getByIpHash($ipHash);
+            $result = $this->flooglightService->get($ipHash);
 
             // test it
             if (is_bool($result)) {
@@ -105,7 +99,11 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
             }
 
             if (Response::HTTP_NOT_FOUND === $result['statusRequestCode']) {
-                $leadDomain->setDomain(FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
+                //Delete entry
+                //Schauen, ob bereits so ein entry existiert
+                //Erstellen oder updaten
+                //$leadDomain->setDomain(FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
+                $leadDomain->setStatus(FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
                 $leadDomain->setDateLastLookup(new \DateTime());
                 $leadDomain->setCount($leadDomain->getCount() + 1);
                 $this->floodlightLeadDomainsModel->saveEntity($leadDomain);

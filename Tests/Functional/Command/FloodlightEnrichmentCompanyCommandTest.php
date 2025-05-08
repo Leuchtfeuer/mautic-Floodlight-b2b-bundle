@@ -31,7 +31,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
     public function testEnrichmentCompanyCommandNoCompaniesByAddress(): void
     {
-        $this->activePlugin(true, 'pro_123');
+        $this->activePlugin();
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich', ['--by-address' => 1]);
         $this->assertStringContainsString('No companies to enrich', $commandTester->getDisplay());
     }
@@ -358,7 +358,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
      * @throws OptimisticLockException
      * @throws NotSupported
      */
-    private function activePlugin(bool $isPublished = true, string $apiKey = 'PRO_123'): void
+    private function activePlugin(bool $isPublished = true, string $apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00'): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         assert($reloadFacade instanceof ReloadFacade);

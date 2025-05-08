@@ -47,8 +47,8 @@ class FloodlightLeadDomains
         $builder->setTable('f4b_lead_ip_lookups')
             ->setCustomRepositoryClass(FloodlightLeadDomainsRepository::class)
             ->addIndex(['contact_id'], 'lead_domains_lead_id')
-            ->addIndex(['domain'], 'lead_domains_domain')
-            ->addIndex(['ip_hash'], 'lead_domains_ip_hash');
+            ->addIndex(['domain'], 'lead_domains_domain');
+            //->addIndex(['ip_hash'], 'lead_domains_ip_hash');
 
         $builder->addBigIntIdField();
         $builder->addContact(true, 'CASCADE');
@@ -63,6 +63,7 @@ class FloodlightLeadDomains
 
         $builder->createField('ipHash', 'string')
             ->columnName('ip_hash')
+            ->nullable()
             ->build();
 
         $builder->createField('lookupType', 'string')

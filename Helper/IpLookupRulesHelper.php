@@ -149,6 +149,7 @@ class IpLookupRulesHelper
         if (Response::HTTP_NOT_FOUND === $data['statusRequestCode']) {
             $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
             $domain = null;
+            $testIpHash = $floodlightDTO->getIpHash();
         } elseif (Response::HTTP_ACCEPTED === $data['statusRequestCode']) {
             $status = FloodlightLeadDomains::STATUS_RETRY;
             $newFloodlightDTO = new FloodlightDTO([]);

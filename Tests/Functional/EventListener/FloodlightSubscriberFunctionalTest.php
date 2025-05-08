@@ -329,7 +329,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $company2);
 
         // Hit 3 with the same lead, save lead domain and company domain
-        $hit3              = $this->createHit($lead);
+        $hit3              = $this->createHit($lead, '217.91.35.16');
         $pageHitEventMock3 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
         $pageHitEventMock3->expects($this->exactly(4))->method('getHit')->willReturn($hit3);
         $pageHitEventMock3->expects($this->exactly(1))->method('getRequest')->willReturn($request);

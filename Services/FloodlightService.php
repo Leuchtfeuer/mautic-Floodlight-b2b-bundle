@@ -53,6 +53,7 @@ class FloodlightService implements FloodlightServiceInterface
         ];
 
         $statusCode = $response->getStatusCode();
+        $body = $response->getBody();
 
         if (200 === $statusCode || 202 === $statusCode) {
             $content = $response->getBody()->getContents();
