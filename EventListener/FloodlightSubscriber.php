@@ -72,7 +72,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $result           = $this->ipLookupRulesHelper->evaluate($event->getHit(), $dataDomain);
+        $result = $this->ipLookupRulesHelper->evaluate($event->getHit()->getLead(), $dataDomain);
         if (
             false === $result
             || FloodlightLeadDomains::STATUS_BLACKLISTED === $result['status']
