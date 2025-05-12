@@ -328,10 +328,13 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame($company2[0]->getId(), $companyDomainsHit2[0]->getCompany()->getId());
         $this->assertCount(1, $company2);
 
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit2[0]);
+
+
         // Hit 3 with the same lead, save lead domain and company domain
         $hit3              = $this->createHit($lead, '217.91.35.16');
         $pageHitEventMock3 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock3->expects($this->exactly(4))->method('getHit')->willReturn($hit3);
+        $pageHitEventMock3->expects($this->exactly(2))->method('getHit')->willReturn($hit3);
         $pageHitEventMock3->expects($this->exactly(1))->method('getRequest')->willReturn($request);
         $floodlightSubscriber->onPageHit($pageHitEventMock3);
         $leadDomainsHit3    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
@@ -349,12 +352,14 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame($company3[0]->getId(), $companyDomainsHit3[0]->getCompany()->getId());
         $this->assertCount(1, $company3);
 
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit3[0]);
+
         // Hit 4 with the same lead, with different domain, save lead domain and company domain
-        $hit4     = $this->createHit($lead);
+        $hit4     = $this->createHit($lead, '185.145.181.191');
         $request2 = new \Symfony\Component\HttpFoundation\Request();
         $request2->server->set('REMOTE_ADDR', '185.145.181.191');
         $pageHitEventMock4 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock4->expects($this->exactly(2))->method('getHit')->willReturn($hit3);
+        $pageHitEventMock4->expects($this->exactly(2))->method('getHit')->willReturn($hit4);
         $pageHitEventMock4->expects($this->exactly(1))->method('getRequest')->willReturn($request2);
         $floodlightSubscriber->onPageHit($pageHitEventMock4);
         $leadDomainsHit4     = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
@@ -378,16 +383,17 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->persist($leadDomainsHit4[1]);
         $this->em->flush();
 
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit4[1]);
+
         // Test recalculateLeadPrimaryCompany
         $pageHitEventMock5 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock5->expects($this->exactly(4))->method('getHit')->willReturn($hit3);
+        $pageHitEventMock5->expects($this->exactly(2))->method('getHit')->willReturn($hit3);
         $pageHitEventMock5->expects($this->exactly(1))->method('getRequest')->willReturn($request2);
         $floodlightSubscriber->onPageHit($pageHitEventMock5);
         $currentLead = $this->em->getRepository(Lead::class)->find($lead->getId());
         $this->assertInstanceOf(Lead::class, $currentLead);
         $this->assertInstanceOf(Company::class, $currentLead->getPrimaryCompany());
         $this->assertSame($currentLead->getPrimaryCompany()->getId(), $company4[1]->getId());
-        //Stimmt das wirklich
     }
 
     //    public function testOnPageHitSaveWithFloodlight()
@@ -536,5 +542,12 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
         }
+    }
+
+    public function setBackDateModifiedByTwoHours(FloodlightLeadDomains $leadDomain): void
+    {
+        $leadDomain->setDateModified(new \DateTime('-2 hours'));
+        $this->em->persist($leadDomain);
+        $this->em->flush();
     }
 }

@@ -21,9 +21,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter;
 
 class IpLookupRulesHelper
 {
-    //public const LEAD_DOMAINS_STATUS_BLACKLISTED = 'blacklisted';
-    //public const LEAD_DOMAINS_STATUS_FAILURE     = 'failure';
-    //public const LEAD_DOMAINS_STATUS_VALID       = 'valid';
 
     private ParameterLoader $parameterLoader;
 

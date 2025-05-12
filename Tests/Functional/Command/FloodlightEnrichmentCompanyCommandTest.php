@@ -100,7 +100,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
     public function testEnrichRetryEntryToSuccessEntry(){
         $this->activePlugin(true, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addRetryLeadDomain($lead);
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
         $leadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $leadDomains);
@@ -116,7 +116,6 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
-        dump($newLeadDomains);
         $this->assertEquals('leuchtfeuer.com', $newLeadDomains[0]->getDomain());
         $this->assertEquals(FloodlightLeadDomains::STATUS_SUCCESS, $newLeadDomains[0]->getStatus());
         $this->assertEquals(1, $newLeadDomains[0]->getCount());
@@ -132,18 +131,151 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertSame('leuchtfeuer.com', $newLeadCompaniesDomains[0]->getDomain());
     }
 
+    public function ttestEnrichRetryEntryTo404Entry(){
+        $this->activePlugin(true, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
+        $lead        = $this->addLead('Test Lead', 'test11@example.com');
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '', 1, FloodlightLeadDomains::STATUS_RETRY);
+
+        $leadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $this->assertCount(1, $leadDomains);
+
+        $companies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(0, $companies);
+
+        $leadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(0, $leadCompaniesDomains);
+
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich', ['--by-address' => 1]);
+
+        $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $this->assertCount(1, $newLeadDomains);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
+        $this->assertEquals(null, $newLeadDomains[0]->getDomain());
+        $this->assertEquals(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $newLeadDomains[0]->getStatus());
+        $this->assertEquals(1, $newLeadDomains[0]->getCount());
+
+        $newCompanies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(0, $newCompanies);
+
+        $newLeadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(0, $newLeadCompaniesDomains);
+    }
+
+    public function ttestEnrichRetryEntryAndExceedRetryLimit(){
+        //not yet ready (faking 202 response needs to be in place)
+        $this->activePlugin(true, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
+        $lead        = $this->addLead('Test Lead', 'test11@example.com');
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '', 2, FloodlightLeadDomains::STATUS_RETRY);
+
+        $leadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $this->assertCount(1, $leadDomains);
+
+        $companies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(0, $companies);
+
+        $leadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(0, $leadCompaniesDomains);
+
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich', ['--by-address' => 1]);
+
+        $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $this->assertCount(1, $newLeadDomains);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
+        $this->assertEquals(null, $newLeadDomains[0]->getDomain());
+        $this->assertEquals(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED, $newLeadDomains[0]->getStatus());
+        $this->assertEquals(3, $newLeadDomains[0]->getCount());
+
+        $newCompanies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(0, $newCompanies);
+
+
+        $newLeadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(0, $newLeadCompaniesDomains);
+    }
+
+    public function testNoEnrichmentWhenNoEntryWithRetryStatus()
+    {
+        $this->activePlugin(true, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
+        $lead        = $this->addLead('Test Lead', 'test11@example.com');
+
+        $leadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $this->assertCount(0, $leadDomains);
+
+        $companies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(0, $companies);
+
+        $leadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(0, $leadCompaniesDomains);
+
+        $floodlightLeadDomain404 = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
+        $floodlightLeadDomainExceeded = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED);
+        $floodlightLeadDomainSuccess = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_SUCCESS);
+
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+
+        $leadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $this->assertCount(3, $leadDomains);
+        $this->assertEmpty($leadDomains[0]->getDomain());
+        $this->assertEmpty($leadDomains[1]->getDomain());
+        $this->assertEmpty($leadDomains[2]->getDomain());
+
+
+        $companies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(0, $companies);
+
+        $leadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(0, $leadCompaniesDomains);
+    }
+
+    public function testOneSuccessEntryAndOneRetryEntry(){
+        $this->activePlugin(true, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
+        $lead        = $this->addLead('Test Lead', 'test11@example.com');
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $successLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_SUCCESS);
+        $successLeadDomain->setDomain('leuchtfeuer.com');
+        $this->em->persist($successLeadDomain);
+        $this->em->flush();
+
+        $leadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $this->assertCount(2, $leadDomains);
+
+        $companies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(0, $companies);
+
+        $leadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(0, $leadCompaniesDomains);
+
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich', ['--by-address' => 1]);
+
+        $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $this->assertCount(1, $newLeadDomains);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
+        $this->assertEquals('leuchtfeuer.com', $newLeadDomains[0]->getDomain());
+        $this->assertEquals(FloodlightLeadDomains::STATUS_SUCCESS, $newLeadDomains[0]->getStatus());
+        $this->assertEquals(2, $newLeadDomains[0]->getCount());
+
+        $newCompanies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(1, $newCompanies);
+        $this->assertInstanceOf(Company::class, $newCompanies[0]);
+        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $newCompanies[0]->getName());
+
+        $newLeadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(1, $newLeadCompaniesDomains);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newLeadCompaniesDomains[0]);
+        $this->assertSame('leuchtfeuer.com', $newLeadCompaniesDomains[0]->getDomain());
+    }
+
     //Es existiert 404er Eintrag und 200er Eintrag und retry limit exceeded Eintrag --> Nichts wird upgetdated
     //es existiert schon ein 200er Eintrag für Leuchtfeuer und gleichzeitig ein retry Eintrag für den selben iphash --> 200er response --> count vom 200er Eintrag wird erhöht und retry eintrag löschen
-    //es existiert 202er Eintrag mit count 2 --> Status wird auf retry limit exceeded gesetzt
     //ERst wird 202 return, dann 404
 
-    private function addRetryLeadDomain($lead): FloodlightLeadDomains
+    private function addNewLeadDomain($lead, string $ipHash, int $count, $status): FloodlightLeadDomains
     {
         $floodlightLeadDomain = new FloodlightLeadDomains();
         $floodlightLeadDomain->setDateAdded(new \DateTime());
-        $floodlightLeadDomain->setIpHash('70d96c1eae48442fe5fc5a7f234f3d0f13d3da42');
-        $floodlightLeadDomain->setCount(1);
-        $floodlightLeadDomain->setStatus(FloodlightLeadDomains::STATUS_RETRY);
+        $floodlightLeadDomain->setIpHash($ipHash);
+        $floodlightLeadDomain->setCount($count);
+        $floodlightLeadDomain->setStatus($status);
         $floodlightLeadDomain->setContact($lead);
         $this->em->persist($floodlightLeadDomain);
         $this->em->flush();

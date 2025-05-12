@@ -94,6 +94,7 @@ class FloodlightLeadDomainsModel extends FormModel
         $this->increaseLeadDomainCount($leadDomain);
         //set status should be removed at later point
         $leadDomain->setStatus($dataDomain['status']);
+        $leadDomain->setDateModified(new \DateTime());
         $this->em->persist($leadDomain);
         $this->em->flush();
 
@@ -236,7 +237,7 @@ class FloodlightLeadDomainsModel extends FormModel
                 continue;
             }
 
-            if ($leadDomain->getCount() > $maxCount) {
+            if ($leadDomain->getCount() >= $maxCount AND $leadDomain->getDateModified() >= $maxLeadDomain->getDateModified()) {
                 $maxCount      = $leadDomain->getCount();
                 $maxLeadDomain = $leadDomain;
             }
