@@ -325,7 +325,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertArrayHasKey('domain', $domain);
         $this->assertArrayHasKey('status', $domain);
         $this->assertEmpty($domain['domain']);
-        $this->assertSame($domain['status'], 'valid');
+        $this->assertSame('retry', $domain['status']);
     }
 
     public function testGetDomainWithFloodLightWith404(): void
@@ -361,8 +361,8 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertArrayHasKey('domain', $domain);
         $this->assertArrayHasKey('status', $domain);
         $this->assertArrayHasKey('details', $domain);
-        $this->assertSame($domain['status'], 'failure');
-        $this->assertSame($domain['domain'], 'failure');
+        $this->assertSame($domain['status'], '404');
+        $this->assertEmpty($domain['domain']);
         $this->assertIsArray($domain['details']);
         $this->assertArrayHasKey('statusRequest', $domain['details']);
         $this->assertSame($domain['details']['statusRequest'], 404);
@@ -400,7 +400,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $domain = $helper->getDomain('123.0.0.1');
         $this->assertIsArray($domain);
         $this->assertArrayHasKey('domain', $domain);
-        $this->assertSame($domain['status'], 'valid');
+        $this->assertSame('retry', $domain['status']);
         $this->assertIsArray($domain['details']);
         $this->assertArrayHasKey('floodlight', $domain['details']);
         assert($domain['details']['floodlight'] instanceof FloodlightDTO);

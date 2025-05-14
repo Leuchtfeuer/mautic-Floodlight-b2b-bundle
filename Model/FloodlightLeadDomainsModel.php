@@ -89,38 +89,95 @@ class FloodlightLeadDomainsModel extends FormModel
      */
     public function addNewLeadDomainOrCountPlusOneInLeadDomain(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
-        $leadDomain = $this->getRepository()->findOneBy(
-            [
-                'contact'   => $lead,
-                'domain'    => $dataDomain['domain'],
-            ]
-        );
+        $leadDomain = $this->getLeadDomainByContactDomainStatusAndIphash($lead, $dataDomain);
 
-        if (empty($leadDomain)) {
-            $leadDomain = $this->getEntity();
-            $leadDomain->setContact($lead);
-            if (is_string($dataDomain['domain'])) {
-                $leadDomain->setDomain($dataDomain['domain']);
-            }
-            $leadDomain->setDateAdded(new \DateTime());
-            $leadDomain->setCount(0);
-            $leadDomain->setIpHash('local');
-            if (
-                is_array($dataDomain)
-                && array_key_exists('details', $dataDomain)
-                && is_array($dataDomain['details'])
-                && array_key_exists('floodlight', $dataDomain['details'])
-                && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
-            ) {
-                $leadDomain->setIpHash($dataDomain['details']['floodlight']->getIpHash());
-            }
-        }
-        assert($leadDomain instanceof FloodlightLeadDomains);
-        $leadDomain->setCount($leadDomain->getCount() + 1);
+        $this->increaseLeadDomainCount($leadDomain);
+        //set status should be removed at later point
+        $leadDomain->setStatus($dataDomain['status']);
+        $leadDomain->setDateModified(new \DateTime());
         $this->em->persist($leadDomain);
         $this->em->flush();
 
+        //To be repalced once floodlight server returns 404 with ipHash
+        //if (FloodlightLeadDomains::STATUS_RETRY !== $leadDomain->getStatus()) {
+        if (FloodlightLeadDomains::STATUS_SUCCESS == $leadDomain->getStatus()) {
+            $this->deleteOldRetryEntries($leadDomain, $lead);
+            }
+        else {
+            $this->setStatusToRetryLimitExceededIfTooHighCount($leadDomain);
+        }
+
         return $leadDomain;
+    }
+
+    public function getLeadDomainByContactDomainStatusAndIphash(Lead $lead, array $dataDomain): FloodlightLeadDomains
+    {
+        $floodlightLeadDomain =  $this->getRepository()->findOneBy(
+            [
+                'contact'    => $lead,
+                'domain'     => $dataDomain['domain'],
+                'status'     => $dataDomain['status'],
+                //To be added once floodlight server returns 404 with ipHash
+                //'ipHash'    => $dataDomain['details']['floodlight']->getIpHash(),
+            ]
+        );
+
+        if (empty($floodlightLeadDomain)) {
+            return $this->floodlightLeadDomainFactory($lead, $dataDomain);
+        }
+
+        return $floodlightLeadDomain;
+    }
+
+    private function floodlightLeadDomainFactory($lead, $dataDomain): FloodlightLeadDomains
+    {
+        $leadDomain = $this->getEntity();
+        $leadDomain->setContact($lead);
+        if (is_string($dataDomain['domain'])) {
+            $leadDomain->setDomain($dataDomain['domain']);
+        }
+        $leadDomain->setDateAdded(new \DateTime());
+        $leadDomain->setCount(0);
+        $leadDomain->setIpHash('local');
+        if (
+            is_array($dataDomain)
+            && array_key_exists('details', $dataDomain)
+            && is_array($dataDomain['details'])
+            && array_key_exists('floodlight', $dataDomain['details'])
+            && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
+        ) {
+            $leadDomain->setIpHash($dataDomain['details']['floodlight']->getIpHash());
+        }
+        return $leadDomain;
+    }
+
+    public function increaseLeadDomainCount(FloodlightLeadDomains $floodlightLeadDomain): void
+    {
+        $floodlightLeadDomain->setCount($floodlightLeadDomain->getCount() + 1);
+    }
+
+    public function deleteOldRetryEntries($leadDomain, $lead): void
+    {
+        $domainToDelete = $this->getRepository()->findOneBy(
+            [
+                'contact'    => $lead,
+                'ipHash'    => $leadDomain->getIpHash(),
+                'status'     => FloodlightLeadDomains::STATUS_RETRY,
+            ]
+        );
+
+        if (!empty($domainToDelete)) {
+            $this->getRepository()->deleteEntity($domainToDelete);
+        }
+    }
+
+    public function setStatusToRetryLimitExceededIfTooHighCount($leadDomain): void
+    {
+        if ($leadDomain->getCount() >= 3) {
+            $leadDomain->setStatus(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED);
+        }
+        $this->em->persist($leadDomain);
+        $this->em->flush();
     }
 
     /**
@@ -131,9 +188,9 @@ class FloodlightLeadDomainsModel extends FormModel
         $qb = $this->getRepository()->createQueryBuilder('l');
         $qb->where('l.ipHash <> :local AND l.ipHash IS NOT NULL')
             ->andWhere('l.domain IS NULL')
-            ->andWhere('l.dateLastLookup IS NULL OR l.dateLastLookup = :dateLastLookup')
+            ->andWhere('l.status = :retryStatus')
             ->setParameter('local', 'local')
-            ->setParameter('dateLastLookup', '1970-01-01 00:00:00')
+            ->setParameter('retryStatus', 'retry')
             ->orderBy('l.dateAdded', 'ASC');
 
         $result = $qb->getQuery()->getResult();
@@ -180,7 +237,7 @@ class FloodlightLeadDomainsModel extends FormModel
                 continue;
             }
 
-            if ($leadDomain->getCount() > $maxCount) {
+            if ($leadDomain->getCount() >= $maxCount AND $leadDomain->getDateModified() >= $maxLeadDomain->getDateModified()) {
                 $maxCount      = $leadDomain->getCount();
                 $maxLeadDomain = $leadDomain;
             }

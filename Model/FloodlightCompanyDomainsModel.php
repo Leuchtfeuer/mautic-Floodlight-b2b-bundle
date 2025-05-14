@@ -16,6 +16,7 @@ use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\UserBundle\Model\UserModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use Psr\Log\LoggerInterface;
@@ -276,8 +277,8 @@ class FloodlightCompanyDomainsModel extends FormModel
         }
 
         if (
-            IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE !== $dataDomain['status']
-            && IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED !== $dataDomain['status']
+            FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $dataDomain['status']
+            && FloodlightLeadDomains::STATUS_BLACKLISTED !== $dataDomain['status']
             && is_string($dataDomain['domain'])
             && is_array($dataDomain['details'])
         ) {

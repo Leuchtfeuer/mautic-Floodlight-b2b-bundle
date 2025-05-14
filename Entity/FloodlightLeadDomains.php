@@ -10,6 +10,14 @@ use Symfony\Component\Validator\Mapping\ClassMetadata as ValidatorClassMetadata;
 
 class FloodlightLeadDomains
 {
+    public const STATUS_NO_DATA_FOUND = '404';
+    public const STATUS_RETRY_LIMIT_EXCEEDED = 'retry limit exceeded';
+    public const STATUS_IP_DOMAIN = 'ip domain';
+    public const STATUS_SUCCESS = 'success';
+    public const STATUS_UNKNOWN_ERROR = 'unknown error';
+    public const STATUS_BLACKLISTED = 'blacklisted';
+    public const STATUS_RETRY = 'retry';
+
     /**
      * @var int
      */
@@ -31,6 +39,8 @@ class FloodlightLeadDomains
 
     private ?\DateTime $dateLastLookup = null;
 
+    private ?string $status = null;
+
     public static function loadMetadata(ORM\ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
@@ -38,6 +48,7 @@ class FloodlightLeadDomains
             ->setCustomRepositoryClass(FloodlightLeadDomainsRepository::class)
             ->addIndex(['contact_id'], 'lead_domains_lead_id')
             ->addIndex(['domain'], 'lead_domains_domain');
+            //->addIndex(['ip_hash'], 'lead_domains_ip_hash');
 
         $builder->addBigIntIdField();
         $builder->addContact(true, 'CASCADE');
@@ -52,6 +63,7 @@ class FloodlightLeadDomains
 
         $builder->createField('ipHash', 'string')
             ->columnName('ip_hash')
+            ->nullable()
             ->build();
 
         $builder->createField('lookupType', 'string')
@@ -67,6 +79,11 @@ class FloodlightLeadDomains
 
         $builder->createField('dateLastLookup', 'datetime')
             ->columnName('date_last_lookup')
+            ->nullable()
+            ->build();
+
+        $builder->createField('status', 'string')
+            ->columnName('status')
             ->nullable()
             ->build();
 
@@ -110,6 +127,7 @@ class FloodlightLeadDomains
                     'dateAdded',
                     'dateModified',
                     'dateLastLookup',
+                    'status',
                 ]
             )
             ->addProperties(
@@ -121,6 +139,7 @@ class FloodlightLeadDomains
                     'dateAdded',
                     'dateModified',
                     'dateLastLookup',
+                    'status',
                 ]
             )
             ->build();
@@ -229,5 +248,15 @@ class FloodlightLeadDomains
     public function setDateLastLookup(?\DateTime $dateLastLookup): void
     {
         $this->dateLastLookup = $dateLastLookup;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(?string $status): void
+    {
+        $this->status = $status;
     }
 }

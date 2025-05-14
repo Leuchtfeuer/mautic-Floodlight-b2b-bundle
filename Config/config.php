@@ -32,6 +32,9 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.connection.credentials',
                 ],
             ],
+            'mautic.leuchtfeuerfloodlightb2b.helper.reporter' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter::class,
+            ],
         ],
         'helpers' => [
             'mautic.leuchtfeuerfloodlightb2b.helper.install' => [
@@ -61,6 +64,11 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
                     'mautic.leuchtfeuerfloodlightb2b.services.floodlight',
                     'mautic.integration.leuchtfeuerfloodlightb2b.config',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.field',
+                    'mautic.lead.model.company',
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
+                    'mautic.lead.model.lead',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.reporter',
                 ],
             ],
         ],

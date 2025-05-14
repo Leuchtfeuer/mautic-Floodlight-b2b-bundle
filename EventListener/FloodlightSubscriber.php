@@ -9,6 +9,7 @@ use Mautic\PageBundle\Event\PageHitEvent;
 use Mautic\PageBundle\PageEvents;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
@@ -64,43 +65,9 @@ class FloodlightSubscriber implements EventSubscriberInterface
         assert($request instanceof Request);
 
         $dataDomain     = $this->ipLookupRulesHelper->getDomain($request->server->get('REMOTE_ADDR'));
+        $this->ipLookupRulesHelper->setChannel($this->logger);
 
-        if (!$dataDomain) {
-            $this->logger->error('Domain not found');
-
-            return;
-        }
-
-        $result           = $this->ipLookupRulesHelper->evaluate($event->getHit(), $dataDomain);
-        if (
-            false === $result
-            || IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE === $result['status']
-            || IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED === $result['status']
-        ) {
-            if (false !== $result) {
-                $this->logger->error('Domain is blacklisted or failed to evaluate: Domain. '.$result['domain'].' status '.$result['status']);
-
-                return;
-            }
-            $this->logger->error('Domain not found');
-
-            return;
-        }
-
-        if (!is_array($result['result']) || !is_array($result['result']['companyDomains'])) {
-            $this->logger->error('Evaluation failed');
-
-            return;
-        }
-
-        $companyDomains = $result['result']['companyDomains']['data'];
-
-        // TODO: Implement updateCompanyCompanyDomains test
-        if (!$result['result']['companyDomains']['isNew']) {
-            $floodlightCompanyDomain = $this->updateCompanyCompanyDomains($dataDomain, $companyDomains, $event->getHit()->getLead());
-            $companyDomains          = $floodlightCompanyDomain;
-            $this->floodlightLeadDomainsModel->recalculateLeadPrimaryCompany($event->getHit()->getLead());
-        }
+        $this->ipLookupRulesHelper->processFloodlightLeadDomains($event->getHit()->getLead(), $dataDomain);
     }
 
     /**
