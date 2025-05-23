@@ -328,10 +328,8 @@ class IpLookupRulesHelper
         if (!$result['result']['companyDomains']['isNew']) {
             $floodlightCompanyDomain = $this->updateCompanyCompanyDomains($dataDomain, $companyDomains, $lead);
             $companyDomains = $floodlightCompanyDomain;
-            $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
         }
-
-
+        $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
     }
 //copied from floodlight subscriber
     private function updateCompanyCompanyDomains(array $dataDomain, array $floodCompanyDomains, Lead $lead): array
