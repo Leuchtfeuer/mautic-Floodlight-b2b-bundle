@@ -248,7 +248,7 @@ class FloodlightLeadDomainsModel extends FormModel
         $companyDomain = $this->getRepositoryFloodlightCompanyDomains()->findOneBy(
             [
                 'domain'          => $maxLeadDomain->getDomain(),
-                'isPrimaryDomain' => true,
+                //'isPrimaryDomain' => true,
             ]
         );
 
