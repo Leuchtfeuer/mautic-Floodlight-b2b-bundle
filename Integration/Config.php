@@ -18,7 +18,7 @@ class Config
             $integration = $this->getIntegrationEntity();
 
             return (bool) $integration->getIsPublished();
-        } catch (IntegrationNotFoundException $e) {
+        } catch (IntegrationNotFoundException) {
             return false;
         }
     }
@@ -28,9 +28,7 @@ class Config
      */
     public function getIntegrationEntity(): Integration
     {
-        $integrationObject = $this->integrationsHelper->getIntegration(LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME);
-
-        return $integrationObject->getIntegrationConfiguration();
+        return $this->integrationsHelper->getIntegration(LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME)->getIntegrationConfiguration();
     }
 
     /**
@@ -44,19 +42,20 @@ class Config
             $integration = $this->getIntegrationEntity();
 
             return $integration->getApiKeys() ?: [];
-        } catch (IntegrationNotFoundException $e) {
+        } catch (IntegrationNotFoundException) {
             return [];
         }
     }
 
-    /**
-     * @throws IntegrationNotFoundException
-     */
     public function isConfigured(): bool
     {
-        $apiKeys = $this->getApiKeys();
+        try {
+            $apiKeys = $this->getApiKeys();
 
-        return !empty($apiKeys['api_key']);
+            return !empty($apiKeys) && isset($apiKeys['api_key']);
+        } catch (IntegrationNotFoundException) {
+            return false;
+        }
     }
 
     public function isFreeTier(): bool
@@ -74,14 +73,23 @@ class Config
 
     public function isProTier(): bool
     {
-        if (!$this->isConfigured() || $this->isFreeTier()) {
+        return true;
+    }
+    
+    /**
+     * Checks if strict GDPR mode is enabled
+     * 
+     * @return bool
+     */
+    public function isStrictGdprMode(): bool
+    {
+        try {
+            $integration = $this->getIntegrationEntity();
+            $featureSettings = $integration->getFeatureSettings();
+            
+            return !empty($featureSettings['integration']['strict_gdpr']) && (bool) $featureSettings['integration']['strict_gdpr'];
+        } catch (IntegrationNotFoundException) {
             return false;
         }
-
-        if (str_contains($this->getApiKeys()['api_key'], 'pro_')) {
-            return true;
-        }
-
-        return false;
     }
 }

@@ -18,10 +18,10 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'externalKeyName' => 'companyfloodlight_id',
             ],
             [
-              'alias'             => 'f4b_companycrunchbase_handle',
-                'name'            => 'Crunchbase Handle',
-                'type'            => 'text',
-                'externalKeyName' => 'companycrunchbase_handle',
+                'alias'             => 'f4b_companycrunchbase_handle',
+                'name'              => 'Crunchbase Handle',
+                'type'              => 'text',
+                'externalKeyName'   => 'companycrunchbase_handle',
             ],
             [
                 'alias'           => 'f4b_companyname_legal',
@@ -252,29 +252,23 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'externalKeyName' => 'companytimezone',
             ],
             [
-                'alias'           => 'f4b_bigpicture_id',
-                'name'            => 'Big Picture ID',
-                'type'            => 'text',
-                'externalKeyName' => 'bigpicture_id',
-            ],
-            [
                 'alias' => 'f4b_companycountry_code',
                 'name'  => 'Country Code',
                 'type'  => 'text',
                 'limit' => 2,
             ],
             [
-                'alias' => 'iplookup_whois_json',
+                'alias' => 'f4b_iplookup_whois_json',
                 'name'  => 'IP Lookup Whois',
                 'type'  => 'textarea',
             ],
             [
-                'alias' => 'enrichment_date',
+                'alias' => 'f4b_enrichment_date',
                 'name'  => 'Enrichment Date',
                 'type'  => 'datetime',
             ],
             [
-                'alias' => 'companyindustry_tags',
+                'alias' => 'f4b_companyindustry_tags',
                 'name'  => 'Industry Tags',
                 'type'  => 'textarea',
             ],
@@ -306,6 +300,8 @@ class PluginInstallSubscriber implements EventSubscriberInterface
             if (isset($fieldData['limit'])) {
                 $options['limit'] = $fieldData['limit'];
             }
+
+            $options['isIndex'] = false;
             if (isset($fieldData['isIndex'])) {
                 $options['isIndex'] = $fieldData['isIndex'];
             }

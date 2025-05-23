@@ -2,15 +2,22 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener;
 
+use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Model\CompanyModel;
+use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\PageBundle\Event\PageHitEvent;
 use Mautic\PageBundle\PageEvents;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightIpDomainLookupsModel;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 class FloodlightSubscriber implements EventSubscriberInterface
 {
@@ -18,8 +25,11 @@ class FloodlightSubscriber implements EventSubscriberInterface
         private IpLookupRulesHelper $ipLookupRulesHelper,
         private Config $config,
         private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel,
-        private FloodlightIpDomainLookupsModel $floodlightIpDomainLookupsModel,
-        private FloodlightService $flooglightService,
+        private LoggerInterface $logger,
+        private FieldHelper $fieldHelper,
+        private CompanyModel $companyModel,
+        private LeadModel $leadModel,
+        private readonly FloodlightLeadDomainsModel $floodlightLeadDomainsModel
     ) {
     }
 
@@ -41,43 +51,67 @@ class FloodlightSubscriber implements EventSubscriberInterface
     private function execute(PageHitEvent $event): void
     {
         $isValid = $this->ipLookupRulesHelper->check($event->getHit());
+
         if (false === $isValid) {
             return;
         }
 
-        $this->saveDomain($event);
-
-        if ($this->config->isProTier()) {
-            $this->saveIpLookup($event->getRequest()->server->get('REMOTE_ADDR'));
-        }
+        $this->saveDomains($event);
     }
 
-    private function saveDomain(PageHitEvent $event): void
+    private function saveDomains(PageHitEvent $event): void
     {
-        $dataDomain     = $this->ipLookupRulesHelper->getDomain($event->getRequest()->server->get('REMOTE_ADDR'));
-        $domain         = $dataDomain['domain'];
-        $result         = $this->ipLookupRulesHelper->evaluate($event->getHit(), $domain);
-        if (
-            IpLookupRulesHelper::LEAD_DOMAINS_STATUS_FAILURE === $result['domain']
-            || IpLookupRulesHelper::LEAD_DOMAINS_STATUS_BLACKLISTED === $result['domain']
-        ) {
-            return;
-        }
+        $request = $event->getRequest();
+        assert($request instanceof Request);
 
-        $this->floodlightCompanyDomainsModel->save($domain, $event->getHit()->getLead(), $dataDomain['details']);
+        $dataDomain     = $this->ipLookupRulesHelper->getDomain($request->server->get('REMOTE_ADDR'));
+        $this->ipLookupRulesHelper->setChannel($this->logger);
+
+        $this->ipLookupRulesHelper->processFloodlightLeadDomains($event->getHit()->getLead(), $dataDomain);
     }
 
-    private function saveIpLookup(string $ip): void
+    /**
+     * @param array<string, mixed>            $dataDomain
+     * @param array<FloodlightCompanyDomains> $floodCompanyDomains
+     *
+     * @return array<FloodlightCompanyDomains>
+     */
+    private function updateCompanyCompanyDomains(array $dataDomain, array $floodCompanyDomains, Lead $lead): array
     {
+        $result = [];
         if (
-            !$this->ipLookupRulesHelper->isIp($ip)
-            || !$this->floodlightIpDomainLookupsModel->getRepository()->isNew($ip)
+            isset($dataDomain['details']['floodlight'])
+            && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
         ) {
-            return;
+            $floodlightDTO = $dataDomain['details']['floodlight'];
+            assert($floodlightDTO instanceof FloodlightDTO);
+            $this->fieldHelper->updateProperties($floodlightDTO);
+            foreach ($floodCompanyDomains as $companyDomain) {
+                assert($companyDomain instanceof FloodlightCompanyDomains);
+                $company = $companyDomain->getCompany();
+                $company = $floodlightDTO->fillCompany($company);
+                $this->companyModel->saveEntity($company);
+                $tempResult = $floodlightDTO->fillCompaniesDomain($this->floodlightCompanyDomainsModel, $company);
+                $result     = array_merge($result, $tempResult);
+            }
+            if (!empty($result)) {
+                $this->floodlightCompanyDomainsModel->saveEntities($result);
+            }
+
+            return $result;
         }
 
-        $data           = $this->flooglightService->get($ip);
-        $ipDomainLookup = (new FloodlightDTO($data))->fillIpLookUp();
-        $this->floodlightIpDomainLookupsModel->saveEntity($ipDomainLookup);
+        foreach ($floodCompanyDomains as $companyDomain) {
+            assert($companyDomain instanceof FloodlightCompanyDomains);
+            $this->leadModel->addToCompany($lead, $companyDomain->getCompany());
+            $result[] = $companyDomain;
+        }
+        if (!empty($result)) {
+            $this->floodlightCompanyDomainsModel->saveEntities($result);
+
+            return $result;
+        }
+
+        return [];
     }
 }

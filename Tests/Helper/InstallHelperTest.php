@@ -15,7 +15,7 @@ class InstallHelperTest extends MauticMysqlTestCase
 
     private function restartIpLookup(): void
     {
-        $configPathTo    = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
         }
@@ -23,16 +23,16 @@ class InstallHelperTest extends MauticMysqlTestCase
 
     public function testCompaniesNoNewFields(): void
     {
-        $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'iplookup_whois_json']);
+        $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'f4b_iplookup_whois_json']);
         $this->assertNull($field);
-        $configPathTo = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/blacklist.php';
+        $configPathTo = $this->getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         $this->assertFileDoesNotExist($configPathTo);
         $this->client->request('GET', '/s/plugins/reload');
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
-        $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'iplookup_whois_json']);
+        $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'f4b_iplookup_whois_json']);
         $this->assertNotNull($field);
-        $this->assertSame('iplookup_whois_json', $field->getAlias());
+        $this->assertSame('f4b_iplookup_whois_json', $field->getAlias());
         $this->assertFileExists($configPathTo);
     }
 
@@ -43,5 +43,6 @@ class InstallHelperTest extends MauticMysqlTestCase
         $this->setUpSymfony($this->configParams);
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
+        self::assertResponseStatusCodeSame(200);
     }
 }

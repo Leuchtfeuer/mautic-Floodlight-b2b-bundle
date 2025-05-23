@@ -13,13 +13,33 @@ return [
                     'monolog.logger.mautic',
                 ],
             ],
+            'mautic.leuchtfeuerfloodlightb2b.services.floodlight' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.connection.apiclient',
+                    'monolog.logger.mautic',
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.connection.credentials' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials::class,
+                'arguments' => [
+                    'mautic.integrations.helper',
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.connection.apiclient' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.connection.credentials',
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.helper.reporter' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter::class,
+            ],
         ],
         'helpers' => [
             'mautic.leuchtfeuerfloodlightb2b.helper.install' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\InstallHelper::class,
                 'arguments' => [
-                    'mautic.helper.core_parameters',
-                    'mautic.factory',
                     'mautic.helper.paths',
                     'mautic.leuchtfeuerfloodlightb2b.helper.field',
                 ],
@@ -42,6 +62,13 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
                     'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice',
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
+                    'mautic.leuchtfeuerfloodlightb2b.services.floodlight',
+                    'mautic.integration.leuchtfeuerfloodlightb2b.config',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.field',
+                    'mautic.lead.model.company',
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
+                    'mautic.lead.model.lead',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.reporter',
                 ],
             ],
         ],
@@ -68,5 +95,6 @@ return [
         ],
     ],
     'parameters' => [
+        'minimum_hour_to_new_entry' => 1, // Minimum hour to new entry, IN HOUR
     ],
 ];

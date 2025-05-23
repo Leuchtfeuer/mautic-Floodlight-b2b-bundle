@@ -2,33 +2,68 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
+use Mautic\CoreBundle\Loader\ParameterLoader;
+use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Model\CompanyModel;
+use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\PageBundle\Entity\Hit;
 use Mautic\PageBundle\Model\PageModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
+use Symfony\Component\HttpFoundation\Response;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter;
 
 class IpLookupRulesHelper
 {
-    public const LEAD_DOMAINS_STATUS_BLACKLISTED = 'blacklisted';
-    public const LEAD_DOMAINS_STATUS_FAILURE     = 'failure';
-    public const LEAD_DOMAINS_STATUS_VALID       = 'valid';
+
+    private ParameterLoader $parameterLoader;
+
 
     public function __construct(
         private PageModel $pageModel,
         private FloodlightLeadDomainsModel $leadDomainsModel,
         private WhoisPyService $whoisPyService,
-        private FloodlightCompanyDomainsModel $companyDomainsModel
+        private FloodlightCompanyDomainsModel $companyDomainsModel,
+        private FloodlightService $floodlightService,
+        private Config $config,
+        private FieldHelper $fieldHelper,
+        private CompanyModel $companyModel,
+        private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel,
+        private LeadModel $leadModel,
+        private Reporter $reporter,
     ) {
+        $this->parameterLoader = new ParameterLoader();
     }
 
-    public function evaluate(Hit $hit, string $domain, $domainDetails=[]): array
+    /**
+     * @param array<string, mixed> $dataDomain
+     *
+     * @return array<string, mixed>|false
+     */
+    public function evaluate(Lead $lead, array $dataDomain): array|false
     {
-        $result = $this->companyDomainsModel->updateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomain($hit->getLead()->getId(), $domain, $domainDetails);
+
+        $resultLeadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $dataDomain);
+
+        $companyDomains   = $this->companyDomainsModel->getCompanyDomains($lead, $dataDomain);
+
+        if (empty($companyDomains)) {
+            return false;
+        }
 
         return [
-            'domain' => $domain,
-            'result' => $result,
+            'domain' => $dataDomain['domain'],
+            'result' => [
+                'leadDomain'     => $resultLeadDomain,
+                'companyDomains' => $companyDomains,
+            ],
+            'status' => $dataDomain['status'],
         ];
     }
 
@@ -48,102 +83,298 @@ class IpLookupRulesHelper
             return false;
         }
 
-        if (!$this->lookupHasMoreThanOneHour($hit->getLead()->getId())) {
+        if (!$this->checkIfWasRecent($hit->getLead()->getId())) {
             return false;
         }
 
         return true;
     }
 
-    private function lookupHasMoreThanOneHour($leadId)
+    private function checkIfWasRecent(int $leadId): bool
     {
-        $result = $this->leadDomainsModel->getRepository()->findOneBy(['lead' => $leadId], ['dateModified' => 'DESC']);
+        $result = $this->leadDomainsModel->getRepository()->findOneBy(['contact' => $leadId], ['dateModified' => 'DESC']);
 
         if (empty($result)) {
             return true;
         }
 
-        if ($result->getDateModified() > (new \DateTime())->modify('-1 hour')) {
+        assert($result instanceof FloodlightLeadDomains);
+
+        $hour = $this->parameterLoader->getParameterBag()->get('minimum_hour_to_new_entry', 2);
+        if ($result->getDateModified() > (new \DateTime())->modify('-'.$hour.' hour')) {
             return false;
         }
 
-        return $result;
+        return true;
     }
 
-    private function checkMoreThan2($leadId): bool
+    private function checkMoreThan2(int $leadId): bool
     {
         $result = $this->pageModel->getHitRepository()->findBy(['lead' => $leadId]);
 
         return count($result) > 1;
     }
 
-    public function getDomain(string $remoteAddr): array
+    /**
+     * @return array<string, mixed>|bool
+     */
+    private function getDataDomainByFloodlight(string $remoteAddr): array|bool
     {
-        $type    = 'getHostByAddr';
-        $details = [];
-        $domain  = $this->getDomainByGetHostByAddr($remoteAddr);
-        if (self::LEAD_DOMAINS_STATUS_FAILURE === $domain) {
-            $type          = 'whoisPyService';
-            $domainByWhois = $this->getDomainByWhoisPyService($remoteAddr);
-            $domain        = $domainByWhois['domain'];
-            $details       = $domainByWhois['details'];
+        if (empty($remoteAddr)) {
+            return false;
         }
 
-        if (self::LEAD_DOMAINS_STATUS_FAILURE === $domain) {
-            $type = '';
+        $data = $this->floodlightService->get($remoteAddr);
+
+        $handleStatusRequest = [
+            '404',
+            '202',
+            '200',
+            //'401'
+        ];
+
+        if (
+            false === $data
+            || !is_array($data)
+            || !in_array($data['statusRequestCode'], $handleStatusRequest)
+        ) {
+            return false;
+        }
+
+        $floodlightDTO = new FloodlightDTO($data);
+        $domain        = $floodlightDTO->getCompanyPrimaryDomain();
+        if (empty($domain) && !empty($floodlightDTO->getDomains())) {
+            $domain = $floodlightDTO->getDomains()[0];
+        }
+        
+        // Bestimme zuerst den allgemeinen Status basierend auf der Domain
+        $status = $this->getStatusDomain($domain);
+
+        // HTTP-Status überschreibt den Domain-Status bei Spezialfällen
+        if (Response::HTTP_NOT_FOUND === $data['statusRequestCode']) {
+            $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+            $domain = null;
+            $testIpHash = $floodlightDTO->getIpHash();
+        } elseif (Response::HTTP_ACCEPTED === $data['statusRequestCode']) {
+            $status = FloodlightLeadDomains::STATUS_RETRY;
+            $newFloodlightDTO = new FloodlightDTO([]);
+            $newFloodlightDTO->setIpHash($floodlightDTO->getIpHash());
+            $newFloodlightDTO->setDomains([]);
+            $floodlightDTO = $newFloodlightDTO;
+            $domain = null;
         }
 
         return [
-            'domain'  => $domain,
-            'type'    => $type,
-            'details' => $details,
+            'status'  => $status,
+            'domain'  => $this->cleanDomain($domain),
+            'details' => [
+                'floodlight'    => $floodlightDTO,
+                'statusRequest' => $data['statusRequestCode'],
+            ],
         ];
     }
 
-    public function getDomainByGetHostByAddr(string $remoteAddr): string
+    private function cleanDomain(?string $domain): ?string
     {
-        $hostname    = gethostbyaddr($remoteAddr);
-        $domainParts = explode('.', $hostname);
-        $baseDomain  = array_slice($domainParts, -2, 2, true);
-        $domain      = implode('.', $baseDomain);
-        $status      = $this->getStatus($domain);
-        if (self::LEAD_DOMAINS_STATUS_VALID !== $status) {
-            return $status;
+        if (is_null($domain)) {
+            return null;
+        }
+        $parts = explode('.', $domain);
+        reset($parts);
+        $firstPart = current($parts);
+        preg_match_all('/\d/', $firstPart, $matches);
+        reset($parts);
+        if (count($matches[0]) > 1) {
+            return implode('.', array_slice($parts, 1));
         }
 
         return $domain;
     }
 
+    /**
+     * @return array<string, mixed>|false
+     */
+    public function getDomain(string $remoteAddr): array|false
+    {
+        if ($this->config->isProTier()) {
+            $floodlightData = $this->getDataDomainByFloodlight($remoteAddr);
+            if (false !== $floodlightData) {
+                return $floodlightData;
+            }
+        }
+
+        $hostByAddrData = $this->getDomainByGetHostByAddr($remoteAddr);
+        if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $hostByAddrData['status']
+            //&& self::LEAD_DOMAINS_STATUS_FAILURE !== $hostByAddrData['status']
+        ) {
+            return $hostByAddrData;
+        }
+
+        $pyServiceData = $this->getDomainByWhoisPyService($remoteAddr);
+        if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $pyServiceData['status']
+            //&& self::LEAD_DOMAINS_STATUS_FAILURE !== $pyServiceData['status']
+        ) {
+            return $pyServiceData;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getDomainByGetHostByAddr(string $remoteAddr): array
+    {
+        $domain = gethostbyaddr($remoteAddr);
+        
+        if (false === $domain) {
+            $domain = null;
+            $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+        } else {
+            $status = $this->getStatusDomain($domain);
+        }
+
+        return [
+            'status'  => $status,
+            'domain'  => $this->cleanDomain($domain),
+            'details' => ['hostname' => $domain],
+        ];
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
     public function getDomainByWhoisPyService(string $remoteAddr): array
     {
         $domainWhois = $this->whoisPyService->getWhoisData($remoteAddr);
         $domain      = '';
         $details     = [];
+        $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+        
         if (!empty($domainWhois) && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
-            $domain      = $domainWhois['company_domain'];
-            $details     = $domainWhois;
-        }
-        $status = $this->getStatus($domain);
-        if (self::LEAD_DOMAINS_STATUS_VALID !== $status) {
-            $domain = $status;
+            $domain = $domainWhois['company_domain'];
+            $details = $domainWhois;
+            $status = $this->getStatusDomain($domain);
         }
 
         return [
-            'domain'  => $domain,
-            'details' => $details,
+            'status'  => $status,
+            'domain'  => $this->cleanDomain($domain),
+            'details' => ['pyservice' => $details],
         ];
     }
 
-    private function getStatus(string $domain): string
+    /**
+     * Returns if the domain is blacklisted, valid or failed.
+     *
+     * @return string
+     */
+    private function getStatusDomain(?string $domain): string
     {
-        if (empty($domain) || $this->isIp($domain)) {
-            return self::LEAD_DOMAINS_STATUS_FAILURE;
+        if (empty($domain)) {
+            return FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+        }
+        
+        if ($this->isIp($domain)) {
+            return FloodlightLeadDomains::STATUS_IP_DOMAIN;
         }
 
         if ($this->leadDomainsModel->isBlackListed($domain)) {
-            return self::LEAD_DOMAINS_STATUS_BLACKLISTED;
+            return FloodlightLeadDomains::STATUS_BLACKLISTED;
         }
 
-        return self::LEAD_DOMAINS_STATUS_VALID;
+        return FloodlightLeadDomains::STATUS_SUCCESS;
+    }
+
+    /**
+     *
+     * @param array<string, mixed> $dataDomain
+     *
+     */
+    public function processFloodlightLeadDomains(Lead $lead, array $dataDomain) {
+
+        if (!$dataDomain) {
+            $this->reporter->notify('Domain for given IP not found');
+
+            return;
+        }
+
+        $result = $this->evaluate($lead, $dataDomain);
+
+        if (
+            false === $result
+            || FloodlightLeadDomains::STATUS_BLACKLISTED === $result['status']
+            || FloodlightLeadDomains::STATUS_NO_DATA_FOUND === $result['status']
+        ) {
+            if (false !== $result) {
+                $this->reporter->notify('Domain is blacklisted or failed to evaluate: Domain. ' . $result['domain'] . ' status ' . $result['status']);
+
+                return;
+            }
+            $this->reporter->notify('Domain not found');
+
+            return;
+        }
+
+        if (!is_array($result['result']) || !is_array($result['result']['companyDomains'])) {
+            $this->reporter->notify('Evaluation failed');
+
+            return;
+        }
+
+        $companyDomains = $result['result']['companyDomains']['data'];
+
+        // TODO: Implement updateCompanyCompanyDomains test
+        if (!$result['result']['companyDomains']['isNew']) {
+            $floodlightCompanyDomain = $this->updateCompanyCompanyDomains($dataDomain, $companyDomains, $lead);
+            $companyDomains = $floodlightCompanyDomain;
+            $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
+        }
+
+
+    }
+//copied from floodlight subscriber
+    private function updateCompanyCompanyDomains(array $dataDomain, array $floodCompanyDomains, Lead $lead): array
+    {
+        $result = [];
+        if (
+            isset($dataDomain['details']['floodlight'])
+            && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
+        ) {
+            $floodlightDTO = $dataDomain['details']['floodlight'];
+            assert($floodlightDTO instanceof FloodlightDTO);
+            $this->fieldHelper->updateProperties($floodlightDTO);
+            foreach ($floodCompanyDomains as $companyDomain) {
+                assert($companyDomain instanceof FloodlightCompanyDomains);
+                $company = $companyDomain->getCompany();
+                $company = $floodlightDTO->fillCompany($company);
+                $this->companyModel->saveEntity($company);
+                $tempResult = $floodlightDTO->fillCompaniesDomain($this->floodlightCompanyDomainsModel, $company);
+                $result     = array_merge($result, $tempResult);
+            }
+            if (!empty($result)) {
+                $this->floodlightCompanyDomainsModel->saveEntities($result);
+            }
+
+            return $result;
+        }
+
+        foreach ($floodCompanyDomains as $companyDomain) {
+            assert($companyDomain instanceof FloodlightCompanyDomains);
+            $this->leadModel->addToCompany($lead, $companyDomain->getCompany());
+            $result[] = $companyDomain;
+        }
+        if (!empty($result)) {
+            $this->floodlightCompanyDomainsModel->saveEntities($result);
+
+            return $result;
+        }
+
+        return [];
+    }
+
+    public function setChannel($output): void
+    {
+        $this->reporter->setChannel($output);
     }
 }

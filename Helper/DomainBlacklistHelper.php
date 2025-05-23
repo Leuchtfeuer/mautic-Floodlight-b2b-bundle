@@ -4,7 +4,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
 class DomainBlacklistHelper
 {
-    public const BLACKLIST_PATH_FILE = __DIR__.'/../../../config/blacklist.php';
+    public const BLACKLIST_PATH_FILE = __DIR__.'/../../../config/f4b_domain_blacklist.php';
 
     /**
      * @param array<string> $blacklist
@@ -15,11 +15,16 @@ class DomainBlacklistHelper
     }
 
     /**
-     * @return array<string>|null
+     * @return array<string>
      */
-    private function readFile(): ?array
+    private function readFile(): array
     {
-        return explode(PHP_EOL, file_get_contents(self::BLACKLIST_PATH_FILE));
+        $fileContent = file_get_contents(self::BLACKLIST_PATH_FILE);
+        if (false === $fileContent) {
+            return [];
+        }
+
+        return explode(PHP_EOL, $fileContent);
     }
 
     public function add(string $blacklistDomain): void
@@ -38,9 +43,9 @@ class DomainBlacklistHelper
     }
 
     /**
-     * @return array<string>|null
+     * @return array<string>
      */
-    public function get(): ?array
+    public function get(): array
     {
         return $this->blacklist;
     }

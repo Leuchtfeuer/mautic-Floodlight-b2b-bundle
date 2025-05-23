@@ -125,3 +125,4 @@ yandex.com
 your-server.de
 zare.com
 zebra.lt
+lfexample.com

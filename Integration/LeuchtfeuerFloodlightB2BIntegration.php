@@ -5,8 +5,10 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration;
 use Mautic\IntegrationsBundle\Integration\BasicIntegration;
 use Mautic\IntegrationsBundle\Integration\ConfigurationTrait;
 use Mautic\IntegrationsBundle\Integration\Interfaces\BasicInterface;
+use Mautic\IntegrationsBundle\Integration\Interfaces\ConfigFormFeatureSettingsInterface;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Form\Type\FloodlightB2BFeatureSettingsType;
 
-class LeuchtfeuerFloodlightB2BIntegration extends BasicIntegration implements BasicInterface
+class LeuchtfeuerFloodlightB2BIntegration extends BasicIntegration implements BasicInterface, ConfigFormFeatureSettingsInterface
 {
     use ConfigurationTrait;
 
@@ -26,5 +28,10 @@ class LeuchtfeuerFloodlightB2BIntegration extends BasicIntegration implements Ba
     public function getIcon(): string
     {
         return 'plugins/LeuchtfeuerFloodlightB2BBundle/Assets/img/icon.png';
+    }
+
+    public function getFeatureSettingsConfigFormName(): string
+    {
+        return FloodlightB2BFeatureSettingsType::class;
     }
 }

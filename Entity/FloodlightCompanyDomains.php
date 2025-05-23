@@ -11,30 +11,39 @@ use Symfony\Component\Validator\Mapping\ClassMetadata as ValidatorClassMetadata;
 
 class FloodlightCompanyDomains
 {
-    private ?int $id = null;
     private Company $company;
 
     private bool $isPrimaryDomain;
 
-    private string $domain;
+    private ?string $domain = null;
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
+
+
+    //    private ?int $codeStatusRequest = null;
 
     public static function loadMetadata(ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
-        $builder->setTable('fl_company_domains')
+        $builder->setTable('f4b_company_domains')
             ->setCustomRepositoryClass(FloodlightCompanyDomainsRepository::class)
             ->addIndex(['company_id'], 'company_domains_company_id')
             ->addIndex(['domain'], 'company_domains_domain');
 
-        $builder->addId();
-
         $builder->createManyToOne('company', Company::class)
+            ->makePrimaryKey()
             ->addJoinColumn('company_id', 'id', false, false, 'CASCADE')
             ->build();
 
-        $builder->createField('domain', 'string')->columnName('domain')->build();
+        $builder->createField('domain', 'string')
+            ->columnName('domain')
+            ->nullable()
+            ->makePrimaryKey()
+            ->build();
+        //        $builder->createField('codeStatusRequest', 'integer')
+        //            ->columnName('code_status_request')
+        //            ->nullable()
+        //            ->build();
         $builder->createField('isPrimaryDomain', 'boolean')->columnName('is_primary_domain')->build();
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')->columnName('date_modified')->build();
@@ -57,7 +66,6 @@ class FloodlightCompanyDomains
         $metadata->setGroupPrefix('company_domains')
             ->addListProperties(
                 [
-                    'id',
                     'domain',
                     'is_primary_domain',
                     'dateAdded',
@@ -66,7 +74,6 @@ class FloodlightCompanyDomains
             )
             ->addProperties(
                 [
-                    'id',
                     'domain',
                     'is_primary_domain',
                     'dateAdded',
@@ -74,11 +81,6 @@ class FloodlightCompanyDomains
                 ]
             )
             ->build();
-    }
-
-    public function getId()
-    {
-        return $this->id;
     }
 
     public function getCompany(): Company
@@ -91,12 +93,12 @@ class FloodlightCompanyDomains
         $this->company = $company;
     }
 
-    public function getDomain(): string
+    public function getDomain(): ?string
     {
         return $this->domain;
     }
 
-    public function setDomain(string $domain): void
+    public function setDomain(?string $domain): void
     {
         $this->domain = $domain;
     }
@@ -135,4 +137,14 @@ class FloodlightCompanyDomains
     {
         return $this->isPrimaryDomain;
     }
+
+    //    public function getCodeStatusRequest(): ?int
+    //    {
+    //        return $this->codeStatusRequest;
+    //    }
+    //
+    //    public function setCodeStatusRequest(?int $codeStatusRequest): void
+    //    {
+    //        $this->codeStatusRequest = $codeStatusRequest;
+    //    }
 }
