@@ -619,6 +619,55 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomains[0]);
     }
 
+    public function testNoNewCompanyCreatedWhenAlreadyExistedBeforeFloodlight(){
+        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
+        $this->updateApikey('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
+        assert($floodlightSubscriber instanceof FloodlightSubscriber);
+
+        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+
+        $lead = $this->createLead();
+        $hit  = $this->createHit($lead, '217.91.35.16');
+
+        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
+
+        $floodlightSubscriber->onPageHit($pageHitEventMock1);
+
+        //createCompanyLeuchtfeuer
+        $companyLeuchtfeuer = new Company();
+        $companyLeuchtfeuer->setName('Leuchtfeuer Digital Marketing GmbH');
+        //$companyLeuchtfeuer->setWebsite('https://leuchtfeuer.com/marketing-technologie/');
+
+        $this->em->persist($companyLeuchtfeuer);
+        $this->em->flush();
+
+        $companies           = $this->em->getRepository(Company::class)->findAll();
+        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
+        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(1,$companies);
+        $this->assertEmpty($leadDomains);
+        $this->assertEmpty($companyDomains);
+
+
+
+        $request = new \Symfony\Component\HttpFoundation\Request();
+        $request->server->set('REMOTE_ADDR', '217.91.35.16');
+        $hit2              = $this->createHit($lead, '217.91.35.16');
+        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+        $pageHitEventMock2->expects($this->exactly(2))->method('getHit')->willReturn($hit2);
+        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
+        $floodlightSubscriber->onPageHit($pageHitEventMock2);
+        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomains[0]);
+        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomains[0]->getDomain()]);
+        $companies          = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(1,$leadDomains);
+        $this->assertCount(1,$companyDomains);
+        $this->assertCount(1,$companies);
+
+
+    }
+
     private function createHit(Lead $lead, string $ipAdress = '127.0.0.1'): Hit
     {
         $ip = new IpAddress();

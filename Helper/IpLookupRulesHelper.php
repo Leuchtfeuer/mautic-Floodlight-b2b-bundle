@@ -10,6 +10,7 @@ use Mautic\PageBundle\Entity\Hit;
 use Mautic\PageBundle\Model\PageModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
@@ -37,6 +38,7 @@ class IpLookupRulesHelper
         private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel,
         private LeadModel $leadModel,
         private Reporter $reporter,
+        private Status200Strategy $status200Strategy
     ) {
         $this->parameterLoader = new ParameterLoader();
     }
@@ -118,28 +120,9 @@ class IpLookupRulesHelper
     /**
      * @return array<string, mixed>|bool
      */
-    private function getDataDomainByFloodlight(string $remoteAddr): array|bool
+    private function getDataDomainByFloodlight(array $data): array|bool
     {
-        if (empty($remoteAddr)) {
-            return false;
-        }
 
-        $data = $this->floodlightService->get($remoteAddr);
-
-        $handleStatusRequest = [
-            '404',
-            '202',
-            '200',
-            //'401'
-        ];
-
-        if (
-            false === $data
-            || !is_array($data)
-            || !in_array($data['statusRequestCode'], $handleStatusRequest)
-        ) {
-            return false;
-        }
 
         $floodlightDTO = new FloodlightDTO($data);
         $domain        = $floodlightDTO->getCompanyPrimaryDomain();
@@ -174,7 +157,7 @@ class IpLookupRulesHelper
         ];
     }
 
-    private function cleanDomain(?string $domain): ?string
+    public function cleanDomain(?string $domain): ?string
     {
         if (is_null($domain)) {
             return null;
@@ -191,17 +174,58 @@ class IpLookupRulesHelper
         return $domain;
     }
 
+    private function checkIfInListOfValidRequestStatuses($data): bool
+    {
+        $validStatusRequest = [
+            '404',
+            '202',
+            '200',
+            '429',
+            '401',
+        ];
+
+        if (
+            false === $data
+            || !is_array($data)
+            || !in_array($data['statusRequestCode'], $validStatusRequest)
+        ) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * @return array<string, mixed>|false
      */
-    public function getDomain(string $remoteAddr): array|false
+    public function getDomain(string $remoteAddr, $lead): array|false
     {
-        if ($this->config->isProTier()) {
-            $floodlightData = $this->getDataDomainByFloodlight($remoteAddr);
-            if (false !== $floodlightData) {
-                return $floodlightData;
-            }
+
+        $data = $this->floodlightService->get($remoteAddr);
+
+
+        if (!$this->checkIfInListOfValidRequestStatuses($data)) {
+            return false;
         }
+
+        if($data['statusRequestCode'] == 200){
+            $processData = $this->status200Strategy->prepareData($data);
+
+            $this->status200Strategy->processData($processData, $lead);
+
+            return false;
+
+        }
+
+       //handleStatuses
+
+        // handle 200 202 404
+        $floodlightData = $this->getDataDomainByFloodlight($data);
+        if (false !== $floodlightData) {
+            return $floodlightData;
+        }
+
+
+        //Handle status 429
 
         $hostByAddrData = $this->getDomainByGetHostByAddr($remoteAddr);
         if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $hostByAddrData['status']
@@ -269,7 +293,7 @@ class IpLookupRulesHelper
      *
      * @return string
      */
-    private function getStatusDomain(?string $domain): string
+    public function getStatusDomain(?string $domain): string
     {
         if (empty($domain)) {
             return FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
@@ -286,6 +310,12 @@ class IpLookupRulesHelper
         return FloodlightLeadDomains::STATUS_SUCCESS;
     }
 
+
+    public function notifyNoDataFromGetDomain()
+    {
+            $this->reporter->notify('Domain for given IP not found');
+    }
+
     /**
      *
      * @param array<string, mixed> $dataDomain
@@ -293,11 +323,7 @@ class IpLookupRulesHelper
      */
     public function processFloodlightLeadDomains(Lead $lead, array $dataDomain) {
 
-        if (!$dataDomain) {
-            $this->reporter->notify('Domain for given IP not found');
 
-            return;
-        }
 
         $result = $this->evaluate($lead, $dataDomain);
 

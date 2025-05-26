@@ -63,11 +63,25 @@ class FloodlightSubscriber implements EventSubscriberInterface
     {
         $request = $event->getRequest();
         assert($request instanceof Request);
+        $remoteAddr = $request->server->get('REMOTE_ADDR');
 
-        $dataDomain     = $this->ipLookupRulesHelper->getDomain($request->server->get('REMOTE_ADDR'));
         $this->ipLookupRulesHelper->setChannel($this->logger);
 
-        $this->ipLookupRulesHelper->processFloodlightLeadDomains($event->getHit()->getLead(), $dataDomain);
+        if (empty($remoteAddr)) {
+            //@TODO no ip for page hit - this should be notified
+            $this->ipLookupRulesHelper->notifyNoDataFromGetDomain();
+        }
+
+        $dataDomain     = $this->ipLookupRulesHelper->getDomain($remoteAddr, $event->getHit()->getLead());
+        if (!$dataDomain)
+        {
+            //it would be nice to se what was in the response whet it is not any standard
+            $this->ipLookupRulesHelper->notifyNoDataFromGetDomain();
+        }
+        else
+        {
+            $this->ipLookupRulesHelper->processFloodlightLeadDomains($event->getHit()->getLead(), $dataDomain);
+        }
     }
 
     /**

@@ -100,12 +100,11 @@ class FloodlightLeadDomainsModel extends FormModel
 
         //To be repalced once floodlight server returns 404 with ipHash
         //if (FloodlightLeadDomains::STATUS_RETRY !== $leadDomain->getStatus()) {
-        if (FloodlightLeadDomains::STATUS_SUCCESS == $leadDomain->getStatus()) {
-            $this->deleteOldRetryEntries($leadDomain, $lead);
-            }
-        else {
+        if (FloodlightLeadDomains::STATUS_RETRY == $leadDomain->getStatus()) {
             $this->setStatusToRetryLimitExceededIfTooHighCount($leadDomain);
         }
+        // @TODO to be removed during 202 refactoring
+
 
         return $leadDomain;
     }

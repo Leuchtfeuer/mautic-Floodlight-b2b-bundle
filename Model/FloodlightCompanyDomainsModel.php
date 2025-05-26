@@ -307,13 +307,13 @@ class FloodlightCompanyDomainsModel extends FormModel
                 ->from(MAUTIC_TABLE_PREFIX.'companies', 'c')
                 ->where('c.f4b_enrichment_date IS NULL OR c.f4b_enrichment_date = :enrichmentDate')
                 ->setParameter('enrichmentDate', '1970-01-01 00:00:00');
-            
+
             $companyIds = $query->executeQuery()->fetchFirstColumn();
-            
+
             if (empty($companyIds)) {
                 return [];
             }
-            
+
             // Schritt 2: Nutze die Doctrine-Repository-Methode mit IN-Abfrage
             return $this->getRepository()->createQueryBuilder('cd')
                 ->where('cd.company IN (:companyIds)')
@@ -325,5 +325,31 @@ class FloodlightCompanyDomainsModel extends FormModel
             dump(['Error' => $e->getMessage()]);
             throw $e;
         }
+    }
+
+    public function getExistingCompanyDomain(string $domain): array
+    {
+        return $this->getRepository()->findBy(
+            [
+                'domain' => $domain,
+            ]
+        );
+    }
+
+    public function createNewCompanyDomain(FloodlightDTO $floodlightDTO, Company $company): FloodlightCompanyDomains
+    {
+        // Save company domain
+        $companiesDomains = $floodlightDTO->fillCompaniesDomain($this, $company);
+
+
+        if (!empty($companiesDomains)) {
+            foreach ($companiesDomains as $companiesDomain) {
+                $companiesDomain->setDomain($this->cleanDomain($companiesDomain->getDomain()));
+            }
+            $this->saveEntities($companiesDomains);
+        }
+
+        return $companiesDomains[0];
+
     }
 }
