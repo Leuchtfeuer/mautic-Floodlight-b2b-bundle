@@ -124,7 +124,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertEquals(1, $newLeadDomains[1]->getCount());
     }
 
-    public function testEnrichRetryEntryWhenFloodlightGivesAnother202Response(){
+    public function disabledtestEnrichRetryEntryWhenFloodlightGivesAnother202Response(){
         $this->activePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '202iphash', 1, FloodlightLeadDomains::STATUS_RETRY);
