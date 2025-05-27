@@ -77,7 +77,6 @@ return [
                     'mautic.integration.leuchtfeuerfloodlightb2b.config',
                     'mautic.leuchtfeuerfloodlightb2b.helper.field',
                     'mautic.lead.model.company',
-                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
                     'mautic.lead.model.lead',
                     'mautic.leuchtfeuerfloodlightb2b.helper.reporter',
                     'mautic.leuchtfeuerfloodlightb2b.status200strategy',

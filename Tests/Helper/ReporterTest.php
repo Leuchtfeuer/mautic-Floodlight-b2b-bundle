@@ -19,7 +19,8 @@ class ReporterTest extends TestCase{
         ->method('writeln')
             ->with('someText');
 
-        $reporter = new Reporter($channel);
+        $reporter = new Reporter();
+        $reporter->setChannel($channel);
 
         $reporter->notify('someText');
         $this->assertTrue(true);
@@ -38,9 +39,10 @@ class ReporterTest extends TestCase{
             ->method('getVerbosity')
             ->willReturn(OutputInterface::VERBOSITY_VERBOSE);
 
-        $report = new Reporter($channel);
+        $reporter = new Reporter();
+        $reporter->setChannel($channel);
 
-        $report->notify('someText',OutputInterface::VERBOSITY_VERBOSE);
+        $reporter->notify('someText',OutputInterface::VERBOSITY_VERBOSE);
         $this->assertTrue(true);
     }
 
@@ -52,7 +54,8 @@ class ReporterTest extends TestCase{
         ->method('error')
             ->with('someText');
 
-        $reporter = new Reporter($channel);
+        $reporter = new Reporter();
+        $reporter->setChannel($channel);
 
         $reporter->notify('someText');
         $this->assertTrue(true);

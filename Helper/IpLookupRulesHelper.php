@@ -35,7 +35,6 @@ class IpLookupRulesHelper
         private Config $config,
         private FieldHelper $fieldHelper,
         private CompanyModel $companyModel,
-        private FloodlightCompanyDomainsModel $floodlightCompanyDomainsModel,
         private LeadModel $leadModel,
         private Reporter $reporter,
         private Status200Strategy $status200Strategy
@@ -209,11 +208,8 @@ class IpLookupRulesHelper
 
         if($data['statusRequestCode'] == 200){
             $processData = $this->status200Strategy->prepareData($data);
-
             $this->status200Strategy->processData($processData, $lead);
-
             return false;
-
         }
 
        //handleStatuses
@@ -373,11 +369,11 @@ class IpLookupRulesHelper
                 $company = $companyDomain->getCompany();
                 $company = $floodlightDTO->fillCompany($company);
                 $this->companyModel->saveEntity($company);
-                $tempResult = $floodlightDTO->fillCompaniesDomain($this->floodlightCompanyDomainsModel, $company);
+                $tempResult = $floodlightDTO->fillCompaniesDomain($this->companyDomainsModel, $company);
                 $result     = array_merge($result, $tempResult);
             }
             if (!empty($result)) {
-                $this->floodlightCompanyDomainsModel->saveEntities($result);
+                $this->companyDomainsModel->saveEntities($result);
             }
 
             return $result;
@@ -389,7 +385,7 @@ class IpLookupRulesHelper
             $result[] = $companyDomain;
         }
         if (!empty($result)) {
-            $this->floodlightCompanyDomainsModel->saveEntities($result);
+            $this->companyDomainsModel->saveEntities($result);
 
             return $result;
         }

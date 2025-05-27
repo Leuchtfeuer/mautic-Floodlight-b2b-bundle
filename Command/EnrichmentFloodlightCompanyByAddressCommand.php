@@ -77,9 +77,17 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
             $this->ipLookupRulesHelper->setChannel($output);
 
             // @TODO notifications from getDomain and processFloodlight need to be added like in Subscriber
-            $dataDomain = $this->ipLookupRulesHelper->getDomain($ipHash);
             $lead = $leadDomain->getContact();
-            $this->ipLookupRulesHelper->processFloodlightLeadDomains($lead, $dataDomain);
+            $dataDomain = $this->ipLookupRulesHelper->getDomain($ipHash, $lead);
+            if (!$dataDomain)
+            {
+                //it would be nice to se what was in the response whet it is not any standard
+                $this->ipLookupRulesHelper->notifyNoDataFromGetDomain();
+            }
+            else
+            {
+                $this->ipLookupRulesHelper->processFloodlightLeadDomains($lead, $dataDomain);
+            }
 
         }
         $output->writeln('<info>Enriching company data DONE!</info>');

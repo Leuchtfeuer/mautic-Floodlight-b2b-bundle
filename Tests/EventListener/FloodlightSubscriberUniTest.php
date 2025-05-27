@@ -121,6 +121,7 @@ class FloodlightSubscriberUniTest extends TestCase
         return $pageHitEvent;
     }
 
+    //@TODO Update according to current logic (with strategy for status codes)
     private function setipLookupRulesHelper(): IpLookupRulesHelper
     {
         $floodlightCompanyDomains = new FloodlightCompanyDomains();
