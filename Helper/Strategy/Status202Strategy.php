@@ -40,7 +40,7 @@ class Status202Strategy
 
     }
 
-    public function processData(array $processedData, $lead)
+    public function process(array $processedData, $lead)
     {
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
         $this->leadDomainsModel->setStatusToRetryLimitExceededIfTooHighCount($leadDomain);

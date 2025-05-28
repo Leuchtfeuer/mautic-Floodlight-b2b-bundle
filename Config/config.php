@@ -68,13 +68,20 @@ return [
             'mautic.leuchtfeuerfloodlightb2b.status429strategy' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status429Strategy::class,
                 'arguments' => [
-
+                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
+                    'mautic.lead.repository.company',
+                    'mautic.lead.model.company',
+                    'mautic.lead.model.lead',
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility::class,
                 'arguments' => [
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
+                    'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice',
+
                 ],
             ],
         ],

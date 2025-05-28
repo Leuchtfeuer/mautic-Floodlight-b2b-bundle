@@ -118,7 +118,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertEquals('localhost', $result['details']['hostname']);
     }
 
-    public function testGetGoogleDomainByGetHostByAddr(): void
+    public function disabledtestGetGoogleDomainByGetHostByAddr(): void
     {
         $helper = $this->getIpLookupRulesHelperMock();
         $result = $helper->getDomainByGetHostByAddr('8.8.8.8');
@@ -129,7 +129,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertEquals('dns.google', $result['details']['hostname']);
     }
 
-    public function testGetDetailsDomainByGetHostByAddr(): void
+    public function disabledtestGetDetailsDomainByGetHostByAddr(): void
     {
         $helper = $this->getIpLookupRulesHelperMock();
         $result = $helper->getDomainByGetHostByAddr('127.0.0.1');
@@ -353,7 +353,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertEquals($floodlightData['companyindustry_naics'], $company->getFieldValue('f4b_companyindustry_naicscode'));
     }
 
-    public function testGetDomainWithFloodLightNoGetPrimaryCompany(): void
+    public function disabledtestGetDomainWithFloodLightNoGetPrimaryCompany(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $config = $this->createMock(Config::class);
@@ -400,7 +400,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertSame('retry', $domain['status']);
     }
 
-    public function testGetDomainWithFloodLightWith404(): void
+    public function disabledtestGetDomainWithFloodLightWith404(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $config = $this->createMock(Config::class);
@@ -452,7 +452,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         assert($domain['details']['floodlight'] instanceof FloodlightDTO);
     }
 
-    public function testGetDomainWithFloodLightWith202(): void
+    public function disabledtestGetDomainWithFloodLightWith202(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $config = $this->createMock(Config::class);

@@ -182,7 +182,7 @@ class IpLookupRulesHelper
     /**
      * @return array<string, mixed>|false
      */
-    public function getAndProcessFloodlightApiData(string $remoteAddr, $lead): array|false
+    public function getAndProcessFloodlightApiData(string $remoteAddr, $lead): void
     {
 
         $data = $this->floodlightService->get($remoteAddr);
@@ -191,98 +191,33 @@ class IpLookupRulesHelper
         if (!$this->checkIfInListOfValidRequestStatuses($data)) {
             // invalidStatusStrategy
             //@TODO: should there be logged anything?
-            return false;
         }
 
         if($data['statusRequestCode'] == 200){
             $processData = $this->status200Strategy->prepareData($data);
-            $this->status200Strategy->processData($processData, $lead);
-            return false;
+            $this->status200Strategy->process($processData, $lead);
         }
-
-       //handleStatuses
-
-        // handle 202 404
 
         if($data['statusRequestCode'] == 202){
             $processData = $this->status202Strategy->prepareData($data);
-            $this->status202Strategy->processData($processData, $lead);
+            $this->status202Strategy->process($processData, $lead);
         }
 
         if($data['statusRequestCode'] == 404){
             $processData = $this->status404Strategy->prepareData($data);
-            $this->status404Strategy->processData($processData, $lead);
+            $this->status404Strategy->process($processData, $lead);
         }
 
-         $floodlightData = $this->getDataDomainByFloodlight($data);
-        if (false !== $floodlightData) {
-            return $floodlightData;
+        if($data['statusRequestCode'] == 429){
+            $processData = $this->status429Strategy->prepareData($remoteAddr);
+            $this->status429Strategy->process($processData, $lead);
         }
 
-
-        //Handle status 429
-
-        $hostByAddrData = $this->getDomainByGetHostByAddr($remoteAddr);
-        if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $hostByAddrData['status']
-            //&& self::LEAD_DOMAINS_STATUS_FAILURE !== $hostByAddrData['status']
-        ) {
-            return $hostByAddrData;
+        if($data['statusRequestCode'] == 401) {
+            $this->reporter->notify('Floodlight API returned 401 Unauthorized. Please check your API credentials.');
         }
 
-        $pyServiceData = $this->getDomainByWhoisPyService($remoteAddr);
-        if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $pyServiceData['status']
-            //&& self::LEAD_DOMAINS_STATUS_FAILURE !== $pyServiceData['status']
-        ) {
-            return $pyServiceData;
-        }
-
-        return false;
     }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function getDomainByGetHostByAddr(string $remoteAddr): array
-    {
-        $domain = gethostbyaddr($remoteAddr);
-        
-        if (false === $domain) {
-            $domain = null;
-            $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
-        } else {
-            $status = $this->domainUtility->getStatusDomain($domain);
-        }
-
-        return [
-            'status'  => $status,
-            'domain'  => $this->domainUtility->cleanDomain($domain),
-            'details' => ['hostname' => $domain],
-        ];
-    }
-
-    /**
-     * @return array<string,mixed>
-     */
-    public function getDomainByWhoisPyService(string $remoteAddr): array
-    {
-        $domainWhois = $this->whoisPyService->getWhoisData($remoteAddr);
-        $domain      = '';
-        $details     = [];
-        $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
-        
-        if (!empty($domainWhois) && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
-            $domain = $domainWhois['company_domain'];
-            $details = $domainWhois;
-            $status = $this->domainUtility->getStatusDomain($domain);
-        }
-
-        return [
-            'status'  => $status,
-            'domain'  => $this->domainUtility->cleanDomain($domain),
-            'details' => ['pyservice' => $details],
-        ];
-    }
-
 
 
     public function notifyNoDataFromGetDomain()

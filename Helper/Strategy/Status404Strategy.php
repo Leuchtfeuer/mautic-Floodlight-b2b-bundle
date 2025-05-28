@@ -28,7 +28,7 @@ class Status404Strategy
 
     }
 
-    public function processData(array $processedData, $lead)
+    public function process(array $processedData, $lead)
     {
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
         //@TODO Implement saving IpHash when 404

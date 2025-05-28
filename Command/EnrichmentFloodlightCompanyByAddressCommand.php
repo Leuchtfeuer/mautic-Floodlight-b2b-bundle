@@ -78,6 +78,8 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
 
             // @TODO notifications from getDomain and processFloodlight need to be added like in Subscriber
             $lead = $leadDomain->getContact();
+            $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($ipHash, $lead);
+            /*
             $dataDomain = $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($ipHash, $lead);
             if (!$dataDomain)
             {
@@ -88,6 +90,7 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
             {
                 $this->ipLookupRulesHelper->processFloodlightLeadDomains($lead, $dataDomain);
             }
+            */
 
         }
         $output->writeln('<info>Enriching company data DONE!</info>');
