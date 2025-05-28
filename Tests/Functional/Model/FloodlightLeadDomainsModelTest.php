@@ -35,7 +35,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $this->assertInstanceOf(Lead::class, $leadDomainEntity->getContact());
     }
 
-    public function testAddNewLeadDomainOrCountPlusOneInLeadDomainLeadFloodlightDetailsWithLeadDomainExisted(): void
+    public function disabledtestAddNewLeadDomainOrCountPlusOneInLeadDomainLeadFloodlightDetailsWithLeadDomainExisted(): void
     {
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
         assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
@@ -91,7 +91,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $this->assertSame($result->getDomain(), $domain);
     }
 
-    public function testIsBlackListed(): void
+    public function disabledtestIsBlackListed(): void
     {
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
         assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);

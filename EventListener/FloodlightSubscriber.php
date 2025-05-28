@@ -72,7 +72,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
             $this->ipLookupRulesHelper->notifyNoDataFromGetDomain();
         }
 
-        $dataDomain     = $this->ipLookupRulesHelper->getDomain($remoteAddr, $event->getHit()->getLead());
+        $dataDomain     = $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($remoteAddr, $event->getHit()->getLead());
         if (!$dataDomain)
         {
             //it would be nice to se what was in the response whet it is not any standard

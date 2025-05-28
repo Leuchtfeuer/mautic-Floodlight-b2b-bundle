@@ -10,7 +10,7 @@ use Mautic\LeadBundle\Model\LeadModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 
@@ -22,7 +22,8 @@ class Status200Strategy implements StatusCodeStrategyInterface
         private CompanyRepository $companyRepository,
         private CompanyModel $companyModel,
         private LeadModel $leadModel,
-        private FieldHelper $fieldHelper
+        private FieldHelper $fieldHelper,
+        private DomainUtility $domainUtility
     ) {}
 
     public function getStatusCode(): string
@@ -39,12 +40,12 @@ class Status200Strategy implements StatusCodeStrategyInterface
             $domain = $floodlightDTO->getDomains()[0];
         }
 
-        $status = $this->getStatusDomain($domain);
+        $status = $this->domainUtility->getStatusDomain($domain);
 
         return [
             'status'  => $status,
             //lookupType
-            'domain'  => $this->cleanDomain($domain),
+            'domain'  => $this->domainUtility->cleanDomain($domain),
             'details' => [
                 'floodlight'    => $floodlightDTO,
                 'statusRequest' => $data['statusRequestCode'],
@@ -56,7 +57,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
     {
         //check if domain is ip
         //check if ip is blacklisted
-        $this->updateF4bLookupsTable($processedData, $lead);
+        $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
         $this->leadDomainsModel->deleteOldRetryEntries($processedData['details']['floodlight'], $lead);
 
         $company = $this->companyRepository->findOneBy(['name' => $processedData['details']['floodlight']->getCompanyName()]);
@@ -78,17 +79,6 @@ class Status200Strategy implements StatusCodeStrategyInterface
         }
 
         $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
-
-
-        //update f4b company domains table (new entry or do nothing)
-        //update companies table (new entry or update data) --> Make sure right merging logic is implemented
-        //recalcutlate primary company of lead
-        //Delete retry entry for iphash-lead-combination if already exists
-    }
-
-    public function updateF4bLookupsTable(array $processedData, $lead): void
-    {
-        $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
     }
 
     public function createNewCompany(FloodlightDTO $floodlightDTO, Lead $lead): Company
@@ -108,39 +98,4 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
     }
 
-    public function getStatusDomain(?string $domain): string
-    {
-        if (empty($domain)) {
-            return FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
-        }
-
-        /*
-        if ($this->isIp($domain)) {
-            return FloodlightLeadDomains::STATUS_IP_DOMAIN;
-        }
-        */
-
-        if ($this->leadDomainsModel->isBlackListed($domain)) {
-            return FloodlightLeadDomains::STATUS_BLACKLISTED;
-        }
-
-        return FloodlightLeadDomains::STATUS_SUCCESS;
-    }
-
-    public function cleanDomain(?string $domain): ?string
-    {
-        if (is_null($domain)) {
-            return null;
-        }
-        $parts = explode('.', $domain);
-        reset($parts);
-        $firstPart = current($parts);
-        preg_match_all('/\d/', $firstPart, $matches);
-        reset($parts);
-        if (count($matches[0]) > 1) {
-            return implode('.', array_slice($parts, 1));
-        }
-
-        return $domain;
-    }
 }

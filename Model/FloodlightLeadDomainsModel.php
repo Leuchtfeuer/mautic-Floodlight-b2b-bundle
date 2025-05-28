@@ -98,14 +98,6 @@ class FloodlightLeadDomainsModel extends FormModel
         $this->em->persist($leadDomain);
         $this->em->flush();
 
-        //To be repalced once floodlight server returns 404 with ipHash
-        //if (FloodlightLeadDomains::STATUS_RETRY !== $leadDomain->getStatus()) {
-        if (FloodlightLeadDomains::STATUS_RETRY == $leadDomain->getStatus()) {
-            $this->setStatusToRetryLimitExceededIfTooHighCount($leadDomain);
-        }
-        // @TODO to be removed during 202 refactoring
-
-
         return $leadDomain;
     }
 

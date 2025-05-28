@@ -19,6 +19,11 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
 use Symfony\Component\HttpFoundation\Response;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status202Strategy;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status401Strategy;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status404Strategy;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status429Strategy;
 
 class IpLookupRulesHelper
 {
@@ -37,7 +42,13 @@ class IpLookupRulesHelper
         private CompanyModel $companyModel,
         private LeadModel $leadModel,
         private Reporter $reporter,
-        private Status200Strategy $status200Strategy
+        private Status200Strategy $status200Strategy,
+        private DomainUtility $domainUtility,
+        private Status202Strategy $status202Strategy,
+        private Status401Strategy $status401Strategy,
+        private Status404Strategy $status404Strategy,
+        private Status429Strategy $status429Strategy,
+
     ) {
         $this->parameterLoader = new ParameterLoader();
     }
@@ -68,15 +79,6 @@ class IpLookupRulesHelper
         ];
     }
 
-    public function isIp(string $domain): bool
-    {
-        $ip = str_replace('.', '', $domain);
-        if (is_numeric($ip)) {
-            return true;
-        }
-
-        return false;
-    }
 
     public function check(Hit $hit): bool
     {
@@ -130,7 +132,7 @@ class IpLookupRulesHelper
         }
         
         // Bestimme zuerst den allgemeinen Status basierend auf der Domain
-        $status = $this->getStatusDomain($domain);
+        $status = $this->domainUtility->getStatusDomain($domain);
 
         // HTTP-Status überschreibt den Domain-Status bei Spezialfällen
         if (Response::HTTP_NOT_FOUND === $data['statusRequestCode']) {
@@ -148,7 +150,7 @@ class IpLookupRulesHelper
 
         return [
             'status'  => $status,
-            'domain'  => $this->cleanDomain($domain),
+            'domain'  => $this->domainUtility->cleanDomain($domain),
             'details' => [
                 'floodlight'    => $floodlightDTO,
                 'statusRequest' => $data['statusRequestCode'],
@@ -156,22 +158,6 @@ class IpLookupRulesHelper
         ];
     }
 
-    public function cleanDomain(?string $domain): ?string
-    {
-        if (is_null($domain)) {
-            return null;
-        }
-        $parts = explode('.', $domain);
-        reset($parts);
-        $firstPart = current($parts);
-        preg_match_all('/\d/', $firstPart, $matches);
-        reset($parts);
-        if (count($matches[0]) > 1) {
-            return implode('.', array_slice($parts, 1));
-        }
-
-        return $domain;
-    }
 
     private function checkIfInListOfValidRequestStatuses($data): bool
     {
@@ -196,13 +182,15 @@ class IpLookupRulesHelper
     /**
      * @return array<string, mixed>|false
      */
-    public function getDomain(string $remoteAddr, $lead): array|false
+    public function getAndProcessFloodlightApiData(string $remoteAddr, $lead): array|false
     {
 
         $data = $this->floodlightService->get($remoteAddr);
 
 
         if (!$this->checkIfInListOfValidRequestStatuses($data)) {
+            // invalidStatusStrategy
+            //@TODO: should there be logged anything?
             return false;
         }
 
@@ -214,8 +202,19 @@ class IpLookupRulesHelper
 
        //handleStatuses
 
-        // handle 200 202 404
-        $floodlightData = $this->getDataDomainByFloodlight($data);
+        // handle 202 404
+
+        if($data['statusRequestCode'] == 202){
+            $processData = $this->status202Strategy->prepareData($data);
+            $this->status202Strategy->processData($processData, $lead);
+        }
+
+        if($data['statusRequestCode'] == 404){
+            $processData = $this->status404Strategy->prepareData($data);
+            $this->status404Strategy->processData($processData, $lead);
+        }
+
+         $floodlightData = $this->getDataDomainByFloodlight($data);
         if (false !== $floodlightData) {
             return $floodlightData;
         }
@@ -251,12 +250,12 @@ class IpLookupRulesHelper
             $domain = null;
             $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
         } else {
-            $status = $this->getStatusDomain($domain);
+            $status = $this->domainUtility->getStatusDomain($domain);
         }
 
         return [
             'status'  => $status,
-            'domain'  => $this->cleanDomain($domain),
+            'domain'  => $this->domainUtility->cleanDomain($domain),
             'details' => ['hostname' => $domain],
         ];
     }
@@ -274,37 +273,16 @@ class IpLookupRulesHelper
         if (!empty($domainWhois) && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
             $domain = $domainWhois['company_domain'];
             $details = $domainWhois;
-            $status = $this->getStatusDomain($domain);
+            $status = $this->domainUtility->getStatusDomain($domain);
         }
 
         return [
             'status'  => $status,
-            'domain'  => $this->cleanDomain($domain),
+            'domain'  => $this->domainUtility->cleanDomain($domain),
             'details' => ['pyservice' => $details],
         ];
     }
 
-    /**
-     * Returns if the domain is blacklisted, valid or failed.
-     *
-     * @return string
-     */
-    public function getStatusDomain(?string $domain): string
-    {
-        if (empty($domain)) {
-            return FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
-        }
-        
-        if ($this->isIp($domain)) {
-            return FloodlightLeadDomains::STATUS_IP_DOMAIN;
-        }
-
-        if ($this->leadDomainsModel->isBlackListed($domain)) {
-            return FloodlightLeadDomains::STATUS_BLACKLISTED;
-        }
-
-        return FloodlightLeadDomains::STATUS_SUCCESS;
-    }
 
 
     public function notifyNoDataFromGetDomain()
