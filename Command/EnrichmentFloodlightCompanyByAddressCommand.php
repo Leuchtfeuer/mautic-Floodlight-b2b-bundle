@@ -80,7 +80,6 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
             $lead = $leadDomain->getContact();
             $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($ipHash, $lead);
             /*
-            $dataDomain = $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($ipHash, $lead);
             if (!$dataDomain)
             {
                 //it would be nice to se what was in the response whet it is not any standard
@@ -91,7 +90,6 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
                 $this->ipLookupRulesHelper->processFloodlightLeadDomains($lead, $dataDomain);
             }
             */
-
         }
         $output->writeln('<info>Enriching company data DONE!</info>');
 

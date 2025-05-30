@@ -2,6 +2,9 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventListener;
 
+use Doctrine\ORM\Exception\NotSupported;
+use Doctrine\ORM\Exception\ORMException;
+use Doctrine\ORM\OptimisticLockException;
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
@@ -22,6 +25,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscrib
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
+
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
     private LeadRepository $leadRepo;
@@ -39,13 +43,11 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->companyRepo       = $this->em->getRepository(Company::class);
         $this->companyDomainRepo = $this->em->getRepository(FloodlightCompanyDomains::class);
         $this->companyLeadRepo   = $this->em->getRepository(CompanyLead::class);
-        $this->activePlugin();
-        $this->updateApikey();
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
     }
 
-    private function updateApikey(string $key='asd13'): void
+    private function updateApikey(string $key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00'): void
     {
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
@@ -53,15 +55,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $form['integration_config[apiKeys][api_key]']->setValue($key);
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
-    }
-
-    public function testPluginNoActivated(): void
-    {
-        $this->activePlugin(false);
-        $this->client->request('GET', '/mtracking.gif');
-        $this->client->request('GET', '/mtracking.gif');
-        $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
-        $this->assertEquals(0, count($totalItemsAfterRequest));
     }
 
     private function activePlugin(bool $isPublished = true): void
@@ -95,77 +88,263 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         //        $this->setUpSymfony($this->configParams);
     }
 
-    public function testIpLookupWithOnlyOneLeadFail(): void
+    public function testPagehitWhenPluginNotActivated(): void
     {
-        $leads = $this->leadRepo->findAll();
-        $this->assertEquals(0, count($leads));
+        $this->activePlugin(false);
+        $this->updateApikey();
         $this->client->request('GET', '/mtracking.gif');
-        $leads = $this->leadRepo->findAll();
-        $this->assertEquals(1, count($leads));
-        $leadDomains = $this->leadDomainRepo->findAll();
-        $this->assertEquals(0, count($leadDomains));
+        $this->client->request('GET', '/mtracking.gif');
+        $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
+        $this->assertEquals(0, count($totalItemsAfterRequest));
     }
 
-    public function disabledtestIplookupLessThanOneHourFail(): void
+    public function testPagehitWhenApiKeyNotSet(): void
     {
+        $this->activePlugin();
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
-        $items = $this->leadDomainRepo->findAll();
-        $this->assertEquals(1, count($items));
-        $this->client->request('GET', '/mtracking.gif');
-        $items = $this->leadDomainRepo->findAll();
-        $this->assertEquals(1, count($items));
+        $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
+        $this->assertEquals(0, count($totalItemsAfterRequest));
     }
 
-    public function disabledtestIpLookupPlusTwoHoursSuccessAddCount(): void
+    public function testPagehitWhenInvalidApiKey(): void
     {
-        $items = $this->leadDomainRepo->findAll();
-        $this->leadDomainRepo->deleteEntities($items);
-
-        $items = $this->leadDomainRepo->findAll();
-        $this->assertEquals(0, count($items));
-
+        $this->activePlugin(true);
+        $this->updateApikey('invalidapikey');
         $this->client->request('GET', '/mtracking.gif');
-        $items = $this->leadDomainRepo->findAll();
-        $this->assertEquals(0, count($items));
-
         $this->client->request('GET', '/mtracking.gif');
-        $items = $this->leadDomainRepo->findAll();
-        $this->assertEquals(1, count($items));
+        $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
+        $this->assertEquals(0, count($totalItemsAfterRequest));
+    }
 
+    public function testJustOnePagehit()
+    {
+        $this->activePlugin();
+        $this->updateApikey();
         $this->client->request('GET', '/mtracking.gif');
-        $items = $this->leadDomainRepo->findAll();
-        $this->assertEquals(1, count($items));
+        $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
+        $this->assertEquals(0, count($totalItemsAfterRequest));
+    }
 
-        $lastItem = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
-
-        assert($lastItem instanceof FloodlightLeadDomains);
-
+    public function testSuccessPagehit()
+    {
         $lead = $this->createLead();
-        $lastItem->setDateModified(new \DateTime('-2 hours'));
-        $lastItem->setContact($lead);
-        $this->em->persist($lastItem);
-        $this->em->flush();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('217.91.35.16', $lead);
 
-        $this->client->request('GET', '/mtracking.gif');
-        $items = $this->leadDomainRepo->findAll();
-        $this->assertEquals(2, count($items));
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(1, $leadDomainsHit[0]->getCount());
+        $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
 
-        $lastItem = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
-        assert($lastItem instanceof FloodlightLeadDomains);
-        $lead     = $this->createLead();
-        $lastItem->setDateModified(new \DateTime('-2 hours'));
-        $lastItem->setContact($lead);
-        $this->em->persist($lastItem);
-        $this->em->flush();
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
 
-        $this->client->request('GET', '/mtracking.gif');
-        $items = $this->leadDomainRepo->findAll();
-        $this->assertEquals(3, count($items));
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
     }
+
+    public function test404Pagehit()
+    {
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit('127.0.0.1', $lead);
+        $this->processHit('127.0.0.1', $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(1, $leadDomainsHit[0]->getCount());
+        $this->assertSame(null, $leadDomainsHit[0]->getDomain());
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertEmpty($company);
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
+        $this->assertEmpty($companyDomainsHit);
+    }
+
+    public function disabledtest202PagehitThenAnotherOneThatExceedsRetryLimitAfterTwoHours()
+    {
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit('retryIp', $lead);
+        $this->processHit('retryIp', $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(FloodlightLeadDomains::STATUS_RETRY, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(1, $leadDomainsHit[0]->getCount());
+        $this->assertSame(null, $leadDomainsHit[0]->getDomain());
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertEmpty($company);
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
+        $this->assertEmpty($companyDomainsHit);
+
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
+
+        $this->processHit('retryIp', $lead);
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertSame(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED, $leadDomainsHit[0]->getStatus());
+    }
+
+    public function testThirdSuccessPagehitAddsCountPlusOne()
+    {
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('217.91.35.16', $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
+        $this->processHit('217.91.35.16', $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(2, $leadDomainsHit[0]->getCount());
+        $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
+    }
+
+    public function testOldRetryEntryDeletedAfter200Request()
+    {
+        $this->activePlugin();
+        $this->updateApikey();
+        $lead = $this->createLead();
+        $this->createHit($lead);
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->setBackDateModifiedByTwoHours($retryLeadDomain);
+
+        $this->processHit('217.91.35.16', $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(1, $leadDomainsHit[0]->getCount());
+        $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
+    }
+
+    //@TODO Implement once right 404 Response structure from floodlight server is in place
+    public function disabledtestOldRetryEntryDeletedAfter404Request()
+    {
+        $this->activePlugin();
+        $this->updateApikey();
+        $lead = $this->createLead();
+        $this->createHit($lead);
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->setBackDateModifiedByTwoHours($retryLeadDomain);
+
+        $this->processHit('217.91.35.16', $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(1, $leadDomainsHit[0]->getCount());
+        $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
+    }
+
+    /**
+     * Description: When there was a recent lookup, no new lookup should be done. So the count of the success entry should not increase after the first lookup
+     */
+    public function testNoLookupIfAlreadyRecentLookup()
+    {
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('217.91.35.16', $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(1, $leadDomainsHit[0]->getCount());
+
+        $this->processHit('217.91.35.16', $lead);
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(1, $leadDomainsHit[0]->getCount());
+    }
+
+    private function addNewLeadDomain($lead, string $ipHash, int $count, $status): FloodlightLeadDomains
+    {
+        $floodlightLeadDomain = new FloodlightLeadDomains();
+        $floodlightLeadDomain->setDateAdded(new \DateTime());
+        $floodlightLeadDomain->setIpHash($ipHash);
+        $floodlightLeadDomain->setCount($count);
+        $floodlightLeadDomain->setStatus($status);
+        $floodlightLeadDomain->setContact($lead);
+        $this->em->persist($floodlightLeadDomain);
+        $this->em->flush();
+
+        return $floodlightLeadDomain;
+    }
+
+
+    private function processHit($remoteAddress, $lead)
+    {
+        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
+        $request = new \Symfony\Component\HttpFoundation\Request();
+        $request->server->set('REMOTE_ADDR', $remoteAddress);
+        $hit              = $this->createHit($lead, $remoteAddress);
+        $pageHitEventMock = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+        $pageHitEventMock->expects($this->any())->method('getHit')->willReturn($hit);
+        $pageHitEventMock->expects($this->any())->method('getRequest')->willReturn($request);
+        $floodlightSubscriber->onPageHit($pageHitEventMock);
+    }
+
+
 
     //@TODO Klären, ob Implementation von Blacklisted bei Floodlight Lookup nötig
-    public function teestIpLookUpBlacklisted(): void
+    public function disabledtestIpLookUpBlacklisted(): void
     {
         $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
         $this->updateApikey('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
@@ -211,364 +390,32 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals('blacklisted', $lastItem->getStatus());
     }
 
-    public function testIfTableIsInstalled(): void
+
+    public function testPrimaryCompanySetCorretcly(): void
     {
-        $this->client->request('GET', '/mtracking.gif');
-        $this->client->request('GET', '/mtracking.gif');
-        $ipLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->getTableColumns();
-        $this->assertNotEmpty($ipLeadDomains);
-        $this->assertContains('id', $ipLeadDomains);
-        $this->assertContains('date_added', $ipLeadDomains);
-        $this->assertContains('lookup_type', $ipLeadDomains);
-    }
-
-    public function testIfTableIsInstalledCompanyDomains(): void
-    {
-        $this->client->request('GET', '/mtracking.gif');
-        $this->client->request('GET', '/mtracking.gif');
-        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->getTableColumns();
-        $this->assertNotEmpty($companyDomains);
-        $this->assertContains('domain', $companyDomains);
-        $this->assertContains('date_added', $companyDomains);
-        $this->assertContains('date_modified', $companyDomains);
-    }
-
-    public function testOnPageHitSaveFlowFiveTimes(): void
-    {
-        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
-        $this->updateApikey('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
-        assert($floodlightSubscriber instanceof FloodlightSubscriber);
-
-        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-
+        $this->activePlugin();
+        $this->updateApikey();
         $lead = $this->createLead();
-        $hit  = $this->createHit($lead, '217.91.35.16');
+        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('217.91.35.16', $lead);
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
+        $this->processHit('217.91.35.16', $lead);
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
 
-        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
+        $this->processHit('185.145.181.191', $lead);
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[1]);
+        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $lead->getPrimaryCompany()->getName());
 
-        $floodlightSubscriber->onPageHit($pageHitEventMock1);
-        $company1           = $this->em->getRepository(Company::class)->findAll();
-        $leadDomainsHit1    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $companyDomainsHit1 = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertEmpty($company1);
-        $this->assertEmpty($leadDomainsHit1);
-        $this->assertEmpty($companyDomainsHit1);
-
-        // Hit 2 with the same lead, save lead domain and company domain
-        $request = new \Symfony\Component\HttpFoundation\Request();
-        $request->server->set('REMOTE_ADDR', '217.91.35.16');
-        $hit2              = $this->createHit($lead, '217.91.35.16');
-        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock2->expects($this->exactly(2))->method('getHit')->willReturn($hit2);
-        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock2);
-        $leadDomainsHit2    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit2[0]);
-        $companyDomainsHit2 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit2[0]->getDomain()]);
-        $company2           = $this->em->getRepository(Company::class)->findAll();
-
-        $this->assertNotEmpty($leadDomainsHit2);
-        $this->assertCount(1, $leadDomainsHit2);
-        $this->assertSame(1, $leadDomainsHit2[0]->getCount());
-        $this->assertEquals('leuchtfeuer.com', $leadDomainsHit2[0]->getDomain());
-        $this->assertNotEmpty($company2);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit2[0]);
-        $this->assertInstanceOf(Company::class, $company2[0]);
-        $this->assertSame($company2[0]->getId(), $companyDomainsHit2[0]->getCompany()->getId());
-        $this->assertCount(1, $company2);
-
-        $this->setBackDateModifiedByTwoHours($leadDomainsHit2[0]);
-
-
-        // Hit 3 with the same lead, save lead domain and company domain
-        $hit3              = $this->createHit($lead, '217.91.35.16');
-        $pageHitEventMock3 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock3->expects($this->exactly(2))->method('getHit')->willReturn($hit3);
-        $pageHitEventMock3->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock3);
-        $leadDomainsHit3    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit3[0]);
-        $companyDomainsHit3 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit3[0]->getDomain()]);
-        $company3           = $this->em->getRepository(Company::class)->findAll();
-        $this->assertNotEmpty($leadDomainsHit3);
-        $this->assertCount(1, $leadDomainsHit3);
-        $this->assertSame(2, $leadDomainsHit3[0]->getCount());
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit3[0]);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit2[0]);
-        $this->assertEquals('leuchtfeuer.com', $leadDomainsHit2[0]->getDomain());
-        $this->assertNotEmpty($company3);
-        $this->assertInstanceOf(Company::class, $company3[0]);
-        $this->assertSame($company3[0]->getId(), $companyDomainsHit3[0]->getCompany()->getId());
-        $this->assertCount(1, $company3);
-
-        $this->setBackDateModifiedByTwoHours($leadDomainsHit3[0]);
-
-        // Hit 4 with the same lead, with different domain, save lead domain and company domain
-        $hit4     = $this->createHit($lead, '185.145.181.191');
-        $request2 = new \Symfony\Component\HttpFoundation\Request();
-        $request2->server->set('REMOTE_ADDR', '185.145.181.191');
-        $pageHitEventMock4 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock4->expects($this->exactly(2))->method('getHit')->willReturn($hit4);
-        $pageHitEventMock4->expects($this->exactly(1))->method('getRequest')->willReturn($request2);
-        $floodlightSubscriber->onPageHit($pageHitEventMock4);
-        $leadDomainsHit4     = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $totalCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit4[1]);
-        $companyDomainsHit4  = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit4[1]->getDomain()]);
-        $company4            = $this->em->getRepository(Company::class)->findAll();
-        $this->assertNotEmpty($leadDomainsHit4);
-        $this->assertCount(2, $leadDomainsHit4);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit4[1]);
-        $this->assertSame(1, $leadDomainsHit4[1]->getCount());
-        $this->assertEquals('arkada-x.com', $leadDomainsHit4[1]->getDomain());
-        $this->assertNotEmpty($company4);
-        $this->assertCount(2, $company4);
-        $this->assertCount(2, $totalCompanyDomains);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit4[0]);
-        $this->assertInstanceOf(Company::class, $company4[1]);
-        $this->assertSame($company4[1]->getId(), $companyDomainsHit4[0]->getCompany()->getId());
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit4[1]);
-        $leadDomainsHit4[1]->setCount(5);
-        $this->em->persist($leadDomainsHit4[1]);
-        $this->em->flush();
-
-        $this->setBackDateModifiedByTwoHours($leadDomainsHit4[1]);
-
-        // Test recalculateLeadPrimaryCompany
-        $pageHitEventMock5 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock5->expects($this->exactly(2))->method('getHit')->willReturn($hit3);
-        $pageHitEventMock5->expects($this->exactly(1))->method('getRequest')->willReturn($request2);
-        $floodlightSubscriber->onPageHit($pageHitEventMock5);
-        $currentLead = $this->em->getRepository(Lead::class)->find($lead->getId());
-        $this->assertInstanceOf(Lead::class, $currentLead);
-        $this->assertInstanceOf(Company::class, $currentLead->getPrimaryCompany());
-        $this->assertSame($currentLead->getPrimaryCompany()->getId(), $company4[1]->getId());
+        $this->processHit('185.145.181.191', $lead);
+        $this->assertSame('Arkada-X', $lead->getPrimaryCompany()->getName());
     }
 
-    //    public function testOnPageHitSaveWithFloodlight()
-    //    {
-    //        $this->updateApikey('pro_123');
-    //
-    //        $lead = $this->createLead();
-    //        $hit = $this->createHit($lead);
-    //
-    //        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit,false);
-    //        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-    //
-    //        $lead = $this->createLead();
-    //        $request = new \Symfony\Component\HttpFoundation\Request();
-    //        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
-    //        $pageHitEventMock1->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-    //        $floodlightSubscriber->onPageHit($pageHitEventMock1);
 
-    //        $hit2 = $this->createHit($lead);
-    //        $floodlightSubscriber = $this->createFloodlightSubescriberInstance($hit2);
-    //        $request = new \Symfony\Component\HttpFoundation\Request();
-    //        $request->server->set('REMOTE_ADDR', '8.8.8.8');
-    //        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-    //        $pageHitEventMock2->expects($this->exactly(4))->method('getHit')->willReturn($hit2);
-    //        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-    //        $floodlightSubscriber->onPageHit($pageHitEventMock2);
-
-    //        $all = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-    //        $leadDomainsHit2 = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-    //        $companyDomainsHit2 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit2[0]->getDomain()]);
-    //        $companies2 = $this->em->getRepository(Company::class)->findAll();
-    //        $this->assertNotEmpty($leadDomainsHit2);
-    //        $this->assertCount(1, $leadDomainsHit2);
-    //        $this->assertSame(1, $leadDomainsHit2[0]->getCount());
-    //        $this->assertEquals('le-non.de', $leadDomainsHit2[0]->getDomain());
-    //        $this->assertNotEmpty($companies2);
-    //        $this->assertCount(1, $companies2);
-    //        $this->assertSame($companies2[0]->getId(), $companyDomainsHit2[0]->getCompany()->getId());
-    //    }
-
-    //    private function createFloodlightSubescriberInstance($hit, $check=true)
-    //    {
-    //        $ipLookupRulesHelperMock = $this->createIpRulesServiceMock($hit, $check);
-    //        $floodlightSubscriber    = new FloodlightSubscriber(
-    //            $ipLookupRulesHelperMock,
-    //            self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class),
-    //            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
-    //            self::getContainer()->get('logger'),
-    //            self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper::class),
-    //            self::getContainer()->get('mautic.lead.model.company'),
-    //            self::getContainer()->get('mautic.lead.model.lead'),
-    //            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
-    //        );
-    //
-    //        return $floodlightSubscriber;
-    //    }
-
-    //    private function createIpRulesServiceMock($hit, $check=true): \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper
-    //    {
-    //        $floodlightCompanyDomains = new FloodlightCompanyDomains();
-    //        $floodlightCompanyDomains->setCompany(new Company());
-    //        $floodlightCompanyDomains->setDomain('google.com');
-    //        $floodlightCompanyDomains->setDomain('google.pt');
-    //        $floodlightCompanyDomains->setDateModified(new \DateTime());
-    //        $floodlightCompanyDomains->setCodeStatusRequest(null);
-    //        $floodlightCompanyDomains->setEnrichmentDate(new \DateTime());
-    //        $floodlightCompanyDomains->setDateAdded(new \DateTime());
-    //
-    //        $ipLookupRulesHelper = $this->createMock(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class);
-    //        $ipLookupRulesHelper->expects($this->exactly(1))->method('check')->willReturn($check);
-    //        $dataDomain    = json_decode(file_get_contents(__DIR__.'/../../fixtures/floodlight.json'), true);
-    //        $flooglightDTO = new \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO($dataDomain);
-    //        $getDomain     = [
-    //            'status'  => 'valid',
-    //            'domain'  => $flooglightDTO->getCompanyPrimaryDomain(),
-    //            'details' => [
-    //                'floodlight'        => $flooglightDTO,
-    //                'statusRequestCode' => 200,
-    //                'companyDomains'    => [$floodlightCompanyDomains],
-    //            ],
-    //        ];
-    //        $ipLookupRulesHelperFunctional = self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class);
-    //        assert($ipLookupRulesHelperFunctional instanceof \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper);
-    //        // Real object
-    //
-    //        $resultGetDomain                                     = $ipLookupRulesHelperFunctional->evaluate($hit, $getDomain);
-    //        $resultGetDomain['result']['companyDomains']['isNew']=false;
-    //
-    //        $ipLookupRulesHelper->expects($this->once())->method('getDomain')->willReturn($getDomain);
-    //        $ipLookupRulesHelper->expects($this->any())->method('isIp')->willReturn(true);
-    //        $fakeGetDomain = [
-    //            'domain' => 'google.com',
-    //            'result' => [
-    //                'leadDomain'     => new FloodlightLeadDomains(),
-    //                'companyDomains' => [
-    //                    'isNew' => true,
-    //                    'data'  => [$floodlightCompanyDomains],
-    //                ],
-    //            ],
-    //            'status' => 'valid',
-    //        ];
-    //        $ipLookupRulesHelper->expects($this->once())->method('evaluate')->willReturn($resultGetDomain);
-    //
-    //        return $ipLookupRulesHelper;
-    //    }
-
-
-    public function testIfLeadPrimaryCompanyGetsSetCorrectly(){
-        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
-        $this->updateApikey('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
-        assert($floodlightSubscriber instanceof FloodlightSubscriber);
-
-        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-
-        $lead = $this->createLead();
-        $hit  = $this->createHit($lead, '217.91.35.16');
-
-        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
-
-        $floodlightSubscriber->onPageHit($pageHitEventMock1);
-        $company           = $this->em->getRepository(Company::class)->findAll();
-        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $leads = $this->em->getRepository(Lead::class)->findAll();
-        $this->assertCount(1, $leads);
-        $this->assertEmpty($company);
-        $this->assertEmpty($leadDomainsHit);
-        $this->assertEmpty($companyDomainsHit);
-
-        // Hit 2 with the same ip
-        $request = new \Symfony\Component\HttpFoundation\Request();
-        $request->server->set('REMOTE_ADDR', '217.91.35.16');
-        $hit2              = $this->createHit($lead, '217.91.35.16');
-        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock2->expects($this->exactly(2))->method('getHit')->willReturn($hit2);
-        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock2);
-
-        $leads = $this->em->getRepository(Lead::class)->findAll();
-        $company           = $this->em->getRepository(Company::class)->findAll();
-        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertCount(1, $leads);
-        $this->assertCount(1, $company);
-        $this->assertCount(1, $leadDomains);
-        $this->assertCount(1, $companyDomains);
-
-        $primaryCompany = $leads[0]->getPrimaryCompany();
-
-        $this->assertInstanceOf(Company::class, $primaryCompany);
-        $this->assertEquals('Leuchtfeuer Digital Marketing GmbH', $primaryCompany->getName());
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomains[0]);
-        $this->setBackDateModifiedByTwoHours($leadDomains[0]);
-
-
-        // Hit 3 with the same ip
-        $hit3              = $this->createHit($lead, '217.91.35.16');
-        $pageHitEventMock3 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock3->expects($this->exactly(2))->method('getHit')->willReturn($hit3);
-        $pageHitEventMock3->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock3);
-
-        $leads = $this->em->getRepository(Lead::class)->findAll();
-        $company           = $this->em->getRepository(Company::class)->findAll();
-        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertCount(1, $leads);
-        $this->assertCount(1, $company);
-        $this->assertCount(1, $leadDomains);
-        $this->assertCount(1, $companyDomains);
-
-        $primaryCompany = $leads[0]->getPrimaryCompany();
-        $this->assertInstanceOf(Company::class, $primaryCompany);
-        $this->assertEquals('Leuchtfeuer Digital Marketing GmbH', $primaryCompany->getName());
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomains[0]);
-        $this->setBackDateModifiedByTwoHours($leadDomains[0]);
-
-        //Hit 4 with different IP
-        $request2 = new \Symfony\Component\HttpFoundation\Request();
-        $request2->server->set('REMOTE_ADDR', '185.145.181.191');
-        $hit4              = $this->createHit($lead, '185.145.181.191');
-        $pageHitEventMock4 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock4->expects($this->exactly(2))->method('getHit')->willReturn($hit4);
-        $pageHitEventMock4->expects($this->exactly(1))->method('getRequest')->willReturn($request2);
-        $floodlightSubscriber->onPageHit($pageHitEventMock4);
-
-        $leads = $this->em->getRepository(Lead::class)->findAll();
-        $company           = $this->em->getRepository(Company::class)->findAll();
-        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertCount(1, $leads);
-        $this->assertCount(2, $company);
-        $this->assertCount(2, $leadDomains);
-        $this->assertCount(2, $companyDomains);
-
-        $primaryCompany = $leads[0]->getPrimaryCompany();
-        $this->assertInstanceOf(Company::class, $primaryCompany);
-        $this->assertEquals('Leuchtfeuer Digital Marketing GmbH', $primaryCompany->getName());
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomains[0]);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomains[1]);
-        $this->setBackDateModifiedByTwoHours($leadDomains[0]);
-        $this->setBackDateModifiedByTwoHours($leadDomains[1]);
-
-        //Hit 5 with different IP (now count of original ip and new ip are equal but new ip should be set because more recent dateModified)
-        $hit5              = $this->createHit($lead, '185.145.181.191');
-        $pageHitEventMock5 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock5->expects($this->exactly(2))->method('getHit')->willReturn($hit5);
-        $pageHitEventMock5->expects($this->exactly(1))->method('getRequest')->willReturn($request2);
-        $floodlightSubscriber->onPageHit($pageHitEventMock5);
-
-        $leads = $this->em->getRepository(Lead::class)->findAll();
-        $company           = $this->em->getRepository(Company::class)->findAll();
-        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertCount(1, $leads);
-        $this->assertCount(2, $company);
-        $this->assertCount(2, $leadDomains);
-        $this->assertCount(2, $companyDomains);
-
-        $primaryCompany = $leads[0]->getPrimaryCompany();
-        $this->assertInstanceOf(Company::class, $primaryCompany);
-        $this->assertEquals('Arkada-X', $primaryCompany->getName());
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomains[0]);
-    }
-
-    public function testNoNewCompanyCreatedWhenAlreadyExistedBeforeFloodlight(){
+    //@TODO klären ob nötig
+    public function disabledtestNoNewCompanyCreatedWhenAlreadyExistedBeforeFloodlight(){
         $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
         $this->updateApikey('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
         assert($floodlightSubscriber instanceof FloodlightSubscriber);

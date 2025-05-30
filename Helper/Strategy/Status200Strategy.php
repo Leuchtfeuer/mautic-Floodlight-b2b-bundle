@@ -31,7 +31,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         return '200';
     }
 
-    public function prepareData(array $data): array|false
+    public function   prepareData(array $data): array|false
     {
         $floodlightDTO = new FloodlightDTO($data);
 
