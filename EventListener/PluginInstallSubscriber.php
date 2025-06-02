@@ -267,11 +267,6 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'name'  => 'Enrichment Date',
                 'type'  => 'datetime',
             ],
-            [
-                'alias' => 'f4b_companyindustry_tags',
-                'name'  => 'Industry Tags',
-                'type'  => 'textarea',
-            ],
         ];
 
     public function __construct(private InstallHelper $installHelper)
