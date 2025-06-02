@@ -76,7 +76,6 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
 
             $this->ipLookupRulesHelper->setChannel($output);
 
-            // @TODO notifications from getDomain and processFloodlight need to be added like in Subscriber
             $lead = $leadDomain->getContact();
             $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($ipHash, $lead);
         }

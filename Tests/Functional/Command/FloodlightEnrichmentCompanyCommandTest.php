@@ -221,7 +221,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
      * @throws OptimisticLockException
      * @throws NotSupported
      */
-    private function activePlugin(bool $isPublished = true, string|null $apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00'): void
+    private function activePlugin(bool $isPublished = true, string|null $apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ0LCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQ4ODU3NjM3fQ.kIKDLACntODwnB0BCzRCyPIKnkmHvgMS1yeCJoxVcVE'): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         assert($reloadFacade instanceof ReloadFacade);
