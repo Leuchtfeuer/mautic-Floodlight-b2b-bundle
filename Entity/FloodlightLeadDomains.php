@@ -86,11 +86,6 @@ class FloodlightLeadDomains
             ->columnName('status')
             ->nullable()
             ->build();
-
-        //        $builder->createField('enrichmentDate', 'datetime')
-        //            ->columnName('enrichment_date')
-        //            ->nullable()
-        //            ->build();
     }
 
     public static function loadValidatorMetadata(ValidatorClassMetadata $metadata): void

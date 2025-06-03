@@ -44,9 +44,8 @@ class PluginInstallSubscriberTest extends MauticMysqlTestCase
             'f4b_companyname_legal',
             'f4b_companycrunchbase_handle',
             'f4b_companyfloodlight_id',
-            'iplookup_whois_json',
-            //'enrichment_date',
-            'companyindustry_tags',
+            'f4b_iplookup_whois_json',
+            'f4b_enrichment_date',
         ];
         foreach ($fields as $field) {
             $this->assertStringContainsString($field, $content);
