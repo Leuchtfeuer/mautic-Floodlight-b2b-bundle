@@ -75,10 +75,9 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
 
 
             $this->ipLookupRulesHelper->setChannel($output);
-            $dataDomain = $this->ipLookupRulesHelper->getDomain($ipHash);
-            $lead = $leadDomain->getContact();
-            $this->ipLookupRulesHelper->processFloodlightLeadDomains($lead, $dataDomain);
 
+            $lead = $leadDomain->getContact();
+            $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($ipHash, $lead);
         }
         $output->writeln('<info>Enriching company data DONE!</info>');
 

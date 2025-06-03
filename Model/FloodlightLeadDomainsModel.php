@@ -98,15 +98,6 @@ class FloodlightLeadDomainsModel extends FormModel
         $this->em->persist($leadDomain);
         $this->em->flush();
 
-        //To be repalced once floodlight server returns 404 with ipHash
-        //if (FloodlightLeadDomains::STATUS_RETRY !== $leadDomain->getStatus()) {
-        if (FloodlightLeadDomains::STATUS_SUCCESS == $leadDomain->getStatus()) {
-            $this->deleteOldRetryEntries($leadDomain, $lead);
-            }
-        else {
-            $this->setStatusToRetryLimitExceededIfTooHighCount($leadDomain);
-        }
-
         return $leadDomain;
     }
 
@@ -248,7 +239,7 @@ class FloodlightLeadDomainsModel extends FormModel
         $companyDomain = $this->getRepositoryFloodlightCompanyDomains()->findOneBy(
             [
                 'domain'          => $maxLeadDomain->getDomain(),
-                'isPrimaryDomain' => true,
+                //'isPrimaryDomain' => true,
             ]
         );
 

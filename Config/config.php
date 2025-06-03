@@ -35,6 +35,55 @@ return [
             'mautic.leuchtfeuerfloodlightb2b.helper.reporter' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter::class,
             ],
+            'mautic.leuchtfeuerfloodlightb2b.status200strategy' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
+                    'mautic.lead.repository.company',
+                    'mautic.lead.model.company',
+                    'mautic.lead.model.lead',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.field',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain'
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.status202strategy' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status202Strategy::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.status401strategy' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status401Strategy::class,
+                'arguments' => [
+
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.status404strategy' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status404Strategy::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.status429strategy' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status429Strategy::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
+                    'mautic.lead.repository.company',
+                    'mautic.lead.model.company',
+                    'mautic.lead.model.lead',
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
+                ],
+            ],
+            'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
+                    'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice',
+
+                ],
+            ],
         ],
         'helpers' => [
             'mautic.leuchtfeuerfloodlightb2b.helper.install' => [
@@ -66,9 +115,14 @@ return [
                     'mautic.integration.leuchtfeuerfloodlightb2b.config',
                     'mautic.leuchtfeuerfloodlightb2b.helper.field',
                     'mautic.lead.model.company',
-                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
                     'mautic.lead.model.lead',
                     'mautic.leuchtfeuerfloodlightb2b.helper.reporter',
+                    'mautic.leuchtfeuerfloodlightb2b.status200strategy',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
+                    'mautic.leuchtfeuerfloodlightb2b.status202strategy',
+                    'mautic.leuchtfeuerfloodlightb2b.status401strategy',
+                    'mautic.leuchtfeuerfloodlightb2b.status404strategy',
+                    'mautic.leuchtfeuerfloodlightb2b.status429strategy',
                 ],
             ],
         ],
