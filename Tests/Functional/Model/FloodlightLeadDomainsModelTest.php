@@ -239,7 +239,6 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $newLeadDomain->setIpHash('local');
         $newLeadDomain->setDateAdded(new \DateTime());
         $newLeadDomain->setDateModified(new \DateTime());
-        $newLeadDomain->setDateLastLookup(new \DateTime());
         $newLeadDomain->setCount(0);
         $this->em->persist($newLeadDomain);
         $this->em->flush();

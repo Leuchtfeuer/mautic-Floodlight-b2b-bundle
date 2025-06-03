@@ -37,8 +37,6 @@ class FloodlightLeadDomains
 
     private ?Lead $contact;
 
-    private ?\DateTime $dateLastLookup = null;
-
     private ?string $status = null;
 
     public static function loadMetadata(ORM\ClassMetadata $metadata): void
@@ -74,11 +72,6 @@ class FloodlightLeadDomains
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')
             ->columnName('date_modified')
-            ->nullable()
-            ->build();
-
-        $builder->createField('dateLastLookup', 'datetime')
-            ->columnName('date_last_lookup')
             ->nullable()
             ->build();
 
@@ -121,7 +114,6 @@ class FloodlightLeadDomains
                     'count',
                     'dateAdded',
                     'dateModified',
-                    'dateLastLookup',
                     'status',
                 ]
             )
@@ -133,7 +125,6 @@ class FloodlightLeadDomains
                     'count',
                     'dateAdded',
                     'dateModified',
-                    'dateLastLookup',
                     'status',
                 ]
             )
@@ -223,26 +214,6 @@ class FloodlightLeadDomains
     public function setLookupType(string $lookupType): void
     {
         $this->lookupType = $lookupType;
-    }
-
-    //    public function getEnrichmentDate(): ?\DateTime
-    //    {
-    //        return $this->enrichmentDate;
-    //    }
-    //
-    //    public function setEnrichmentDate(?\DateTime $enrichmentDate): void
-    //    {
-    //        $this->enrichmentDate = $enrichmentDate;
-    //    }
-
-    public function getDateLastLookup(): ?\DateTime
-    {
-        return $this->dateLastLookup;
-    }
-
-    public function setDateLastLookup(?\DateTime $dateLastLookup): void
-    {
-        $this->dateLastLookup = $dateLastLookup;
     }
 
     public function getStatus(): ?string
