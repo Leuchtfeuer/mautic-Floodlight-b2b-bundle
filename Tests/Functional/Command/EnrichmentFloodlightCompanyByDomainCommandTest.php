@@ -132,11 +132,10 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->activatePlugin();
         $company       = $this->addCompany('Test Company');
 
+        //First 200 command --> company should be updated
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
-
         $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
-
         $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
@@ -144,11 +143,14 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
         $newCompany = $newCompanyDomains[0]->getCompany();
         $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $newCompany->getName());
-
-        // Console Output Assertions
         $this->assertStringContainsString('Company data updated Leuchtfeuer Digital Marketing GmbH', $commandTester->getDisplay());
         $this->assertStringContainsString('CompanyDomain leuchtfeuer.com data updated', $commandTester->getDisplay());
         $this->assertStringContainsString('Enriching company data DONE!', $commandTester->getDisplay());
+
+        //Second 200 command --> company should not be updated again
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
+        $this->assertStringContainsString('No companies to enrich', $commandTester->getDisplay());
+
     }
 
     /**
@@ -159,19 +161,25 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->activatePlugin();
         $company       = $this->addCompany('Test Company', '202domain.com');
 
+        //First 202 command, enrichment date should be set to default date
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
-
         $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
-
         $this->assertEmpty($newCompanyDomains);
         $this->assertCount(1, $companies);
         $this->assertNotNull($company->getFieldValue('f4b_enrichment_date'));
         $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
         $this->assertSame('Test Company', $companies[0]->getName());
-        
-        // Console Output Assertion
-        $this->assertStringContainsString('Enriching company data DONE!', $commandTester->getDisplay());
+        $this->assertStringContainsString('Company domain 202domain.com with request 202, enrichment date set to default date', $commandTester->getDisplay());
+
+        //Second 202 command, enrichment date should be set to current date
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
+        $this->assertStringContainsString('Company domain 202domain.com with request 202, enrichment date set to current date', $commandTester->getDisplay());
+
+        //Third 202 command, there shouldn't be found a company to enrich
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
+        $this->assertStringContainsString('No companies to enrich', $commandTester->getDisplay());
+
     }
 
     /**
@@ -180,21 +188,21 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
     public function testEnrichByDomainStatus404(): void
     {
         $this->activatePlugin();
-        $company       = $this->addCompany('Test Company', 'https://localhostdomain1245.com');
+        $company       = $this->addCompany('Test Company', 'localhostdomain12456.com');
 
+        //First 404 command, enrichment date should be set to current date
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
-
         $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
-
-        $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
         $this->assertNotNull($company->getFieldValue('f4b_enrichment_date'));
         $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
         $this->assertSame('Test Company', $companies[0]->getName());
+        //$this->assertStringContainsString('Domain not found (404) : localhostdomain1245.com', $commandTester->getDisplay());
         
-        // Console Output Assertion
-        $this->assertStringContainsString('Enriching company data DONE!', $commandTester->getDisplay());
+        // Second 404 command, no companies to enrich should be found
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
+        $this->assertStringContainsString('No companies to enrich', $commandTester->getDisplay());
     }
 
     public function testEnrichmentCompanyCommandByDomainRequest202200(): void

@@ -95,7 +95,7 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && empty($companyEnrichmentDate)) {
                 $company->addUpdatedField('f4b_enrichment_date', (new \DateTime(self::DATE_DEFAULT))->format('Y-m-d H:i:s'));
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    $output->writeln('<info>Company domain '.$companyDomain->getDomain().' with request 202 by second time</info>');
+                    $output->writeln('<info>Company domain '.$companyDomain->getDomain().' with request 202, enrichment date set to default date</info>');
                 }
                 continue;
             }
@@ -103,7 +103,7 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && (new \DateTime(self::DATE_DEFAULT))->format('Y-m-d H:i:s') == $companyEnrichmentDate) {
                 $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    $output->writeln('<error>Lead domain '.$companyDomain->getDomain().' with request 202 by third time</error>');
+                    $output->writeln('<error>Lead domain '.$companyDomain->getDomain().' with request 202, enrichment date set to current date</error>');
                 }
                 continue;
             }
