@@ -105,7 +105,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
     //@TODO: Implement new logic as soon as iphash is returned with 404 response
     public function testEnrichRetryEntryTo404Entry(){
-        $this->activePlugin(true, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
+        $this->activePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '127.0.0.1', 1, FloodlightLeadDomains::STATUS_RETRY);
 
@@ -159,7 +159,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
      * When then for the retry we get a success response from the floodlight API, the retry entry should be deleted and the count of the success entry should be increased.
      * */
     public function testOneSuccessEntryAndOneRetryEntry(){
-        $this->activePlugin(true, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
+        $this->activePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
         $successLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_SUCCESS);
@@ -183,7 +183,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
      * When then for the retry we get a 404 response from the floodlight API, the retry entry should be deleted and the count of the 404 entry should be increased.
      * */
     public function disabledtestOneSuccessEntryAndOne404Entry(){
-        $this->activePlugin(true, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
+        $this->activePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '404iphash', 1, FloodlightLeadDomains::STATUS_RETRY);
         $LeadDomain404 = $this->addNewLeadDomain($lead, '404iphash', 1, FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
