@@ -115,9 +115,7 @@ class FloodlightCompanyDomainsModel extends FormModel
      */
     public function getCompanyDomainToEnrichment()
     {
-        // Verwende eine einfachere Zwei-Schritt-Methode
         try {
-            // Schritt 1: Finde alle Company-IDs mit nativer SQL-Abfrage
             $connection = $this->em->getConnection();
             $query = $connection->createQueryBuilder()
                 ->select('id')
@@ -142,6 +140,55 @@ class FloodlightCompanyDomainsModel extends FormModel
             dump(['Error' => $e->getMessage()]);
             throw $e;
         }
+    }
+
+    public function saveDomainsForNonFloodlightCompanies(): void
+    {
+        $connection = $this->em->getConnection();
+        $query = $connection->createQueryBuilder()
+            ->select('c.id')
+            ->from(MAUTIC_TABLE_PREFIX.'companies', 'c')
+            ->where('c.f4b_companyfloodlight_id IS NULL')
+            ->andWhere('c.companywebsite IS NOT NULL')
+            ->andWhere('c.companywebsite != :empty')
+            ->setParameter('empty', '');
+
+        $companyIds = $query->executeQuery()->fetchFirstColumn();
+
+        if (empty($companyIds)) {
+            return;
+        }
+
+        $companies = $this->companiesModel->getEntities(['ids' => $companyIds]);
+
+        foreach ($companies as $company) {
+            $domain = $this->extractDomainFromCompanywebsite($company->getCompanywebsite());
+
+            if (!$domain || !empty($this->getExistingCompanyDomain($domain))) {
+                continue;
+            }
+
+            $companyDomain = $this->getEntity();
+            $companyDomain->setCompany($company);
+            $companyDomain->setDomain($domain);
+            $companyDomain->setDateAdded(new \DateTime());
+            $companyDomain->setDateModified(new \DateTime());
+            $companyDomain->setIsPrimaryDomain(false);
+
+            $this->saveEntity($companyDomain);
+        }
+    }
+
+    private function extractDomainFromCompanywebsite(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+
+        $parsed = parse_url($url);
+        $host = $parsed['host'] ?? '';
+
+        return empty($host) ? null : preg_replace('/^www\./', '', $host);
     }
 
     public function getExistingCompanyDomain(string $domain): array
