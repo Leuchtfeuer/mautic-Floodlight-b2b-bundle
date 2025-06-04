@@ -403,14 +403,26 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('217.91.35.16', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
+        $this->processHit('185.145.181.191', $lead);
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[1]);
+        //Leuchtfeuer should be primary company because domain has count 2 and Arkada-X has only count 1
+        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $lead->getPrimaryCompany()->getName());
 
         $this->processHit('185.145.181.191', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[1]);
-        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $lead->getPrimaryCompany()->getName());
-
-        $this->processHit('185.145.181.191', $lead);
+        //Arkada-X should be primary company because domain has count 2 like Leuchtfeuer, but the date modified of the entry is more recent
         $this->assertSame('Arkada-X', $lead->getPrimaryCompany()->getName());
+
+
+        $leadDomain = $this->addNewLeadDomain($lead, 'iphash2', 2, FloodlightLeadDomains::STATUS_SUCCESS);
+        $leadDomain->setDomain('leuchtfeuer.com');
+        $this->em->persist($leadDomain);
+        $this->em->flush();
+        $this->processHit('185.145.181.191', $lead);
+        //Leuchtfeuer should be primary company because the count of both lead domain entries for domain 'leuchtfeuer.com' get aggregated, so the count is 4 and the count for the Arkada-X domain is only three.
+        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $lead->getPrimaryCompany()->getName());
     }
 
 
