@@ -216,17 +216,6 @@ class FloodlightLeadDomains
         $this->lookupType = $lookupType;
     }
 
-    //    public function getEnrichmentDate(): ?\DateTime
-    //    {
-    //        return $this->enrichmentDate;
-    //    }
-    //
-    //    public function setEnrichmentDate(?\DateTime $enrichmentDate): void
-    //    {
-    //        $this->enrichmentDate = $enrichmentDate;
-    //    }
-
-
     public function getStatus(): ?string
     {
         return $this->status;
