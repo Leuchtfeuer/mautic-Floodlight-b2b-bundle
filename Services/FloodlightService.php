@@ -99,27 +99,6 @@ class FloodlightService implements FloodlightServiceInterface
         return $this->makeRequest($url);
     }
 
-    public function getByIpHash(string $ipHash): bool|array
-
-    {
-        $response   = $this->getCompanyByIpHash($ipHash);
-
-        // Check if don't have response
-
-        if (false === $response) {
-            return false;
-        }
-
-        return $this->handleResult($response);
-    }
-
-    private function getCompanyByIpHash(string $ipHash): ResponseInterface|false
-    {
-        $url = sprintf('%s/%s/companies/hash/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ipHash);
-
-        return $this->makeRequest($url);
-    }
-
     public function getByDomain(string $domain): bool|array
     {
 
