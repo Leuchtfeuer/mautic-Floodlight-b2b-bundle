@@ -18,6 +18,7 @@ return [
                 'arguments' => [
                     'mautic.leuchtfeuerfloodlightb2b.connection.apiclient',
                     'monolog.logger.mautic',
+                    '%mautic.leuchtfeuerfloodlightb2b.floodlight_api_url%',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.connection.credentials' => [
