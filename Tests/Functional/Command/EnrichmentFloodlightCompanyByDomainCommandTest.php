@@ -52,76 +52,10 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
     public function testEnrichByDomainWhenInvalidApiKey(): void
     {
         $this->activatePlugin(true, 'invalidApiKey');
+        $company       = $this->addCompany('Test Company');
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich', ['--by-domain' => 1]);
         $this->assertStringContainsString('You are using an invalid API key', $commandTester->getDisplay());
     }
-
-    private function addCompany(string $name='Test Company', string $website = 'https://leuchtfeuer.com/marketing-technologie/'): Company
-    {
-        $company = new Company();
-        $company->setName($name);
-        $company->setDateAdded(new \DateTime());
-        $company->setDateModified(new \DateTime());
-        $company->setWebsite($website);
-        $this->em->persist($company);
-        $this->em->flush();
-
-        return $company;
-    }
-
-    //    private function addLead($name='Test Lead', $email='test@example.com'): Lead
-    //    {
-    //        $lead = new Lead();
-    //        $lead->setFirstName($name);
-    //        $lead->setEmail($email);
-    //        $lead->setDateAdded(new \DateTime());
-    //        $lead->setDateModified(new \DateTime());
-    //        $this->em->persist($lead);
-    //        $this->em->flush();
-    //
-    //        return $lead;
-    //    }
-
-    private function addCompanyCompanyDomain(string $domain, Company $company): FloodlightCompanyDomains
-    {
-        $companyDomain = new FloodlightCompanyDomains();
-        $companyDomain->setCompany($company);
-        $companyDomain->setDomain($domain);
-        $companyDomain->setIsPrimaryDomain(true);
-        $companyDomain->setDateAdded(new \DateTime());
-        $companyDomain->setDateModified(new \DateTime());
-        $this->em->persist($companyDomain);
-        $this->em->flush();
-
-        return $companyDomain;
-    }
-
-    //    private function addLeadDomain(?Lead $lead, string $domain='', $ipHash=''): FloodlightLeadDomains
-    //    {
-    //        if (empty($ipHash)) {
-    //            $ipHash = 'iphash'.random_int(1, 10000000);
-    //        }
-    //        $floodlightLeadDomain = new FloodlightLeadDomains();
-    //        if (!empty($domain)) {
-    //            $floodlightLeadDomain->setDomain('test.com');
-    //        }
-    //        $floodlightLeadDomain->setDateAdded(new \DateTime());
-    //        $floodlightLeadDomain->setIpHash($ipHash);
-    //        $floodlightLeadDomain->setCount(1);
-    //        if ($lead) {
-    //            $floodlightLeadDomain->setContact($lead);
-    //        }
-    //        $this->em->persist($floodlightLeadDomain);
-    //        $this->em->flush();
-    //
-    //        return $floodlightLeadDomain;
-    //    }
-
-
-    //enrichment date set --> no lookup (name nicht upgedated)
-    //company already existed before floodlight and domain does not yet exist
-    //company already existed before floodlight but domain already exists
-    //success --> company name angepasst
 
 
     /**
@@ -174,7 +108,10 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
 
         //Second 202 command, enrichment date should be set to current date
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
-        $this->assertStringContainsString('Company domain 202domain.com with request 202, enrichment date set to current date', $commandTester->getDisplay());
+        $companies         = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(1, $companies);
+        $this->assertNotNull($company->getFieldValue('f4b_enrichment_date'));
+        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
 
         //Third 202 command, there shouldn't be found a company to enrich
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
@@ -188,294 +125,22 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
     public function testEnrichByDomainStatus404(): void
     {
         $this->activatePlugin();
-        $company       = $this->addCompany('Test Company', 'localhostdomain12456.com');
+        $company       = $this->addCompany('Test Company', 'https://localhostdomain1245.com');
 
         //First 404 command, enrichment date should be set to current date
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
         $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $companies         = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(1, $newCompanyDomains);
         $this->assertCount(1, $companies);
         $this->assertNotNull($company->getFieldValue('f4b_enrichment_date'));
         $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
         $this->assertSame('Test Company', $companies[0]->getName());
-        //$this->assertStringContainsString('Domain not found (404) : localhostdomain1245.com', $commandTester->getDisplay());
-        
-        // Second 404 command, no companies to enrich should be found
+        $this->assertStringContainsString('Enriching company data DONE!', $commandTester->getDisplay());
+
+        //Second 404 command, there shouldn't be found a company to enrich
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:domain');
         $this->assertStringContainsString('No companies to enrich', $commandTester->getDisplay());
-    }
-
-    public function testEnrichmentCompanyCommandByDomainRequest202200(): void
-    {
-        $this->activatePlugin(true, 'pro_123');
-        $domain        = 'test.com';
-        $company       = $this->addCompany('Test Company');
-        $companyDomain = $this->addCompanyCompanyDomain($domain, $company);
-        $localCompany  = clone $company;
-
-        $floodlightServiceMock         = $this->createMock(FloodlightService::class);
-        $fileContent                   = file_get_contents(__DIR__.'/../../fixtures/floodlight.json');
-        $this->assertNotFalse($fileContent);
-        $response                      = json_decode($fileContent, true);
-        $this->assertIsArray($response);
-        $response['statusRequestCode'] = 200;
-
-        $floodlightServiceMock->expects($this->exactly(2))->method('getByDomain')->willReturnOnConsecutiveCalls(['statusRequestCode' => 202], $response);
-
-        $kernel    = static::getContainer()->get('kernel');
-        $this->assertNotNull($kernel);
-        $this->assertInstanceOf(\Symfony\Component\HttpKernel\Kernel::class, $kernel);
-        $container = $kernel->getContainer();
-        $container->set('mautic.leuchtfeuerfloodlightb2b.services.floodlight', $floodlightServiceMock);
-        $application = new Application($kernel);
-
-        $command = new EnrichmentFloodlightCompanyCommand(
-            $container->get('mautic.helper.paths'),
-            $container->get('mautic.helper.core_parameters'),
-            $container->get('mautic.lead.model.company'),
-            $container->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
-            $container->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class),
-            $floodlightServiceMock,
-            $container->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper::class),
-            $container->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains')
-        );
-        $command->setName('leuchtfeuer:floodlight:enrich');
-
-        $application->add($command);
-
-        $commandToTest = $application->find('leuchtfeuer:floodlight:enrich');
-
-        $commandTester = new CommandTester($commandToTest);
-
-        $commandTester->execute(['--by-domain' => 1]);
-
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
-        $companies         = $this->em->getRepository(Company::class)->findAll();
-        $this->assertCount(1, $newCompanyDomains);
-        $this->assertCount(1, $companies);
-        $this->assertNotEmpty($companies);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
-        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
-
-        $commandTester->execute(['--by-domain' => 1]);
-
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
-        $companies         = $this->em->getRepository(Company::class)->findAll();
-        $this->assertInstanceOf(Company::class, $companies[0]);
-        $this->assertCount(1, $newCompanyDomains);
-        $this->assertCount(1, $companies);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
-        $newCompany = $newCompanyDomains[0]->getCompany();
-        $this->assertArrayHasKey('companyname', $response);
-        $this->assertArrayHasKey('companystate_code', $response);
-        $this->assertArrayHasKey('companyfloodlight_id', $response);
-        $this->assertArrayHasKey('companyindustry_icb_industry', $response);
-        $this->assertSame($newCompany->getName(), $response['companyname']);
-        $this->assertSame($newCompany->getFieldValue('f4b_companystate_code'), $response['companystate_code']);
-        $this->assertSame($newCompany->getFieldValue('f4b_companyfloodlight_id'), $response['companyfloodlight_id']);
-        $this->assertSame($newCompany->getFieldValue('f4b_companyindustry_icb_industry'), $response['companyindustry_icb_industry']);
-        $this->assertSame($newCompany->getFieldValue('f4b_companyindustry_icb_industry'), $companies[0]->getFieldValue('f4b_companyindustry_icb_industry'));
-        $this->assertNotEmpty($newCompany->getFieldValue('f4b_companydescription_long'));
-    }
-
-    public function testEnrichmentCompanyCommandByDomainRequest202202(): void
-    {
-        $this->activatePlugin(true, 'pro_123');
-        $domain        = 'test.com';
-        $company       = $this->addCompany('Test Company');
-        $companyDomain = $this->addCompanyCompanyDomain($domain, $company);
-        $localCompany  = clone $company;
-
-        $floodlightServiceMock = $this->createMock(FloodlightService::class);
-
-        $floodlightServiceMock->expects($this->exactly(2))->method('getByDomain')->willReturnOnConsecutiveCalls(['statusRequestCode' => 202], ['statusRequestCode' => 202]);
-
-        $kernel    = static::getContainer()->get('kernel');
-        $this->assertInstanceOf(\Symfony\Component\HttpKernel\Kernel::class, $kernel);
-        $container = $kernel->getContainer();
-        $container->set('mautic.leuchtfeuerfloodlightb2b.services.floodlight', $floodlightServiceMock);
-        $application = new Application($kernel);
-
-        $command = new EnrichmentFloodlightCompanyCommand(
-            $container->get('mautic.helper.paths'),
-            $container->get('mautic.helper.core_parameters'),
-            $container->get('mautic.lead.model.company'),
-            $container->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
-            $container->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class),
-            $floodlightServiceMock,
-            $container->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper::class),
-            $container->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains')
-        );
-        $command->setName('leuchtfeuer:floodlight:enrich');
-
-        $application->add($command);
-
-        $commandToTest = $application->find('leuchtfeuer:floodlight:enrich');
-
-        $commandTester = new CommandTester($commandToTest);
-
-        $commandTester->execute(['--by-domain' => 1]);
-
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
-        $companies         = $this->em->getRepository(Company::class)->findAll();
-        $this->assertCount(1, $newCompanyDomains);
-        $this->assertCount(1, $companies);
-        $this->assertNotEmpty($companies);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
-        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
-
-        $commandTester->execute(['--by-domain' => 1]);
-
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
-        $companies         = $this->em->getRepository(Company::class)->findAll();
-        $this->assertCount(1, $newCompanyDomains);
-        $this->assertCount(1, $companies);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
-        $newCompany = $newCompanyDomains[0]->getCompany();
-        $this->assertSame($newCompany->getName(), $localCompany->getName());
-        $this->assertEmpty($newCompany->getFieldValue('f4b_companystate_code'));
-        $this->assertEmpty($newCompany->getFieldValue('f4b_companyfloodlight_id'));
-        $this->assertEmpty($newCompany->getFieldValue('f4b_companyindustry_icb_industry'));
-        $this->assertEmpty($newCompany->getFieldValue('f4b_companyindustry_icb_industry'));
-        $this->assertEmpty($newCompany->getFieldValue('f4b_companydescription_long'));
-        $this->assertInstanceOf(Company::class, $companies[0]);
-        $this->assertSame($newCompany->getFieldValue('f4b_companyname_legal'), $companies[0]->getFieldValue('f4b_companyname_legal'));
-    }
-
-    public function testEnrichmentCompanyCommandByDomainRequest202404(): void
-    {
-        $this->activatePlugin(true, 'pro_123');
-        $domain        = 'test.com';
-        $company       = $this->addCompany('Test Company');
-        $companyDomain = $this->addCompanyCompanyDomain($domain, $company);
-        $localCompany  = clone $company;
-
-        $floodlightServiceMock = $this->createMock(FloodlightService::class);
-
-        $floodlightServiceMock->expects($this->exactly(2))->method('getByDomain')->willReturnOnConsecutiveCalls(
-            ['statusRequestCode' => 202],
-            ['statusRequestCode' => 404]
-        );
-
-        $commandTester = $this->executeCommand($floodlightServiceMock);
-
-        $commandTester->execute(['--by-domain' => 1]);
-
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
-        $companies         = $this->em->getRepository(Company::class)->findAll();
-        $this->assertCount(1, $newCompanyDomains);
-        $this->assertCount(1, $companies);
-        $this->assertNotEmpty($companies);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
-        //        $this->assertNotSame($newCompanyDomains[0]->getCodeStatusRequest(), 404);
-        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
-
-        $commandTester->execute(['--by-domain' => 1]);
-
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
-        $companies         = $this->em->getRepository(Company::class)->findAll();
-        $this->assertCount(1, $newCompanyDomains);
-        $this->assertCount(1, $companies);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertNotEmpty($company->getFieldValue('f4b_enrichment_date'));
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
-        //        $this->assertSame($newCompanyDomains[0]->getCodeStatusRequest(), 404);
-    }
-
-    public function testEnrichmentTwoCompanyCommandByDomainRequest202200404(): void
-    {
-        $this->activatePlugin(true, 'pro_123');
-        $domain1        = 'test.com';
-        $domain2        = 'ww.com';
-        $company1       = $this->addCompany('Test Company1');
-        $company2       = $this->addCompany('Test Company2');
-        $companyDomain1 = $this->addCompanyCompanyDomain($domain1, $company1);
-        $companyDomain2 = $this->addCompanyCompanyDomain($domain2, $company2);
-        $this->assertNull($companyDomain1->getCompany()->getFieldValue('f4b_companyfloodlight_id'));
-        $this->assertNull($companyDomain2->getCompany()->getFieldValue('f4b_companyfloodlight_id'));
-
-        $floodlightServiceMock         = $this->createMock(FloodlightService::class);
-        $fileContent                   = file_get_contents(__DIR__.'/../../fixtures/floodlight.json');
-        $this->assertNotFalse($fileContent);
-        $response                      = json_decode($fileContent, true);
-        $this->assertIsArray($response);
-        $response['statusRequestCode'] = 200;
-        $floodlightServiceMock->expects($this->exactly(3))->method('getByDomain')->willReturnOnConsecutiveCalls(
-            ['statusRequestCode' => 202],
-            $response,
-            ['statusRequestCode' => 404]
-        );
-
-        $commandTester = $this->executeCommand($floodlightServiceMock);
-
-        $commandTester->execute(['--by-domain' => 1]);
-
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
-        $companies         = $this->em->getRepository(Company::class)->findAll();
-        $this->assertCount(2, $newCompanyDomains);
-        $this->assertCount(2, $companies);
-        $this->assertNotEmpty($companies);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[1]);
-        $this->assertNotEmpty($company1->getFieldValue('f4b_enrichment_date'));
-        $this->assertSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company1->getFieldValue('f4b_enrichment_date'));
-        $this->assertNotEmpty($company2->getFieldValue('f4b_enrichment_date'));
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company2->getFieldValue('f4b_enrichment_date'));
-        $this->assertEmpty($newCompanyDomains[0]->getCompany()->getFieldValue('f4b_companyfloodlight_id'));
-        $this->assertEmpty($newCompanyDomains[0]->getCompany()->getFieldValue('f4b_companystate_code'));
-        $this->assertArrayHasKey('companyname', $response);
-        $this->assertSame($newCompanyDomains[1]->getCompany()->getName(), $response['companyname']);
-        $this->assertArrayHasKey('companystate_code', $response);
-        $this->assertArrayHasKey('companyfloodlight_id', $response);
-        $this->assertSame($newCompanyDomains[1]->getCompany()->getFieldValue('f4b_companystate_code'), $response['companystate_code']);
-        $this->assertSame($newCompanyDomains[1]->getCompany()->getFieldValue('f4b_companyfloodlight_id'), $response['companyfloodlight_id']);
-        //        $this->assertSame($newCompanyDomains[0]->getCodeStatusRequest(), 202);
-        //        $this->assertSame($newCompanyDomains[1]->getCodeStatusRequest(), 200);
-        $this->assertNotNull($newCompanyDomains[1]->getCompany()->getFieldValue('f4b_companyfloodlight_id'));
-
-        $commandTester->execute(['--by-domain' => 1]);
-
-        $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
-        $companies         = $this->em->getRepository(Company::class)->findAll();
-        $this->assertCount(2, $newCompanyDomains);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        //        $this->assertSame($newCompanyDomains[0]->getCodeStatusRequest(), 404);
-        $this->assertNotEmpty($company1->getFieldValue('f4b_enrichment_date'));
-        $this->assertNotSame(EnrichmentFloodlightCompanyByAddressCommand::DATE_DEFAULT, $company1->getFieldValue('f4b_enrichment_date'));
-    }
-
-    private function executeCommand(FloodlightService $floodlightServiceMock): CommandTester
-    {
-        $kernel    = static::getContainer()->get('kernel');
-        $this->assertInstanceOf(\Symfony\Component\HttpKernel\Kernel::class, $kernel);
-        $container = $kernel->getContainer();
-        $container->set('mautic.leuchtfeuerfloodlightb2b.services.floodlight', $floodlightServiceMock);
-        $application = new Application($kernel);
-
-        $command = new EnrichmentFloodlightCompanyCommand(
-            $container->get('mautic.helper.paths'),
-            $container->get('mautic.helper.core_parameters'),
-            $container->get('mautic.lead.model.company'),
-            $container->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
-            $container->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class),
-            $floodlightServiceMock,
-            $container->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper::class),
-            $container->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains')
-        );
-        $command->setName('leuchtfeuer:floodlight:enrich');
-
-        $application->add($command);
-
-        $commandToTest = $application->find('leuchtfeuer:floodlight:enrich');
-
-        return new CommandTester($commandToTest);
     }
 
     private function activatePlugin(bool $isPublished = true, string $apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ0LCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQ4ODU3NjM3fQ.kIKDLACntODwnB0BCzRCyPIKnkmHvgMS1yeCJoxVcVE'): void
@@ -502,5 +167,32 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
+    }
+
+    private function addCompany(string $name='Test Company', string $website = 'https://leuchtfeuer.com/marketing-technologie/'): Company
+    {
+        $company = new Company();
+        $company->setName($name);
+        $company->setDateAdded(new \DateTime());
+        $company->setDateModified(new \DateTime());
+        $company->setWebsite($website);
+        $this->em->persist($company);
+        $this->em->flush();
+
+        return $company;
+    }
+
+    private function addCompanyCompanyDomain(string $domain, Company $company): FloodlightCompanyDomains
+    {
+        $companyDomain = new FloodlightCompanyDomains();
+        $companyDomain->setCompany($company);
+        $companyDomain->setDomain($domain);
+        $companyDomain->setIsPrimaryDomain(true);
+        $companyDomain->setDateAdded(new \DateTime());
+        $companyDomain->setDateModified(new \DateTime());
+        $this->em->persist($companyDomain);
+        $this->em->flush();
+
+        return $companyDomain;
     }
 }
