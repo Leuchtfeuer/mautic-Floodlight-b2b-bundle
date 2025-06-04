@@ -29,7 +29,39 @@ INSTALLATION
 
 CONFIGURATION
 -------------
-Enable the plugin and configure the plugin with the API key and the endpoint.
+Enable the plugin and configure the plugin with the API key.
+
+### API URL Configuration
+
+The plugin connects to the Floodlight B2B API. The API URL can be configured:
+
+1.  **Default:** If no other configuration is provided, it defaults to `https://api.floodlight-b2b.com`.
+2.  **Via Environment Variable (Recommended for Testing/Development):**
+    You can override the API URL by setting the `FLOODLIGHT_API_URL` environment variable. This is the highest priority. This is particularly useful for pointing the plugin to a mock server (like Mockoon) for tests.
+
+    Example for running tests against a local Mockoon server on port 3002:
+    ```bash
+    FLOODLIGHT_API_URL="http://localhost:3002" composer test plugins/LeuchtfeuerFloodlightB2BBundle/Tests/
+    ```
+
+### Running Mockoon for Local Testing
+
+To use a local Mockoon server for testing:
+
+1.  Navigate to the Mockoon configuration directory within the plugin:
+    ```bash
+    cd plugins/LeuchtfeuerFloodlightB2BBundle/Tests/Mockoon
+    ```
+2.  Install the necessary dependencies (if you haven't already):
+    ```bash
+    npm install
+    ```
+    (This typically installs `mockoon-cli` and any other local dependencies.)
+3.  Start the Mockoon server with the predefined mock data:
+    ```bash
+    npx mockoon-cli start --data ./floodlight_mockoon.json
+    ```
+    This will usually start the mock server on `http://localhost:3002`. You can then use the `FLOODLIGHT_API_URL` environment variable as shown above to direct the plugin's API calls to your local Mockoon instance.
 
 USAGE
 -----
