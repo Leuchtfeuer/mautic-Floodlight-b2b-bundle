@@ -17,6 +17,9 @@ class FloodlightLeadDomains
     public const STATUS_UNKNOWN_ERROR = 'unknown error';
     public const STATUS_BLACKLISTED = 'blacklisted';
     public const STATUS_RETRY = 'retry';
+    public const LOOKUP_TYPE_API = 'API';
+    public const LOOKUP_TYPE_DNS = 'dns';
+    public const LOOKUP_TYPE_WHOIS = 'whois';
 
     /**
      * @var int

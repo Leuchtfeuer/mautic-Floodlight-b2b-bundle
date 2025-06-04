@@ -91,6 +91,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertEquals('leuchtfeuer.com', $newLeadDomains[0]->getDomain());
         $this->assertEquals(FloodlightLeadDomains::STATUS_SUCCESS, $newLeadDomains[0]->getStatus());
         $this->assertEquals(1, $newLeadDomains[0]->getCount());
+        $this->assertEquals(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
 
         $newCompanies = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $newCompanies);
@@ -122,6 +123,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertEquals(null, $newLeadDomains[1]->getDomain());
         $this->assertEquals(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $newLeadDomains[1]->getStatus());
         $this->assertEquals(1, $newLeadDomains[1]->getCount());
+        $this->assertEquals(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[1]->getLookupType());
     }
 
     public function disabledtestEnrichRetryEntryWhenFloodlightGivesAnother202Response(){
@@ -137,6 +139,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertEquals(null, $newLeadDomains[0]->getDomain());
         $this->assertEquals(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
         $this->assertEquals(2, $newLeadDomains[0]->getCount());
+        $this->assertEquals(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
     }
 
     public function disabledtestEnrichRetryEntryAndExceedRetryLimit(){
@@ -175,6 +178,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertEquals('leuchtfeuer.com', $newLeadDomains[0]->getDomain());
         $this->assertEquals(FloodlightLeadDomains::STATUS_SUCCESS, $newLeadDomains[0]->getStatus());
         $this->assertEquals(2, $newLeadDomains[0]->getCount());
+        $this->assertEquals(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
     }
 
     /**

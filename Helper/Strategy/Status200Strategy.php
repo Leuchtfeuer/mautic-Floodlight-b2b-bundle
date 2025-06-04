@@ -44,8 +44,8 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
         return [
             'status'  => $status,
-            //lookupType
             'domain'  => $this->domainUtility->cleanDomain($domain),
+            'lookupType' => FloodlightLeadDomains::LOOKUP_TYPE_API,
             'details' => [
                 'floodlight'    => $floodlightDTO,
                 'statusRequest' => $data['statusRequestCode'],

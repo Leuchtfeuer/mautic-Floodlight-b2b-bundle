@@ -141,6 +141,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
         $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
 
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
@@ -168,6 +169,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
         $this->assertSame(null, $leadDomainsHit[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
 
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertEmpty($company);
@@ -191,6 +193,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(FloodlightLeadDomains::STATUS_RETRY, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
         $this->assertSame(null, $leadDomainsHit[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
 
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertEmpty($company);
