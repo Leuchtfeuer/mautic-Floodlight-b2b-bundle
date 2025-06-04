@@ -109,7 +109,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     public function testPagehitWhenInvalidApiKey(): void
     {
-        $this->activePlugin(true);
+        $this->activePlugin();
         $this->updateApikey('invalidapikey');
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
@@ -178,13 +178,13 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEmpty($companyDomainsHit);
     }
 
-    public function disabledtest202PagehitThenAnotherOneThatExceedsRetryLimitAfterTwoHours()
+    public function test202PagehitThenAnotherOneThatExceedsRetryLimitAfterTwoHours()
     {
         $lead = $this->createLead();
         $this->activePlugin();
         $this->updateApikey();
-        $this->processHit('retryIp', $lead);
-        $this->processHit('retryIp', $lead);
+        $this->processHit('retryip', $lead);
+        $this->processHit('retryip', $lead);
 
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
         $this->assertNotEmpty($leadDomainsHit);
@@ -203,8 +203,11 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
 
-        $this->processHit('retryIp', $lead);
+        $this->processHit('retryip', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
+
+        $this->processHit('retryip', $lead);
         $this->assertNotEmpty($leadDomainsHit);
         $this->assertCount(1, $leadDomainsHit);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
@@ -429,7 +432,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     }
 
 
-    //@TODO klären ob nötig
+/*
+ * Test is not yet necessary but might be needed once merging logic is clear
     public function disabledtestNoNewCompanyCreatedWhenAlreadyExistedBeforeFloodlight(){
         $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
         $this->updateApikey('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
@@ -475,9 +479,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1,$leadDomains);
         $this->assertCount(1,$companyDomains);
         $this->assertCount(1,$companies);
-
-
     }
+*/
 
     private function createHit(Lead $lead, string $ipAdress = '127.0.0.1'): Hit
     {

@@ -342,6 +342,50 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "e8be13d4-5bfb-415e-a1ce-8a30544ddd96",
+      "type": "http",
+      "documentation": "Retry IP",
+      "method": "get",
+      "endpoint": "v1/companies/ip/retryip",
+      "responses": [
+        {
+          "uuid": "ef8f012d-ea47-480a-87f9-5a5adabc5997",
+          "body": "{\n    \"ip_hash\": \"retryIpHash\"\n}",
+          "latency": 0,
+          "statusCode": 202,
+          "label": "202 Retry Ip",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer invaidApiKey",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -364,6 +408,10 @@
     {
       "type": "route",
       "uuid": "1f3e6bfb-61e0-4361-8451-a5e4d9f76551"
+    },
+    {
+      "type": "route",
+      "uuid": "e8be13d4-5bfb-415e-a1ce-8a30544ddd96"
     }
   ],
   "proxyMode": false,
