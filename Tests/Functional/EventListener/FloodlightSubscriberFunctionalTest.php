@@ -47,7 +47,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->setUpSymfony($this->configParams);
     }
 
-    private function updateApikey(string $key='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ0LCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQ4ODU3NjM3fQ.kIKDLACntODwnB0BCzRCyPIKnkmHvgMS1yeCJoxVcVE'): void
+    private function updateApikey(string $key='validApiKey'): void
     {
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
@@ -353,7 +353,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     public function disabledtestIpLookUpBlacklisted(): void
     {
         $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
-        $this->updateApikey('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
+        $this->updateApikey();
         assert($floodlightSubscriber instanceof FloodlightSubscriber);
 
         $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);

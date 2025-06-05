@@ -22,7 +22,7 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
-class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
+class EnrichByAddressCommandTest extends MauticMysqlTestCase
 {
     public function setUp(): void
     {
@@ -225,7 +225,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
      * @throws OptimisticLockException
      * @throws NotSupported
      */
-    private function activatePlugin(bool $isPublished = true, string|null $apiKey = '200apikey'): void
+    private function activatePlugin(bool $isPublished = true, string|null $apiKey = 'validApiKey'): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         assert($reloadFacade instanceof ReloadFacade);
