@@ -29,15 +29,15 @@ class Status429Strategy
     {
         $hostByAddrData = $this->domainUtility->getDomainByGetHostByAddr($remoteAddr);
         if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $hostByAddrData['status']
-            //&& self::LEAD_DOMAINS_STATUS_FAILURE !== $hostByAddrData['status']
         ) {
+            $hostByAddrData['lookupType'] = FloodlightLeadDomains::LOOKUP_TYPE_DNS;
             return $hostByAddrData;
         }
 
         $pyServiceData = $this->domainUtility->getDomainByWhoisPyService($remoteAddr);
         if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $pyServiceData['status']
-            //&& self::LEAD_DOMAINS_STATUS_FAILURE !== $pyServiceData['status']
         ) {
+            $pyServiceData['lookupType'] = FloodlightLeadDomains::LOOKUP_TYPE_WHOIS;
             return $pyServiceData;
         }
 

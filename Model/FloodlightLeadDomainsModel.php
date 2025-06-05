@@ -95,6 +95,7 @@ class FloodlightLeadDomainsModel extends FormModel
         //set status should be removed at later point
         $leadDomain->setStatus($dataDomain['status']);
         $leadDomain->setDateModified(new \DateTime());
+        $leadDomain->setLookupType($dataDomain['lookupType']);
         $this->em->persist($leadDomain);
         $this->em->flush();
 

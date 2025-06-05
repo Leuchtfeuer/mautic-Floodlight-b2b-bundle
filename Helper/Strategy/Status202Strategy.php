@@ -32,6 +32,7 @@ class Status202Strategy
         return [
             'status'  => $status,
             'domain'  => null,
+            'lookupType' => FloodlightLeadDomains::LOOKUP_TYPE_API,
             'details' => [
                 'floodlight'    => $floodlightDTO,
                 'statusRequest' => $data['statusRequestCode'],
