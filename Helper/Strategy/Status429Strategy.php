@@ -64,6 +64,8 @@ class Status429Strategy
             $this->createNewCompanyDomain($processedData['details']['floodlight'], $company);
         }
 
+        //recalculate new primary lead company
+
     }
 
     public function createNewCompany($domain, $details, Lead $lead): Company

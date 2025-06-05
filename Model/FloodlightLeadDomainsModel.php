@@ -200,49 +200,27 @@ class FloodlightLeadDomainsModel extends FormModel
 
     public function recalculateLeadPrimaryCompany(Lead $lead): void
     {
+        // Query die direkt die aggregierten Counts pro Domain zurückgibt, sortiert nach höchstem Count
         $qb = $this->getRepository()->createQueryBuilder('l');
-        $qb->where('l.contact = :lead')
+        $qb->select('l.domain, SUM(l.count) as totalCount, MAX(l.dateModified) as latestDate')
+            ->where('l.contact = :lead')
             ->andWhere('l.domain IS NOT NULL')
-            ->setParameter('lead', $lead);
+            ->setParameter('lead', $lead)
+            ->groupBy('l.domain')
+            ->orderBy('totalCount', 'DESC')
+            ->addOrderBy('latestDate', 'DESC');
 
-        $leadDomains = $qb->getQuery()->getResult();
+        $result = $qb->getQuery()->getResult();
 
-        if (empty($leadDomains)) {
+        if (empty($result)) {
             return;
         }
 
-        $maxCount      = 0;
-        $maxLeadDomain = 0;
-        $isFirst       = true;
 
-        // test it
-        if (!is_array($leadDomains)) {
-            return;
-        }
-
-        foreach ($leadDomains as $leadDomain) {
-            assert($leadDomain instanceof FloodlightLeadDomains);
-            if ($isFirst) {
-                $isFirst       = false;
-                $maxLeadDomain = $leadDomain;
-                $maxCount      = $leadDomain->getCount();
-                continue;
-            }
-
-            if ($leadDomain->getCount() >= $maxCount AND $leadDomain->getDateModified() >= $maxLeadDomain->getDateModified()) {
-                $maxCount      = $leadDomain->getCount();
-                $maxLeadDomain = $leadDomain;
-            }
-        }
-
-        assert($maxLeadDomain instanceof FloodlightLeadDomains);
-
-        $companyDomain = $this->getRepositoryFloodlightCompanyDomains()->findOneBy(
-            [
-                'domain'          => $maxLeadDomain->getDomain(),
-                //'isPrimaryDomain' => true,
-            ]
-        );
+        $primaryDomain = $result[0]['domain'];
+        $companyDomain = $this->getRepositoryFloodlightCompanyDomains()->findOneBy([
+            'domain' => $primaryDomain,
+        ]);
 
         if (empty($companyDomain)) {
             return;
