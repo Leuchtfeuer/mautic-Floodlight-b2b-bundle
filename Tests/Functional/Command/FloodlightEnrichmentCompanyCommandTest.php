@@ -32,7 +32,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
     public function testEnrichWhenPluginNotPublished()
     {
-        $this->activePlugin(false);
+        $this->activatePlugin(false);
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
@@ -48,7 +48,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
     public function testEnrichWhenApiKeyNotSet()
     {
-        $this->activePlugin(true, null);
+        $this->activatePlugin(true, null);
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
@@ -64,7 +64,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
     public function testEnrichIfInvalidApiKey()
     {
-        $this->activePlugin(true, 'invaidApiKey');
+        $this->activatePlugin(true, 'invaidApiKey');
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
@@ -79,7 +79,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
     }
 
     public function testEnrichRetryEntryToSuccessEntry(){
-        $this->activePlugin();
+        $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
@@ -105,7 +105,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
 
     //@TODO: Implement new logic as soon as iphash is returned with 404 response
     public function testEnrichRetryEntryTo404Entry(){
-        $this->activePlugin();
+        $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '127.0.0.1', 1, FloodlightLeadDomains::STATUS_RETRY);
 
@@ -124,6 +124,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
         $this->assertEquals(1, $newLeadDomains[1]->getCount());
     }
 
+
     public function disabledtestEnrichRetryEntryWhenFloodlightGivesAnother202Response(){
         $this->activePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
@@ -140,7 +141,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
     }
 
     public function disabledtestEnrichRetryEntryAndExceedRetryLimit(){
-        $this->activePlugin();
+        $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '202iphash', 2, FloodlightLeadDomains::STATUS_RETRY);
 
@@ -159,7 +160,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
      * When then for the retry we get a success response from the floodlight API, the retry entry should be deleted and the count of the success entry should be increased.
      * */
     public function testOneSuccessEntryAndOneRetryEntry(){
-        $this->activePlugin();
+        $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
         $successLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_SUCCESS);
@@ -183,7 +184,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
      * When then for the retry we get a 404 response from the floodlight API, the retry entry should be deleted and the count of the 404 entry should be increased.
      * */
     public function disabledtestOneSuccessEntryAndOne404Entry(){
-        $this->activePlugin();
+        $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '404iphash', 1, FloodlightLeadDomains::STATUS_RETRY);
         $LeadDomain404 = $this->addNewLeadDomain($lead, '404iphash', 1, FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
@@ -221,7 +222,7 @@ class FloodlightEnrichmentCompanyCommandTest extends MauticMysqlTestCase
      * @throws OptimisticLockException
      * @throws NotSupported
      */
-    private function activePlugin(bool $isPublished = true, string|null $apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ0LCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQ4ODU3NjM3fQ.kIKDLACntODwnB0BCzRCyPIKnkmHvgMS1yeCJoxVcVE'): void
+    private function activatePlugin(bool $isPublished = true, string|null $apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ0LCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQ4ODU3NjM3fQ.kIKDLACntODwnB0BCzRCyPIKnkmHvgMS1yeCJoxVcVE'): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         assert($reloadFacade instanceof ReloadFacade);

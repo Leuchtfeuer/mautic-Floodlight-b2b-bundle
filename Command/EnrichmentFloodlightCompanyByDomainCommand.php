@@ -48,11 +48,7 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             return 0;
         }
 
-        if (!$this->config->isProTier()) {
-            $output->writeln('<error>Plugin isn\'t pro tier</error>');
-
-            return 0;
-        }
+        $this->flCompanyDomainsModel->saveDomainsForNonFloodlightCompanies();
 
         $companyDomains = $this->flCompanyDomainsModel->getCompanyDomainToEnrichment();
         if (empty($companyDomains) || !is_array($companyDomains)) {
@@ -67,7 +63,6 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             $company = $companyDomain->getCompany();
             $companyEnrichmentDate = $company->getFieldValue('f4b_enrichment_date');
             if (null === $domain) {
-                $output->writeln('<error>Domain is empty </error>');
                 continue;
             }
 
@@ -83,11 +78,15 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
                 continue;
             }
 
+            if (Response::HTTP_UNAUTHORIZED === $result['statusRequestCode']) {
+                $output->writeln('<error>You are using an invalid API key</error>');
+                continue;
+            }
+
 
             if (Response::HTTP_NOT_FOUND === $result['statusRequestCode']) {
-                // Confirm if it is correct to set the enrichment date here
                 $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
-                //$this->flCompanyDomainsModel->saveEntity($companyDomain);
+                $this->companyModel->saveEntity($company);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     $output->writeln('<error>Domain not found (404) : '.$companyDomain->getDomain().'</error>');
                 }
@@ -96,18 +95,18 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
 
             if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && empty($companyEnrichmentDate)) {
                 $company->addUpdatedField('f4b_enrichment_date', (new \DateTime(self::DATE_DEFAULT))->format('Y-m-d H:i:s'));
-                //$this->flCompanyDomainsModel->saveEntity($companyDomain);
+                $this->companyModel->saveEntity($company);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    $output->writeln('<info>Company domain '.$companyDomain->getDomain().' with request 202 by second time</info>');
+                    $output->writeln('<info>Company domain '.$companyDomain->getDomain().' with request 202, enrichment date set to default date</info>');
                 }
                 continue;
             }
 
             if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && (new \DateTime(self::DATE_DEFAULT))->format('Y-m-d H:i:s') == $companyEnrichmentDate) {
                 $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
-                //$this->flCompanyDomainsModel->saveEntity($companyDomain);
+                $this->companyModel->saveEntity($company);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
-                    $output->writeln('<error>Lead domain '.$companyDomain->getDomain().' with request 202 by third time</error>');
+                    $output->writeln('<error>Lead domain '.$companyDomain->getDomain().' with request 202, enrichment date set to current date</error>');
                 }
                 continue;
             }
@@ -125,14 +124,10 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             $company = $floodlightDTO->fillCompany($company);
             $this->companyModel->saveEntity($company);
 
-            //            $companyDomain->setCodeStatusRequest($result['statusRequestCode']);
-            //$companyDomain->setEnrichmentDate(new \DateTime());
             $this->flCompanyDomainsModel->saveEntity($companyDomain);
 
-            $output->writeln('<info>Company data updated '.$company->getName().'</info>');
-            $output->writeln('<info>CompanyDomain '.$companyDomain->getDomain().' data updated</info>');
-
-            $output->writeln('<info>Company and Company domain data updated</info>');
+            $output->writeln('<info>Company data updated ' . $company->getName() . '</info>');
+            $output->writeln('<info>CompanyDomain ' . $companyDomain->getDomain() . ' data updated</info>');
             $output->writeln(PHP_EOL);
         }
 
