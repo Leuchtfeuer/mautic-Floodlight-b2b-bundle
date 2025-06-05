@@ -1,0 +1,570 @@
+{
+  "uuid": "15b01dc3-ef8e-4c6b-82a2-b225c9f06d28",
+  "lastMigration": 33,
+  "name": "Floodlight",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 3002,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "e8dd18af-a914-4da0-a608-a061fd77d3a1",
+      "type": "http",
+      "documentation": "Handles IP lookup for 217.91.35.16 with valid/invalid API key scenarios",
+      "method": "get",
+      "endpoint": "v1/companies/ip/217.91.35.16",
+      "responses": [
+        {
+          "uuid": "807ce92c-52aa-406b-af86-70399543adc2",
+          "body": "{\n    \"statusCode\": 401,\n    \"timestamp\": \"2025-06-04T08:30:14.758Z\",\n    \"message\": \"Unauthorized\",\n    \"path\": \"/v1/companies/ip/217.91.35.16\"\n}",
+          "latency": 0,
+          "statusCode": 401,
+          "label": "401 Unauthorized - Invalid API Key",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer invaidApiKey",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "default": false,
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "04406b87-1ee2-45ae-95db-4eb6e05b9a89",
+          "body": "{\n  \"ip_hash\": \"70d96c1eae48442fe5fc5a7f234f3d0f13d3da42\",\n  \"companyfloodlight_id\": \"zni80rvfy0wfzdr01us88i1g\",\n  \"primarydomain\": \"leuchtfeuer.com\",\n  \"companyname\": \"Leuchtfeuer Digital Marketing GmbH\",\n  \"companyname_legal\": \"Beacon Digital Marketing GmbH.\",\n  \"companywebsite\": \"https://leuchtfeuer.com/marketing-technologie/\",\n  \"companyindustry\": \"technology, information and internet\",\n  \"companyindustry_linkedin\": \"technology, information and internet\",\n  \"companyindustry_list\": [\n    \"Software & Computer Services\",\n    \"Internet\"\n  ],\n  \"companylabels\": [\n    \"B2B\",\n    \"Digital Marketing\",\n    \"Web Development\",\n    \"TYPO3\",\n    \"Mautic\",\n    \"Marketing Automation\",\n    \"Analytics\",\n    \"Marketing\",\n    \"Open Source\",\n    \"SEO\",\n    \"Social Media\"\n  ],\n  \"companyindustry_naics\": \"541511\",\n  \"companyindustry_icb_industrygroup\": \"Technology\",\n  \"companyindustry_icb_industry\": \"Software & Computer Services\",\n  \"companyindustry_icb_subindustry\": \"Internet\",\n  \"companyindustry_icb_sector\": \"Technology\",\n  \"companydescription_long\": \"Our Leuchtfeuer team offers full service for your success – especially for ambitious customers and projects. We plan, select and implement efficient online marketing goals for your business success and support you, perfectly adapted to your needs. In addition to deep know-how, experience, methodological knowledge and continuity, it is particularly important to us to have a close and good relationship with our customers. We are convinced that a current, target-oriented and implementable strategy is the basis for efficient and successful marketing. We will be happy to assist you in the development of your strategy, sift through existing elements, analyze your online activities and and set up suitable structures together with you. We moreover offer workshops and custom-made in-house training courses as well as individual coachings and open marketing automation / mautic trainings in our company. You can also count on our Leuchtfeuer team when it comes to implementing your online marketing activities: Our service portfolio ranges from content creation for various channels via SEO up to inbound marketing and marketing automation. Of course in the end, we are always interested in achieving your goals in a cost-benefit-optimized way – whether you work in the B2B or B2C sector. Due to our many years of experience in online marketing and our focus in marketing automation with Mautic, we offer capable strategies and are able to further increase your business efficiency via lead generation and conversion rate optimization. Offers which are custom-made for your specific situation will enable completely new possibilities for your e-mail marketing: Together with our partner Webmecanik we want to create ideal conditions for your project! supporting your online marketing strategy and implementation. To get in touch, send us an e-mail to hallo@leuchtfeuer.com or call us: +49 511 626293-30.\",\n  \"companyfounding_year\": 2001,\n  \"companyaddress1\": \"Immengarten 16-18\",\n  \"companycity\": \"Hanover\",\n  \"companystate_code\": \"NI\",\n  \"companycountry\": \"Germany\",\n  \"companycountry_code\": \"DE\",\n  \"companyrank_tranco\": 1978335,\n  \"companynumber_of_employees\": 31,\n  \"companyemployees_range\": \"20-49\",\n  \"companyannual_revenue_range\": \"$10B+\",\n  \"company_technologies\": [\n    \"linked_in\",\n    \"leadfeeder\",\n    \"mailjet\",\n    \"twitter\",\n    \"yoast_plugins\",\n    \"g_suite\",\n    \"google_docs\",\n    \"gmail\",\n    \"word_press_themes\",\n    \"amazon_web_services_aws\",\n    \"typo_3\",\n    \"github\",\n    \"medium\",\n    \"you_tube\",\n    \"google_workspace\",\n    \"google_analytics\",\n    \"matomo_formerly_piwik\",\n    \"php\",\n    \"html\",\n    \"vercel\",\n    \"java_script\",\n    \"font_awesome\"\n  ],\n  \"companyfacebook_handle\": \"leuchtfeuercom\",\n  \"companylinkedin_handle\": \"company/leuchtfeuer\",\n  \"companytwitter_handle\": \"Leuchtfeuer_com\",\n  \"companytwitter_followers\": 51,\n  \"companylogo\": \"http://logo.bigpicture.io/logo/leuchtfeuer.com\",\n  \"companytype\": \"public\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "200 OK - Valid API Key (Leuchtfeuer Data)",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "rules": [],
+          "default": true,
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "c63bccc7-69e6-4896-bea0-83da6ded4a06",
+      "type": "http",
+      "documentation": "Get IP Hash",
+      "method": "get",
+      "endpoint": "v1/companies/ip/70d96c1eae48442fe5fc5a7f234f3d0f13d3da42",
+      "responses": [
+        {
+          "uuid": "de02d5ff-02c2-49c0-bcc0-fa455d55da4b",
+          "body": "{\n    \"statusCode\": 401,\n    \"timestamp\": \"{{{date 'iso'}}}\",\n    \"message\": \"Unauthorized - Invalid API Key\",\n    \"path\": \"{{{request.path}}}\"\n}",
+          "latency": 0,
+          "statusCode": 401,
+          "label": "401 Unauthorized - Invalid API Key",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer invaidApiKey",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "default": false,
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "9cd0e9d2-b75f-4fdb-acaf-7fd1b713cea0",
+          "body": "{\n  \"ip_hash\": \"70d96c1eae48442fe5fc5a7f234f3d0f13d3da42\",\n  \"companyfloodlight_id\": \"zni80rvfy0wfzdr01us88i1g\",\n  \"companycrunchbase_handle\": \"beacon-digital-marketing-eac1\",\n  \"primarydomain\": \"leuchtfeuer.com\",\n  \"companyname\": \"Leuchtfeuer Digital Marketing GmbH\",\n  \"companyname_legal\": \"Beacon Digital Marketing GmbH.\",\n  \"companyname_alternatives\": [\n    \"Leuchtfeuer\"\n  ],\n  \"companywebsite\": \"https://leuchtfeuer.com/marketing-technologie/\",\n  \"companyemail\": \"hallo@Leuchtfeuer.com\",\n  \"companyindustry\": \"technology, information and internet\",\n  \"companyindustry_linkedin\": \"technology, information and internet\",\n  \"companyindustry_list\": [\n    \"Software & Computer Services\",\n    \"Internet\"\n  ],\n  \"companylabels\": [\n    \"B2B\",\n    \"Digital Marketing\",\n    \"Web Development\",\n    \"TYPO3\",\n    \"Mautic\",\n    \"Marketing Automation\",\n    \"Analytics\",\n    \"Marketing\",\n    \"Open Source\",\n    \"SEO\",\n    \"Social Media\"\n  ],\n  \"companyindustry_naics\": \"541511\",\n  \"companyindustry_icb_industrygroup\": \"Technology\",\n  \"companyindustry_icb_industry\": \"Software & Computer Services\",\n  \"companyindustry_icb_subindustry\": \"Internet\",\n  \"companyindustry_icb_sector\": \"Technology\",\n  \"companydescription_long\": \"Our Leuchtfeuer team offers full service for your success – especially for ambitious customers and projects. We plan, select and implement efficient online marketing goals for your business success and support you, perfectly adapted to your needs. In addition to deep know-how, experience, methodological knowledge and continuity, it is particularly important to us to have a close and good relationship with our customers. We are convinced that a current, target-oriented and implementable strategy is the basis for efficient and successful marketing. We will be happy to assist you in the development of your strategy, sift through existing elements, analyze your online activities and and set up suitable structures together with you. We moreover offer workshops and custom-made in-house training courses as well as individual coachings and open marketing automation / mautic trainings in our company. You can also count on our Leuchtfeuer team when it comes to implementing your online marketing activities: Our service portfolio ranges from content creation for various channels via SEO up to inbound marketing and marketing automation. Of course in the end, we are always interested in achieving your goals in a cost-benefit-optimized way – whether you work in the B2B or B2C sector. Due to our many years of experience in online marketing and our focus in marketing automation with Mautic, we offer capable strategies and are able to further increase your business efficiency via lead generation and conversion rate optimization. Offers which are custom-made for your specific situation will enable completely new possibilities for your e-mail marketing: Together with our partner Webmecanik we want to create ideal conditions for your project! supporting your online marketing strategy and implementation. To get in touch, send us an e-mail to hallo@leuchtfeuer.com or call us: +49 511 626293-30.\",\n  \"companydescription\": \"Our Leuchtfeuer team offers full service for your success\",\n  \"companyfounding_year\": 2001,\n  \"companyaddress1\": \"Immengarten 16-18\",\n  \"companyaddress2\": \"Bürogebäude\",\n  \"companycity\": \"Hanover\",\n  \"companyzipcode\": \"30177\",\n  \"companystate_code\": \"NI\",\n  \"companycountry\": \"Germany\",\n  \"companycountry_code\": \"DE\",\n  \"companyrank_tranco\": 1978335,\n  \"companynumber_of_employees\": 31,\n  \"companyemployees_range\": \"20-49\",\n  \"companymarketcap\": 10000000,\n  \"companyannual_revenue_range\": \"$10B+\",\n  \"companyfunding_raised\": 1,\n  \"company_technologies\": [\n    \"linked_in\",\n    \"leadfeeder\",\n    \"mailjet\",\n    \"twitter\",\n    \"yoast_plugins\",\n    \"g_suite\",\n    \"google_docs\",\n    \"gmail\",\n    \"word_press_themes\",\n    \"amazon_web_services_aws\",\n    \"typo_3\",\n    \"github\",\n    \"medium\",\n    \"you_tube\",\n    \"google_workspace\",\n    \"google_analytics\",\n    \"matomo_formerly_piwik\",\n    \"php\",\n    \"html\",\n    \"vercel\",\n    \"java_script\",\n    \"font_awesome\"\n  ],\n  \"companyfacebook_handle\": \"leuchtfeuercom\",\n  \"companylinkedin_handle\": \"company/leuchtfeuer\",\n  \"companytwitter_handle\": \"Leuchtfeuer_com\",\n  \"companytwitter_followers\": 51,\n  \"companylogo\": \"http://logo.bigpicture.io/logo/leuchtfeuer.com\",\n  \"companytype\": \"public\",\n  \"companyticker\": \"LDM.DE\",\n  \"companyphone\": \"+495116262930\",\n  \"companytimezone\": \"CET\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Successful response",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e2cb6a3d-92be-48e3-aaa8-2cc37f520aa5",
+      "type": "http",
+      "documentation": "By domain 200",
+      "method": "get",
+      "endpoint": "v1/companies/domain/leuchtfeuer.com",
+      "responses": [
+        {
+          "uuid": "7a0f5f13-06ea-4f02-ae31-0c656179f3f8",
+          "body": "{\n    \"statusCode\": 401,\n    \"timestamp\": \"{{{date 'iso'}}}\",\n    \"message\": \"Unauthorized - Invalid API Key\",\n    \"path\": \"{{{request.path}}}\"\n}",
+          "latency": 0,
+          "statusCode": 401,
+          "label": "401 Unauthorized - Invalid API Key",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer invaidApiKey",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "default": false,
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "6acb2db7-b928-4c2e-bb0c-611218c5e837",
+          "body": "{\n  \"companyfloodlight_id\": \"zni80rvfy0wfzdr01us88i1g\",\n  \"companycrunchbase_handle\": \"beacon-digital-marketing-eac1\",\n  \"primarydomain\": \"leuchtfeuer.com\",\n  \"companyname\": \"Leuchtfeuer Digital Marketing GmbH\",\n  \"companyname_legal\": \"Beacon Digital Marketing GmbH.\",\n  \"companyname_alternatives\": [\n    \"Leuchtfeuer\"\n  ],\n  \"companywebsite\": \"https://leuchtfeuer.com/marketing-technologie/\",\n  \"companyemail\": \"hallo@Leuchtfeuer.com\",\n  \"companyindustry\": \"technology, information and internet\",\n  \"companyindustry_linkedin\": \"technology, information and internet\",\n  \"companyindustry_list\": [\n    \"Software & Computer Services\",\n    \"Internet\"\n  ],\n  \"companylabels\": [\n    \"B2B\",\n    \"Digital Marketing\",\n    \"Web Development\",\n    \"TYPO3\",\n    \"Mautic\",\n    \"Marketing Automation\",\n    \"Analytics\",\n    \"Marketing\",\n    \"Open Source\",\n    \"SEO\",\n    \"Social Media\"\n  ],\n  \"companyindustry_naics\": \"541511\",\n  \"companyindustry_icb_industrygroup\": \"Technology\",\n  \"companyindustry_icb_industry\": \"Software & Computer Services\",\n  \"companyindustry_icb_subindustry\": \"Internet\",\n  \"companyindustry_icb_sector\": \"Technology\",\n  \"companydescription_long\": \"Our Leuchtfeuer team offers full service for your success – especially for ambitious customers and projects. We plan, select and implement efficient online marketing goals for your business success and support you, perfectly adapted to your needs. In addition to deep know-how, experience, methodological knowledge and continuity, it is particularly important to us to have a close and good relationship with our customers. We are convinced that a current, target-oriented and implementable strategy is the basis for efficient and successful marketing. We will be happy to assist you in the development of your strategy, sift through existing elements, analyze your online activities and and set up suitable structures together with you. We moreover offer workshops and custom-made in-house training courses as well as individual coachings and open marketing automation / mautic trainings in our company. You can also count on our Leuchtfeuer team when it comes to implementing your online marketing activities: Our service portfolio ranges from content creation for various channels via SEO up to inbound marketing and marketing automation. Of course in the end, we are always interested in achieving your goals in a cost-benefit-optimized way – whether you work in the B2B or B2C sector. Due to our many years of experience in online marketing and our focus in marketing automation with Mautic, we offer capable strategies and are able to further increase your business efficiency via lead generation and conversion rate optimization. Offers which are custom-made for your specific situation will enable completely new possibilities for your e-mail marketing: Together with our partner Webmecanik we want to create ideal conditions for your project! supporting your online marketing strategy and implementation. To get in touch, send us an e-mail to hallo@leuchtfeuer.com or call us: +49 511 626293-30.\",\n  \"companydescription\": \"Our Leuchtfeuer team offers full service for your success\",\n  \"companyfounding_year\": 2001,\n  \"companyaddress1\": \"Immengarten 16-18\",\n  \"companyaddress2\": \"Bürogebäude\",\n  \"companycity\": \"Hanover\",\n  \"companyzipcode\": \"30177\",\n  \"companystate_code\": \"NI\",\n  \"companycountry\": \"Germany\",\n  \"companycountry_code\": \"DE\",\n  \"companyrank_tranco\": 1978335,\n  \"companynumber_of_employees\": 31,\n  \"companyemployees_range\": \"20-49\",\n  \"companymarketcap\": 10000000,\n  \"companyannual_revenue_range\": \"$10B+\",\n  \"companyfunding_raised\": 1,\n  \"company_technologies\": [\n    \"linked_in\",\n    \"leadfeeder\",\n    \"mailjet\",\n    \"twitter\",\n    \"yoast_plugins\",\n    \"g_suite\",\n    \"google_docs\",\n    \"gmail\",\n    \"word_press_themes\",\n    \"amazon_web_services_aws\",\n    \"typo_3\",\n    \"github\",\n    \"medium\",\n    \"you_tube\",\n    \"google_workspace\",\n    \"google_analytics\",\n    \"matomo_formerly_piwik\",\n    \"php\",\n    \"html\",\n    \"vercel\",\n    \"java_script\",\n    \"font_awesome\"\n  ],\n  \"companyfacebook_handle\": \"leuchtfeuercom\",\n  \"companylinkedin_handle\": \"company/leuchtfeuer\",\n  \"companytwitter_handle\": \"Leuchtfeuer_com\",\n  \"companytwitter_followers\": 51,\n  \"companylogo\": \"http://logo.bigpicture.io/logo/leuchtfeuer.com\",\n  \"companytype\": \"public\",\n  \"companyticker\": \"LDM.DE\",\n  \"companyphone\": \"+495116262930\",\n  \"companytimezone\": \"CET\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Successful response",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "276e8415-9807-407e-924c-9dec75dfb32b",
+      "type": "http",
+      "documentation": "Validation: Empty APi Key",
+      "method": "get",
+      "endpoint": "v1/auth/usage",
+      "responses": [
+        {
+          "uuid": "44087287-f6b3-4e71-afac-c14291aa8024",
+          "body": "{\n    \"statusCode\": 401,\n    \"timestamp\": \"{{{date 'iso'}}}\",\n    \"message\": \"Unauthorized - Invalid API Key\",\n    \"path\": \"{{{request.path}}}\"\n}",
+          "latency": 0,
+          "statusCode": 401,
+          "label": "401 Unauthorized - Invalid API Key",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer invaidApiKey",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "default": false,
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "a9742ee8-d7fc-4a1d-bba5-9f643077e42d",
+          "body": "{\n  \"remaining\": 1000,\n  \"limit\": 1000,\n  \"free\": false,\n  \"next_renewal\": \"Sat, 31 May 2025 22:00:00 GMT\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Successful response",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "1f3e6bfb-61e0-4361-8451-a5e4d9f76551",
+      "type": "http",
+      "documentation": "Arkada-X",
+      "method": "get",
+      "endpoint": "v1/companies/ip/185.145.181.191",
+      "responses": [
+        {
+          "uuid": "db143683-29ca-4b3b-8e42-3afe28fd24f8",
+          "body": "{\n    \"statusCode\": 401,\n    \"timestamp\": \"{{{date 'iso'}}}\",\n    \"message\": \"Unauthorized - Invalid API Key\",\n    \"path\": \"{{{request.path}}}\"\n}",
+          "latency": 0,
+          "statusCode": 401,
+          "label": "401 Unauthorized - Invalid API Key",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer invaidApiKey",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "default": false,
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "8f697126-f175-4b36-b36d-28b6f1c4fc9f",
+          "body": "{\n  \"ip_hash\": \"3f39548b9d4da726a2e0f63adc2fb798acf06f41\",\n  \"companyfloodlight_id\": \"k70g2ve91u3gc0a1dh42hs0x\",\n  \"primarydomain\": \"arkada-x.com\",\n  \"companyname\": \"Arkada-X\",\n  \"companyname_legal\": \"ТОВ \\\"Аркада-Х\\\"\",\n  \"companywebsite\": \"https://arkada-x.com/\",\n  \"companyindustry\": \"Internet\",\n  \"companyindustry_list\": [\n    \"Software & Computer Services\",\n    \"Internet\"\n  ],\n  \"companylabels\": [\n    \"Telecommunications\",\n    \"Internet Service Provider\",\n    \"B2C\",\n    \"Internet\",\n    \"VoIP\",\n    \"ISP\"\n  ],\n  \"companyindustry_icb_industrygroup\": \"Technology\",\n  \"companyindustry_icb_industry\": \"Software & Computer Services\",\n  \"companyindustry_icb_subindustry\": \"Internet\",\n  \"companyindustry_icb_sector\": \"Technology\",\n  \"companydescription_long\": \"Arkada-X is a telecommunications company based in Lviv, Ukraine, offering internet and telephony services.  They provide various tariff plans and have a history of service updates and promotions dating back to 2005.\",\n  \"companyfounding_year\": 2000,\n  \"companyaddress1\": \"Patona St. 7A\",\n  \"companycity\": \"Lviv\",\n  \"companystate_code\": \"46\",\n  \"companycountry\": \"Ukraine\",\n  \"companycountry_code\": \"UA\",\n  \"companyrank_tranco\": 344680,\n  \"companynumber_of_employees\": 126,\n  \"companyemployees_range\": \"100-199\",\n  \"companyannual_revenue_range\": \"$10B+\",\n  \"companylogo\": \"http://logo.bigpicture.io/logo/arkada-x.com\",\n  \"companytype\": \"private\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Successful response",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e8be13d4-5bfb-415e-a1ce-8a30544ddd96",
+      "type": "http",
+      "documentation": "Retry IP",
+      "method": "get",
+      "endpoint": "v1/companies/ip/retryip",
+      "responses": [
+        {
+          "uuid": "ef8f012d-ea47-480a-87f9-5a5adabc5997",
+          "body": "{\n    \"ip_hash\": \"retryIpHash\"\n}",
+          "latency": 0,
+          "statusCode": 202,
+          "label": "202 Retry Ip",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer invaidApiKey",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "1d352527-d7a5-4afe-a4f8-262690eb750e",
+      "type": "http",
+      "documentation": "By domain 202",
+      "method": "get",
+      "endpoint": "v1/companies/domain/202domain.com",
+      "responses": [
+        {
+          "uuid": "b1f2d883-a847-44d0-ba2b-17e566cbb250",
+          "body": "{\n    \"statusCode\": 401,\n    \"timestamp\": \"{{{date 'iso'}}}\",\n    \"message\": \"Unauthorized - Invalid API Key\",\n    \"path\": \"{{{request.path}}}\"\n}",
+          "latency": 0,
+          "statusCode": 401,
+          "label": "401 Unauthorized - Invalid API Key",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer invaidApiKey",
+              "invert": false,
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "default": false,
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "fca86ee0-e020-4b2e-a2ac-b09c36879f3e",
+          "body": "{\n    \"domain\": \"myater.com\"\n}",
+          "latency": 0,
+          "statusCode": 202,
+          "label": "202 by domain",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "68960f70-7b3c-468c-b807-567a6d9fb1a9",
+      "type": "http",
+      "documentation": "By domain 404",
+      "method": "get",
+      "endpoint": "v1/companies/domain/localhostdomain1245.com",
+      "responses": [
+        {
+          "uuid": "eccaf790-3007-41f3-b5fb-722bd4d21d76",
+          "body": "{\n    \"statusCode\": 404,\n    \"timestamp\": \"2025-06-05T06:44:53.262Z\",\n    \"message\": \"Not Found\",\n    \"path\": \"/v1/companies/domain/localhostdomain1245.com\"\n}",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "404 by domain",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "e8dd18af-a914-4da0-a608-a061fd77d3a1"
+    },
+    {
+      "type": "route",
+      "uuid": "c63bccc7-69e6-4896-bea0-83da6ded4a06"
+    },
+    {
+      "type": "route",
+      "uuid": "e2cb6a3d-92be-48e3-aaa8-2cc37f520aa5"
+    },
+    {
+      "type": "route",
+      "uuid": "276e8415-9807-407e-924c-9dec75dfb32b"
+    },
+    {
+      "type": "route",
+      "uuid": "1f3e6bfb-61e0-4361-8451-a5e4d9f76551"
+    },
+    {
+      "type": "route",
+      "uuid": "e8be13d4-5bfb-415e-a1ce-8a30544ddd96"
+    },
+    {
+      "type": "route",
+      "uuid": "1d352527-d7a5-4afe-a4f8-262690eb750e"
+    },
+    {
+      "type": "route",
+      "uuid": "68960f70-7b3c-468c-b807-567a6d9fb1a9"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}

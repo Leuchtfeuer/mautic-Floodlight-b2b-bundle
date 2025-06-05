@@ -18,7 +18,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Tester\CommandTester;
 
-class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
+class EnrichByDomainCommandTest extends MauticMysqlTestCase
 {
     public function setUp(): void
     {
@@ -143,7 +143,7 @@ class EnrichmentFloodlightCompanyByDomainCommandTest extends MauticMysqlTestCase
         $this->assertStringContainsString('No companies to enrich', $commandTester->getDisplay());
     }
 
-    private function activatePlugin(bool $isPublished = true, string $apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjQ0LCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQ4ODU3NjM3fQ.kIKDLACntODwnB0BCzRCyPIKnkmHvgMS1yeCJoxVcVE'): void
+    private function activatePlugin(bool $isPublished = true, string $apiKey = 'validApiKey'): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         assert($reloadFacade instanceof ReloadFacade);

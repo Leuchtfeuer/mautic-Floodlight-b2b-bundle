@@ -13,20 +13,21 @@ use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\HttpFactory;
 
 class FloodlightService implements FloodlightServiceInterface
 {
-    private const FLOODLIGHT_API  = 'https://api.floodlight-b2b.com';
+    private string $floodlightApiUrl;
+    public const FLOODLIGHT_VERSION = 'v1';
 
     public function __construct(
         private ApiClient $client,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
+        string $floodlightApiUrl = 'https://api.floodlight-b2b.com'
     ) {
+        $this->floodlightApiUrl = $floodlightApiUrl;
     }
 
     public function getAPIClient(): ApiClient
     {
         return $this->client;
     }
-
-    public const FLOODLIGHT_VERSION = 'v1';
 
     /**
      * @return array<mixed>|bool
@@ -92,10 +93,12 @@ class FloodlightService implements FloodlightServiceInterface
         return false;
     }
 
+    /**
+     * @return ResponseInterface|false
+     */
     private function getCompanyByIp(string $ip): ResponseInterface|false
     {
-        $url = sprintf('%s/%s/companies/ip/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ip);
-
+        $url = sprintf('%s/%s/companies/ip/%s', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION, $ip);
         return $this->makeRequest($url);
     }
 
@@ -111,23 +114,24 @@ class FloodlightService implements FloodlightServiceInterface
         return $this->handleResult($response);
     }
 
-    private function getCompanyByDomain(string $ipHash): ResponseInterface|false
+    /**
+     * @return ResponseInterface|false
+     */
+    private function getCompanyByDomain(string $domainName): ResponseInterface|false
     {
-        $url = sprintf('%s/%s/companies/domain/%s', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION, $ipHash);
-
+        $url = sprintf('%s/%s/companies/domain/%s', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION, $domainName);
         return $this->makeRequest($url);
     }
 
     /**
      * Prüft den Status der API-Autorisierung
      * 
-     * @return array<mixed>
+     * @return ResponseInterface|false
      */
-    public function getAuthorizationStatus(): ResponseInterface
+    public function getAuthorizationStatus(): ResponseInterface|false
     {
-        $url = sprintf('%s/%s/auth/usage', self::FLOODLIGHT_API, self::FLOODLIGHT_VERSION);
-        $response = $this->makeRequest($url);
-        return $response;
+        $url = sprintf('%s/%s/auth/usage', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION);
+        return $this->makeRequest($url);
     }
 
     /**
@@ -135,9 +139,8 @@ class FloodlightService implements FloodlightServiceInterface
      */
     private function handleAuthorizationResult(ResponseInterface $result): JsonResponse
     {
-        // Prüfe auf ungültigen API-Key (401 Unauthorized)
         $statusCode = $result->getStatusCode();
-        if ($statusCode === 401) {
+        if (401 === $statusCode) {
             return new JsonResponse(['message' => 'API key invalid'], Response::HTTP_UNAUTHORIZED);
         }
 
@@ -162,8 +165,11 @@ class FloodlightService implements FloodlightServiceInterface
      */
     public function validateApiKey(): JsonResponse
     {
-        //if ($this->isAPIKeySet())
         $result = $this->getAuthorizationStatus();
+
+        if (false === $result) {
+            return new JsonResponse(['message' => 'Could not connect to API for validation.'], Response::HTTP_SERVICE_UNAVAILABLE);
+        }
         return $this->handleAuthorizationResult($result);
     }
 }
