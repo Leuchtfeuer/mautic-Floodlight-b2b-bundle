@@ -18,7 +18,7 @@ class DomainUtility
             return FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
         }
 
-        if ($this->isIp($domain)) {
+        if ($this->hasMoreThanFourNumbers($domain)) {
             return FloodlightLeadDomains::STATUS_IP_DOMAIN;
         }
 
@@ -46,10 +46,9 @@ class DomainUtility
         return $domain;
     }
 
-    public function isIp(string $domain): bool
+    public function hasMoreThanFourNumbers(string $domain): bool
     {
-        $ip = str_replace('.', '', $domain);
-        if (is_numeric($ip)) {
+        if (preg_match_all('/\d/', $domain) > 4) {
             return true;
         }
 

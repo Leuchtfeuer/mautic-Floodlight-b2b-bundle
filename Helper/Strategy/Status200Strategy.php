@@ -55,8 +55,6 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
     public function process(array $processedData, $lead)
     {
-        //check if domain is ip
-        //check if ip is blacklisted
         $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
         $this->leadDomainsModel->deleteOldRetryEntries($processedData['details']['floodlight'], $lead);
 

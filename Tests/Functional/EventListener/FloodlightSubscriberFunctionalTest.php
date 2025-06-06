@@ -80,10 +80,9 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
         $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
-        if (file_exists($configPathTo)) {
-            unlink($configPathTo);
+        if (!file_exists($configPathTo)) {
+            copy($pluginPathFrom, $configPathTo);
         }
-        copy($pluginPathFrom, $configPathTo);
         //        $this->useCleanupRollback = false;
         //        $this->setUpSymfony($this->configParams);
     }
@@ -520,10 +519,12 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     public function beforeTearDown(): void
     {
+        /*
         $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
         }
+        */
     }
 
     public function setBackDateModifiedByTwoHours(FloodlightLeadDomains $leadDomain): void
