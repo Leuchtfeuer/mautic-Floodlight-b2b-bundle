@@ -319,6 +319,71 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
     }
 
+
+    public function test429PagehitWithSuccessfulDnsLookup()
+    {
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit('86.101.230.57', $lead);
+        $this->processHit('86.101.230.57', $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(1, $leadDomainsHit[0]->getCount());
+        $this->assertSame('office.destra.hu', $leadDomainsHit[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[0]->getLookupType());
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        $this->assertSame('office.destra.hu', $company[0]->getName());
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
+        $this->assertSame('office.destra.hu', $companyDomainsHit[0]->getDomain());
+    }
+
+    public function test429PagehitWithSuccessfulWhoisLookup()
+    {
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit('185.73.27.251', $lead);
+        $this->processHit('185.73.27.251', $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertNotEmpty($leadDomainsHit);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(1, $leadDomainsHit[0]->getCount());
+        $this->assertSame('upheads.no', $leadDomainsHit[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_WHOIS, $leadDomainsHit[0]->getLookupType());
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        $this->assertSame('upheads.no', $company[0]->getName());
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
+        $this->assertSame('upheads.no', $companyDomainsHit[0]->getDomain());
+    }
+    //429 domain blacklisted
+    //429 whois
+    //429 dns
+    //429 is_ip
+
     private function addNewLeadDomain($lead, string $ipHash, int $count, $status): FloodlightLeadDomains
     {
         $floodlightLeadDomain = new FloodlightLeadDomains();

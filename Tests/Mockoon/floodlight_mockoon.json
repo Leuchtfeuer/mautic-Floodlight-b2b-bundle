@@ -490,6 +490,78 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "b867bad4-2c39-438a-a36e-49557e79ef9b",
+      "type": "http",
+      "documentation": "429 Request (Only dns will return something)",
+      "method": "get",
+      "endpoint": "v1/companies/ip/86.101.230.57",
+      "responses": [
+        {
+          "uuid": "91d9edab-e67c-49c3-af79-5f963faf90be",
+          "body": "{\n    \"statusCode\": 429,\n    \"timestamp\": \"2025-04-01T09:15:32.414Z\",\n    \"message\": \"API key limit exceeded\",\n    \"path\": \"/v1/companies/ip/217.91.35.16\"\n}",
+          "latency": 0,
+          "statusCode": 429,
+          "label": "",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "b48f395a-ff04-4764-b9a3-b9f94a2d455e",
+      "type": "http",
+      "documentation": "429 Request (Only whois will return something)",
+      "method": "get",
+      "endpoint": "v1/companies/ip/185.73.27.251",
+      "responses": [
+        {
+          "uuid": "35dbb23f-b8ad-43cb-999c-aaeeea7a44a9",
+          "body": "{\n    \"statusCode\": 429,\n    \"timestamp\": \"2025-04-01T09:15:32.414Z\",\n    \"message\": \"API key limit exceeded\",\n    \"path\": \"/v1/companies/ip/217.91.35.16\"\n}",
+          "latency": 0,
+          "statusCode": 429,
+          "label": "",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -524,6 +596,14 @@
     {
       "type": "route",
       "uuid": "68960f70-7b3c-468c-b807-567a6d9fb1a9"
+    },
+    {
+      "type": "route",
+      "uuid": "b867bad4-2c39-438a-a36e-49557e79ef9b"
+    },
+    {
+      "type": "route",
+      "uuid": "b48f395a-ff04-4764-b9a3-b9f94a2d455e"
     }
   ],
   "proxyMode": false,

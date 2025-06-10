@@ -28,14 +28,14 @@ class Status429Strategy
     public function prepareData(string $remoteAddr): array
     {
         $hostByAddrData = $this->domainUtility->getDomainByGetHostByAddr($remoteAddr);
-        if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $hostByAddrData['status']
+        if (FloodlightLeadDomains::STATUS_SUCCESS === $hostByAddrData['status']
         ) {
             $hostByAddrData['lookupType'] = FloodlightLeadDomains::LOOKUP_TYPE_DNS;
             return $hostByAddrData;
         }
 
         $pyServiceData = $this->domainUtility->getDomainByWhoisPyService($remoteAddr);
-        if (FloodlightLeadDomains::STATUS_NO_DATA_FOUND !== $pyServiceData['status']
+        if (FloodlightLeadDomains::STATUS_SUCCESS === $pyServiceData['status']
         ) {
             $pyServiceData['lookupType'] = FloodlightLeadDomains::LOOKUP_TYPE_WHOIS;
             return $pyServiceData;
@@ -61,7 +61,7 @@ class Status429Strategy
 
         $companyDomain = $this->companyDomainsModel->getExistingCompanyDomain($processedData['domain']);
         if (empty($companyDomain) && !empty($company)) {
-            $this->createNewCompanyDomain($processedData['details']['floodlight'], $company);
+            $this->createNewCompanyDomain($processedData['domain'], $company);
         }
 
         //recalculate new primary lead company
@@ -82,7 +82,7 @@ class Status429Strategy
         //$company->setOwner($user);
 
         if (!empty($details) && isset($details['pyservice']) && is_array($details['pyservice'])) {
-            $company->addUpdatedField('iplookup_whois_json', json_encode($this->transformDetails($details['pyservice']), JSON_THROW_ON_ERROR));
+            $company->addUpdatedField('f4b_iplookup_whois_json', json_encode($this->transformDetails($details['pyservice']), JSON_THROW_ON_ERROR));
         }
 
         $this->companyModel->saveEntity($company);
