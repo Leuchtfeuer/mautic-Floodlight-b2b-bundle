@@ -75,6 +75,7 @@ class Status429Strategy
         $company       = $this->companyModel->getEntity();
 
         $company->setName($domain);
+        $company->setWebsite($domain);
         $company->setDateAdded(new \DateTime());
         $company->setIsPublished(true);
         //$company->setCreatedBy($user);

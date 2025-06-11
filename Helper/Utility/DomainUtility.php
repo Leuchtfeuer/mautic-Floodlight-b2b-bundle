@@ -5,12 +5,17 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
+use Pdp\Domain;
+use Pdp\Rules;
 
 class DomainUtility
 {
+    private ?Rules $rules = null;
+
     public function __construct(
         private FloodlightLeadDomainsModel $leadDomainsModel,
-                                private WhoisPyService $whoisPyService,){}
+        private WhoisPyService $whoisPyService,
+    ) {}
 
     public function getStatusDomain(?string $domain): string
     {
@@ -46,6 +51,47 @@ class DomainUtility
         return $domain;
     }
 
+    /**
+     * Bereinigt eine Domain mit der jeremykendall/php-domain-parser Bibliothek
+     * und gibt nur den bereinigten Host zurück (registrable domain)
+     */
+    public function cleanDnsOrWhoisDomain(?string $domain): string
+    {
+        if (is_null($domain) || empty($domain)) {
+            return 'Domain could not be cleaned';
+        }
+
+        try {
+            // Initialisiere Rules nur einmal
+            if ($this->rules === null) {
+                $this->rules = Rules::fromPath(
+                    'https://publicsuffix.org/list/public_suffix_list.dat'
+                );
+            }
+
+            // Entferne Protokoll falls vorhanden
+            $cleanInput = preg_replace('#^https?://#', '', $domain);
+            
+            // Entferne www. falls vorhanden
+            $cleanInput = preg_replace('#^www\.#', '', $cleanInput);
+            
+            // Entferne Pfad, Query-Parameter etc.
+            $cleanInput = parse_url('http://' . $cleanInput, PHP_URL_HOST) ?: $cleanInput;
+
+            // Parse die Domain
+            $domainObj = Domain::fromIDNA2008($cleanInput);
+            $resolvedDomain = $this->rules->resolve($domainObj);
+            
+            // Gib nur den bereinigten Host zurück (registrable domain)
+            $host = $resolvedDomain->registrableDomain()->toString();
+            
+            return !empty($host) ? $host : 'Domain could not be cleaned';
+            
+        } catch (\Exception $e) {
+            return 'Domain could not be cleaned';
+        }
+    }
+
     public function hasMoreThanFourNumbers(string $domain): bool
     {
         if (preg_match_all('/\d/', $domain) > 4) {
@@ -61,17 +107,18 @@ class DomainUtility
     public function getDomainByGetHostByAddr(string $remoteAddr): array
     {
         $domain = gethostbyaddr($remoteAddr);
+        $cleanDomain = $this->cleanDnsOrWhoisDomain($domain);
 
-        if (false === $domain) {
-            $domain = null;
+        if ($cleanDomain === 'Domain could not be cleaned') {
+            $cleanDomain = null;
             $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
         } else {
-            $status = $this->getStatusDomain($domain);
+            $status = $this->getStatusDomain($cleanDomain);
         }
 
         return [
             'status'  => $status,
-            'domain'  => $this->cleanDomain($domain),
+            'domain'  => $cleanDomain,
             'details' => ['hostname' => $domain],
         ];
     }
@@ -82,19 +129,25 @@ class DomainUtility
     public function getDomainByWhoisPyService(string $remoteAddr): array
     {
         $domainWhois = $this->whoisPyService->getWhoisData($remoteAddr);
-        $domain      = '';
+        $cleanDomain = '';
         $details     = [];
         $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
 
         if (!empty($domainWhois) && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
             $domain = $domainWhois['company_domain'];
-            $details = $domainWhois;
-            $status = $this->getStatusDomain($domain);
+            $cleanDomain = $this->cleanDnsOrWhoisDomain($domain);
+            if ($cleanDomain === 'Domain could not be cleaned') {
+                $cleanDomain = null;
+            } else {
+                $domain = $cleanDomain;
+                $details = $domainWhois;
+                $status = $this->getStatusDomain($domain);
+            }
         }
 
         return [
             'status'  => $status,
-            'domain'  => $this->cleanDomain($domain),
+            'domain'  => $cleanDomain,
             'details' => ['pyservice' => $details],
         ];
     }

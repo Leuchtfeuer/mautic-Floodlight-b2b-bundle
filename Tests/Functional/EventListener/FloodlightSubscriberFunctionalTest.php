@@ -24,6 +24,10 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepo
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
+use Mautic\PageBundle\Event\PageHitEvent;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
+use Symfony\Component\HttpFoundation\Request;
 
 
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
@@ -598,4 +602,67 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->persist($leadDomain);
         $this->em->flush();
     }
+
+    public function testPageHitWithSpecificIpAndMockedResponses(): void
+    {
+        $ip = '86.101.230.57';
+
+        $this->mockShellExec($ip, "{'company_domain': 'NEPHRONPHARM.COM', 'company_name': 'AT&T Enterprises, LLC', 'is_isp': False, 'is_dialup': False}\n");
+        $this->mockMethodGetHostByAddr($ip, '11.11.11.11');
+
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertEmpty($leadDomainsHit);
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        $this->assertSame('nephronpharm.com', $company[0]->getName());
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => 'nephronpharm.com']);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
+    }
+
+    // Helper Methode - einmal implementieren, überall verwenden
+    private function mockMethodGetHostByAddr(string $forIp, string $returnValue): void
+    {
+        // Dynamische namespace function nur für diesen Test
+        $mockCode = "
+        namespace MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Helper\\Utility {
+            function gethostbyaddr(\$ip) {
+                if (\$ip === '$forIp') {
+                    return '$returnValue';
+                }
+                return \\gethostbyaddr(\$ip);
+            }
+        }";
+
+        eval($mockCode);
+    }
+
+    private function mockShellExec(string $forIp, string $returnValue): void
+    {
+        $returnValue = addslashes($returnValue);
+        // Dynamische namespace function nur für diesen Test
+        $mockCode = "
+        namespace MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Services {
+            function shell_exec(\$command) {
+                if (strpos(\$command, '$forIp') !== false) {
+                    return '$returnValue';
+                }
+                return \\shell_exec(\$command);
+            }
+        }";
+
+        eval($mockCode);
+    }
 }
+

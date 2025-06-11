@@ -126,3 +126,8 @@ your-server.de
 zare.com
 zebra.lt
 lfexample.com
+att.com
+att.net
+mail.mil
+aup.lumen.com
+nic.or.kr

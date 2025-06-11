@@ -61,7 +61,7 @@ class WhoisPyService
         return true;
     }
 
-    private function execute(string $ip): false|string|null
+    public function execute(string $ip): false|string|null
     {
         $command = 'python3 '.$this->whoisPyPathFile.' -ipaddr '.$ip;
 
