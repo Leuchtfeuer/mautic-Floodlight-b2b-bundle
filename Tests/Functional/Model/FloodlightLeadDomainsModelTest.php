@@ -78,6 +78,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $dataDomain    = [
             'domain'  => $domain,
             'status'  => 'valid',
+            'lookupType' => FloodlightLeadDomains::LOOKUP_TYPE_API,
             'details' => [
                 'floodlight'        => $floodlightDTO,
                 'statusRequestCode' => 200,

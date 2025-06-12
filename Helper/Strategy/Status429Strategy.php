@@ -48,6 +48,7 @@ class Status429Strategy
     {
         if(empty($processedData)){
             //$this->reporter->notify('quota exceeded and also no data found via DNS and Whois lookup');
+            return;
         }
 
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);

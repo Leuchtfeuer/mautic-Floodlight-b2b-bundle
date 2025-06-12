@@ -10,6 +10,7 @@ use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 
@@ -78,7 +79,6 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $lead          = $this->addLead();
         $companyDomain = $this->em->getRepository(FloodlightCompanyDomains::class)->findOneBy(['domain' => $domain]);
         $this->assertNull($companyDomain);
-        $result        = $floodlightLeadDomainsModel->getCompanyDomains($lead, $dataDomain);
         $companyDomain = $this->em->getRepository(FloodlightCompanyDomains::class)->findOneBy(['domain' => $domain]);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomain);
         $this->assertSame($domain, $companyDomain->getDomain());

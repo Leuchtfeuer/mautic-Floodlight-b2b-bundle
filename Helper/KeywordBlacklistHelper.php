@@ -4,7 +4,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
 class KeywordBlacklistHelper
 {
-    public const BLACKLIST_PATH_FILE = __DIR__.'/../Config/f4b_domain_blacklist.php';
+    public const BLACKLIST_PATH_FILE = __DIR__.'/../Config/f4b_domain_keyword_blacklist.php';
 
     /**
      * @param array<string> $blacklist

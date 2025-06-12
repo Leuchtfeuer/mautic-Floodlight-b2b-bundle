@@ -494,7 +494,7 @@
     {
       "uuid": "b867bad4-2c39-438a-a36e-49557e79ef9b",
       "type": "http",
-      "documentation": "429 Request (Only dns will return something)",
+      "documentation": "429 Request 1",
       "method": "get",
       "endpoint": "v1/companies/ip/86.101.230.57",
       "responses": [
@@ -530,12 +530,120 @@
     {
       "uuid": "b48f395a-ff04-4764-b9a3-b9f94a2d455e",
       "type": "http",
-      "documentation": "429 Request (Only whois will return something)",
+      "documentation": "429 Request 2",
       "method": "get",
-      "endpoint": "v1/companies/ip/185.73.27.251",
+      "endpoint": "v1/companies/ip/86.101.230.58",
       "responses": [
         {
           "uuid": "35dbb23f-b8ad-43cb-999c-aaeeea7a44a9",
+          "body": "{\n    \"statusCode\": 429,\n    \"timestamp\": \"2025-04-01T09:15:32.414Z\",\n    \"message\": \"API key limit exceeded\",\n    \"path\": \"/v1/companies/ip/217.91.35.16\"\n}",
+          "latency": 0,
+          "statusCode": 429,
+          "label": "",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "ad13c955-4189-4445-92f2-3e96ff5eee5d",
+      "type": "http",
+      "documentation": "429 Request 3",
+      "method": "get",
+      "endpoint": "v1/companies/ip/86.101.230.59",
+      "responses": [
+        {
+          "uuid": "07d53158-480c-4670-85e1-e47673862242",
+          "body": "{\n    \"statusCode\": 429,\n    \"timestamp\": \"2025-04-01T09:15:32.414Z\",\n    \"message\": \"API key limit exceeded\",\n    \"path\": \"/v1/companies/ip/217.91.35.16\"\n}",
+          "latency": 0,
+          "statusCode": 429,
+          "label": "",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "c94ac9c3-68a3-4f0a-a1fd-9f3c424821ae",
+      "type": "http",
+      "documentation": "429 Request 4",
+      "method": "get",
+      "endpoint": "v1/companies/ip/86.101.230.60",
+      "responses": [
+        {
+          "uuid": "53b4f180-b50f-45b8-bde8-8085550be925",
+          "body": "{\n    \"statusCode\": 429,\n    \"timestamp\": \"2025-04-01T09:15:32.414Z\",\n    \"message\": \"API key limit exceeded\",\n    \"path\": \"/v1/companies/ip/217.91.35.16\"\n}",
+          "latency": 0,
+          "statusCode": 429,
+          "label": "",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "719735cc-691d-4204-b024-3ed20a9216fe",
+      "type": "http",
+      "documentation": "429 Request 5",
+      "method": "get",
+      "endpoint": "v1/companies/ip/86.101.230.61",
+      "responses": [
+        {
+          "uuid": "2ccd77da-ce7c-435f-b03e-c82d5cca90ea",
           "body": "{\n    \"statusCode\": 429,\n    \"timestamp\": \"2025-04-01T09:15:32.414Z\",\n    \"message\": \"API key limit exceeded\",\n    \"path\": \"/v1/companies/ip/217.91.35.16\"\n}",
           "latency": 0,
           "statusCode": 429,
@@ -604,6 +712,18 @@
     {
       "type": "route",
       "uuid": "b48f395a-ff04-4764-b9a3-b9f94a2d455e"
+    },
+    {
+      "type": "route",
+      "uuid": "ad13c955-4189-4445-92f2-3e96ff5eee5d"
+    },
+    {
+      "type": "route",
+      "uuid": "c94ac9c3-68a3-4f0a-a1fd-9f3c424821ae"
+    },
+    {
+      "type": "route",
+      "uuid": "719735cc-691d-4204-b024-3ed20a9216fe"
     }
   ],
   "proxyMode": false,
