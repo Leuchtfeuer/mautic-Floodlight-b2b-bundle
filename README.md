@@ -25,7 +25,21 @@ INSTALLATION
 2. Go to `Plugins` page
 3. Click on the `Install/Upgrade Plugins` or if you have access to the shell, execute `php bin\console mautic:plugins:reload` to install the plugins.
 4. Click button to install `LeuchtfeuerFloodlightB2BBundle`.
-5. Enable the plugin and configure the plugin with the API key and the endpoint. 
+5. Enable the plugin and configure the plugin with the API key. 
+
+USAGE
+-----
+Once the plugin is installed and configured, it will automatically start detecting and saving the companies of your anonymous leads whenever they execute a pagehit.
+
+The plugin also allows you to run two commands:
+
+1. leuchtfeuer:floodlight:enrich --by-domain (also available as leuchtfeuer:floodlight:enrich:domain)
+   - This command enriches companies that have been saved manually (there won't be more than two tries to enrich these companies)
+2. leuchtfeuer:floodlight:enrich --by-address (also available as leuchtfeuer:floodlight:enrich:address)
+   - This command makes sure all the lookups are done again which have the status retry (as Floodlight could not provide the company data on the first try)
+
+The standalone command leuchtfeuer:floodlight:enrich will not work without the `--by-domain` or `--by-address` options.
+
 
 CONFIGURATION
 -------------
@@ -63,9 +77,6 @@ To use a local Mockoon server for testing:
     ```
     This will usually start the mock server on `http://localhost:3002`. You can then use the `FLOODLIGHT_API_URL` environment variable as shown above to direct the plugin's API calls to your local Mockoon instance.
 
-USAGE
------
-NA
 
 AUTHOR
 ------

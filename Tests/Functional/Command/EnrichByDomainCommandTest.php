@@ -46,7 +46,7 @@ class EnrichByDomainCommandTest extends MauticMysqlTestCase
     {
         $this->activatePlugin(true, '');
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich', ['--by-domain' => 1]);
-        $this->assertStringContainsString('Plugin is not published', $commandTester->getDisplay());
+        $this->assertStringContainsString('There is no API key set for the plugin', $commandTester->getDisplay());
     }
 
     public function testEnrichByDomainWhenInvalidApiKey(): void

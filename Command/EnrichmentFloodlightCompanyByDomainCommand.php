@@ -42,8 +42,14 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (!$this->config->isConfigured() || !$this->config->isPublished()) {
+        if (!$this->config->isPublished()) {
             $output->writeln('<error>Plugin is not published</error>');
+
+            return 0;
+        }
+
+        if (!$this->config->isConfigured()) {
+            $output->writeln('<error>There is no API key set for the plugin</error>');
 
             return 0;
         }
