@@ -2,6 +2,7 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy;
 
+use DateTime;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyRepository;
 use Mautic\LeadBundle\Entity\Lead;
@@ -65,7 +66,8 @@ class Status429Strategy
             $this->createNewCompanyDomain($processedData['domain'], $company);
         }
 
-        //recalculate new primary lead company
+        $this->setLeadFirstNameIfNecessary($lead, $company);
+        $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
 
     }
 
@@ -91,7 +93,6 @@ class Status429Strategy
 
         if (null !== $lead) {
             $this->leadModel->addToCompany($lead, $company);
-            //$lead->setPrimaryCompany($company);
             $this->leadModel->saveEntity($lead);
         }
 
@@ -132,5 +133,16 @@ class Status429Strategy
             $companyDomain->setCompany($company);
         }
         $this->companyDomainsModel->saveEntity($companyDomain);
+    }
+
+    private function setLeadFirstNameIfNecessary(Lead $lead, Company $company): void
+    {
+        // was wenn firstname zu lange?
+        if (empty($lead->getPrimaryCompany())) {
+            $timestamp = (new DateTime())->format('Ymd-H:i');
+            $newLeadFirstName = $company->getName().' anonymous '.$timestamp;
+            $lead->setFirstname($newLeadFirstName);
+            $this->leadModel->saveEntity($lead);
+        }
     }
 }

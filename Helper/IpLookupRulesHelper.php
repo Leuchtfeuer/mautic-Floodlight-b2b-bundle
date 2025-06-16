@@ -50,7 +50,7 @@ class IpLookupRulesHelper
 
     public function check(Hit $hit): bool
     {
-        if (!$this->checkMoreThan2($hit->getLead()->getId())) {
+        if (!$this->checkLeadHasMoreThanOnePagehit($hit->getLead()->getId())) {
             return false;
         }
 
@@ -79,7 +79,7 @@ class IpLookupRulesHelper
         return true;
     }
 
-    private function checkMoreThan2(int $leadId): bool
+    private function checkLeadHasMoreThanOnePagehit(int $leadId): bool
     {
         $result = $this->pageModel->getHitRepository()->findBy(['lead' => $leadId]);
 
