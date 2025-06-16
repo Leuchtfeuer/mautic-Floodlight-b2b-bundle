@@ -85,6 +85,15 @@ return [
 
                 ],
             ],
+                'mautic.floodlight_lead_name_helper' => [
+                    'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FloodlightLeadNameHelper::class,
+                    'arguments' => [
+                        'doctrine.orm.entity_manager',
+                    ],
+                    'tags' => [
+                        'twig.extension',
+                    ],
+                ],
         ],
         'helpers' => [
             'mautic.leuchtfeuerfloodlightb2b.helper.install' => [

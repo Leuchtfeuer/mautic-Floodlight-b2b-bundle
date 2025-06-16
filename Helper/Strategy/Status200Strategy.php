@@ -56,7 +56,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
     public function process(array $processedData, Lead $lead)
     {
-        $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
+        $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
         $this->leadDomainsModel->deleteOldRetryEntries($processedData['details']['floodlight'], $lead);
 
 
@@ -74,8 +74,6 @@ class Status200Strategy implements StatusCodeStrategyInterface
         if (empty($companyDomain)) {
             $this->companyDomainsModel->createNewCompanyDomain($processedData['details']['floodlight'], $company);
         }
-
-        $this->setLeadFirstNameIfNecessary($lead, $company);
 
         $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
     }
@@ -95,17 +93,6 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $this->leadModel->addToCompany($lead, $company);
         $this->companyModel->saveEntity($company);
 
-    }
-
-    private function setLeadFirstNameIfNecessary(Lead $lead, Company $company): void
-    {
-        // was wenn firstname zu lange?
-        if (empty($lead->getPrimaryCompany())) {
-            $timestamp = (new DateTime())->format('Ymd-H:i');
-            $newLeadFirstName = $company->getName().' anonymous '.$timestamp;
-            $lead->setFirstname($newLeadFirstName);
-            $this->leadModel->saveEntity($lead);
-        }
     }
 
 }
