@@ -2,9 +2,7 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventListener;
 
-use Doctrine\ORM\Exception\NotSupported;
-use Doctrine\ORM\Exception\ORMException;
-use Doctrine\ORM\OptimisticLockException;
+
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
@@ -22,8 +20,8 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsR
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
+
 
 
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
@@ -80,10 +78,9 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
         $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
-        if (file_exists($configPathTo)) {
-            unlink($configPathTo);
+        if (!file_exists($configPathTo)) {
+            copy($pluginPathFrom, $configPathTo);
         }
-        copy($pluginPathFrom, $configPathTo);
         //        $this->useCleanupRollback = false;
         //        $this->setUpSymfony($this->configParams);
     }
@@ -320,82 +317,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
     }
 
-    private function addNewLeadDomain($lead, string $ipHash, int $count, $status): FloodlightLeadDomains
-    {
-        $floodlightLeadDomain = new FloodlightLeadDomains();
-        $floodlightLeadDomain->setDateAdded(new \DateTime());
-        $floodlightLeadDomain->setIpHash($ipHash);
-        $floodlightLeadDomain->setCount($count);
-        $floodlightLeadDomain->setStatus($status);
-        $floodlightLeadDomain->setContact($lead);
-        $this->em->persist($floodlightLeadDomain);
-        $this->em->flush();
-
-        return $floodlightLeadDomain;
-    }
-
-
-    private function processHit($remoteAddress, $lead)
-    {
-        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
-        $request = new \Symfony\Component\HttpFoundation\Request();
-        $request->server->set('REMOTE_ADDR', $remoteAddress);
-        $hit              = $this->createHit($lead, $remoteAddress);
-        $pageHitEventMock = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock->expects($this->any())->method('getHit')->willReturn($hit);
-        $pageHitEventMock->expects($this->any())->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock);
-    }
-
-
-
-    //@TODO Klären, ob Implementation von Blacklisted bei Floodlight Lookup nötig
-    public function disabledtestIpLookUpBlacklisted(): void
-    {
-        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
-        $this->updateApikey();
-        assert($floodlightSubscriber instanceof FloodlightSubscriber);
-
-        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-
-        $lead = $this->createLead();
-        $hit  = $this->createHit($lead, '217.91.35.16');
-
-        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
-        $floodlightSubscriber->onPageHit($pageHitEventMock1);
-        $company1           = $this->em->getRepository(Company::class)->findAll();
-        $leadDomainsHit1    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $companyDomainsHit1 = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertEmpty($company1);
-        $this->assertEmpty($leadDomainsHit1);
-        $this->assertEmpty($companyDomainsHit1);
-
-        $blacklistHelper = new DomainBlacklistHelper();
-        $blacklistHelper->add('leuchtfeuer.com');
-
-        $request = new \Symfony\Component\HttpFoundation\Request();
-        $request->server->set('REMOTE_ADDR', '217.91.35.16');
-        $hit2              = $this->createHit($lead, '217.91.35.16');
-        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock2->expects($this->exactly(2))->method('getHit')->willReturn($hit2);
-        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock2);
-        $leadDomainsHit2    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit2[0]);
-        $companyDomainsHit2 = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit2[0]->getDomain()]);
-        $company2           = $this->em->getRepository(Company::class)->findAll();
-
-        $lastItem          = $this->leadDomainRepo->findOneBy([], ['id' => 'DESC']);
-        $lastCompany       = $this->companyRepo->findOneBy([], ['id' => 'DESC']);
-        $lastCompanyDomain = $this->companyDomainRepo->findOneBy([], ['company' => 'ASC', 'domain' => 'ASC']);
-        assert($lastItem instanceof FloodlightLeadDomains);
-        $this->assertEquals(1, $lastItem->getCount());
-        $this->assertEmpty($lastCompany);
-        $this->assertEmpty($lastCompanyDomain);
-        $blacklistHelper->remove('leuchtfeuer.com');
-        $this->assertEquals('blacklisted', $lastItem->getStatus());
-    }
-
 
     public function testPrimaryCompanySetCorretcly(): void
     {
@@ -429,6 +350,141 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('185.145.181.191', $lead);
         //Leuchtfeuer should be primary company because the count of both lead domain entries for domain 'leuchtfeuer.com' get aggregated, so the count is 4 and the count for the Arkada-X domain is only three.
         $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $lead->getPrimaryCompany()->getName());
+    }
+
+    public function test429PagehitWithFailingDnsLookupAndSuccessfulWhoisLookup(): void
+    {
+        // Use ip 86.101.230.57 because Mockoon will return 429 floodlight response for this IP, mock dns lookup will fail for this IP and Whois will be success for this ip
+        $ip = '86.101.230.57';
+
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_WHOIS, $leadDomainsHit[0]->getLookupType());
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        $this->assertSame('nephronpharm.com', $company[0]->getName());
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
+    }
+
+    public function test429PagehitWithSuccessfulDnsLookup(): void
+    {
+        // Use ip 86.101.230.58 because Mockoon will return 429 floodlight response for this IP and mock DNS lookup will be successful for this IP (returns bbisp.co.za domain)
+        $ip = '86.101.230.58';
+
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[0]->getLookupType());
+        $this->assertSame('bbisp.co.za', $leadDomainsHit[0]->getDomain());
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        $this->assertSame('bbisp.co.za', $company[0]->getName());
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
+    }
+
+
+    public function test429PagehitWithFailingDnsLookupAndWhoisLookupWithBlacklistedKeywordInDomain(): void
+    {
+        // Use ip 86.101.230.59 because Mockoon will return 429 floodlight response for this IP, mock dns lookup will fail for this IP and Whois will return result with blacklisted keyword in domain
+        $ip = '86.101.230.59';
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertEmpty($leadDomainsHit);
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertEmpty($company);
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertEmpty($companyDomainsHit);
+    }
+
+    public function test429PagehitWithFailingDnsLookupAndWhoisLookupWithBlacklistedDomain(): void
+    {
+        // Use ip 86.101.230.60 because Mockoon will return 429 floodlight response for this IP, mock dns lookup will fail for this IP and Whois will return result with blacklisted domain
+        $ip = '86.101.230.60';
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertEmpty($leadDomainsHit);
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertEmpty($company);
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertEmpty($companyDomainsHit);
+    }
+
+    public function test429PagehitWithFailingDnsLookupAndWhoisLookupWithError(): void
+    {
+        // Use ip 86.101.230.61 because Mockoon will return 429 floodlight response for this IP, mock dns lookup will fail for this IP and Whois will return an error
+        $ip = '86.101.230.61';
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
+
+        $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertEmpty($leadDomainsHit);
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertEmpty($company);
+
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertEmpty($companyDomainsHit);
     }
 
 
@@ -520,16 +576,119 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     public function beforeTearDown(): void
     {
+        /*
         $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         if (file_exists($configPathTo)) {
             unlink($configPathTo);
         }
+        */
     }
 
-    public function setBackDateModifiedByTwoHours(FloodlightLeadDomains $leadDomain): void
+    private function setBackDateModifiedByTwoHours(FloodlightLeadDomains $leadDomain): void
     {
         $leadDomain->setDateModified(new \DateTime('-2 hours'));
         $this->em->persist($leadDomain);
         $this->em->flush();
     }
+
+    private function addNewLeadDomain($lead, string $ipHash, int $count, $status): FloodlightLeadDomains
+    {
+        $floodlightLeadDomain = new FloodlightLeadDomains();
+        $floodlightLeadDomain->setDateAdded(new \DateTime());
+        $floodlightLeadDomain->setIpHash($ipHash);
+        $floodlightLeadDomain->setCount($count);
+        $floodlightLeadDomain->setStatus($status);
+        $floodlightLeadDomain->setContact($lead);
+        $this->em->persist($floodlightLeadDomain);
+        $this->em->flush();
+
+        return $floodlightLeadDomain;
+    }
+
+
+    private function processHit($remoteAddress, $lead)
+    {
+        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
+        $request = new \Symfony\Component\HttpFoundation\Request();
+        $request->server->set('REMOTE_ADDR', $remoteAddress);
+        $hit              = $this->createHit($lead, $remoteAddress);
+        $pageHitEventMock = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+        $pageHitEventMock->expects($this->any())->method('getHit')->willReturn($hit);
+        $pageHitEventMock->expects($this->any())->method('getRequest')->willReturn($request);
+        $floodlightSubscriber->onPageHit($pageHitEventMock);
+    }
+
+
+    private function mockDnsLookupResultDependingOnIp(): void
+    {
+        // Prüfen ob bereits definiert
+        if (function_exists('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Helper\\Utility\\gethostbyaddr')) {
+            return;
+        }
+        
+        // EINMALIG alle Cases hardcoded definieren
+        $mockCode = "
+        namespace MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Helper\\Utility {
+            function gethostbyaddr(\$ip) {
+                switch (\$ip) {
+                    case '86.101.230.57':
+                        return '11.11.11.11';
+                    case '86.101.230.58':
+                        return '102-220-105-89.dna.tri.bbisp.co.za';
+                    case '86.101.230.59':
+                    case '86.101.230.60':
+                    case '86.101.230.61':
+                    case '11.11.11.11':
+                        return '11.11.11.11';
+                    default:
+                        return \\gethostbyaddr(\$ip);
+                }
+            }
+        }";
+
+        eval($mockCode);
+    }
+
+    private function mockWhoisResultDependingOnIp(): void
+    {
+        if (function_exists('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Services\\shell_exec')) {
+            return;
+        }
+
+        $mockCode = "
+        namespace MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Services {
+            function shell_exec(\$command) {
+                if (strpos(\$command, '86.101.230.57') !== false && strpos(\$command, 'main.py') !== false) {
+                    return \"{'company_domain': 'NEPHRONPHARM.COM', 'company_name': 'AT&T Enterprises, LLC', 'is_isp': False, 'is_dialup': False}\\n\";
+                }
+                
+                if (strpos(\$command, '86.101.230.58') !== false && strpos(\$command, 'main.py') !== false) {
+                    return 'Error: ...';
+                }
+                
+                if (strpos(\$command, '86.101.230.59') !== false && strpos(\$command, 'main.py') !== false) {
+                    return \"{'company_domain': 'floodlightblacklistkeyword.com', 'company_name': 'AT&T Enterprises, LLC', 'is_isp': False, 'is_dialup': False}\\n\";
+                }
+                
+                if (strpos(\$command, '86.101.230.60') !== false && strpos(\$command, 'main.py') !== false) {
+                    return \"{'company_domain': 'floodlightblacklistdomain.com', 'company_name': 'AT&T Enterprises, LLC', 'is_isp': False, 'is_dialup': False}\\n\";
+                }
+                
+                if (strpos(\$command, '86.101.230.61') !== false && strpos(\$command, 'main.py') !== false) {
+                    return 'Error: IPv4 address 127.0.0.1 is already defined as Loopback via RFC 1122, Section 3.2.1.3.';
+                }
+                
+                if (strpos(\$command, '127.0.0.1') !== false) {
+                    return 'Error: IPv4 address 127.0.0.1 is already defined as Loopback via RFC 1122, Section 3.2.1.3.';
+                }
+                
+                return \\shell_exec(\$command);
+            }
+        }";
+
+        eval($mockCode);
+    }
 }
+
+
+

@@ -17,6 +17,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsR
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -70,6 +71,16 @@ class FloodlightLeadDomainsModel extends FormModel
 
     public function isBlackListed(string $domain): bool
     {
+        $keywordBlacklist = (new KeywordBlacklistHelper())->get();
+        $domainLower = strtolower($domain);
+
+        foreach ($keywordBlacklist as $keyword) {
+            if (str_contains($domainLower, strtolower($keyword))) {
+                return true;
+            }
+        }
+
+
         $blacklist = (new DomainBlacklistHelper())->get();
 
         if (!empty($blacklist) && in_array($domain, $blacklist, true)) {

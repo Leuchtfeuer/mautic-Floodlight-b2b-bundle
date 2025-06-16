@@ -1,0 +1,2 @@
+floodlightblacklistkeyword
+amazon

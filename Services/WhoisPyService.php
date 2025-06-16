@@ -61,9 +61,17 @@ class WhoisPyService
         return true;
     }
 
-    private function execute(string $ip): false|string|null
+    public function execute(string $ip): false|string|null
     {
-        $command = 'python3 '.$this->whoisPyPathFile.' -ipaddr '.$ip;
+        $pluginDir = __DIR__ . '/..';
+        $pythonModulesPath = $pluginDir . '/PythonModules';
+
+        $envVar = '';
+        if (is_dir($pythonModulesPath)) {
+            $envVar = 'PYTHONPATH=' . escapeshellarg($pythonModulesPath) . ' ';
+        }
+
+        $command = $envVar . 'python3 ' . escapeshellarg($this->whoisPyPathFile) . ' -ipaddr ' . escapeshellarg($ip);
 
         return shell_exec($command);
     }

@@ -144,7 +144,6 @@ class IpLookupRulesHelper
         if($data['statusRequestCode'] == 401) {
             $this->reporter->notify('Floodlight API returned 401 Unauthorized. Please check your API credentials.');
         }
-
     }
 
 

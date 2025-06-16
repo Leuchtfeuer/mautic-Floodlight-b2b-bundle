@@ -15,8 +15,8 @@ class DomainUtilityTest extends TestCase
         $whoisPyService = $this->createMock(WhoisPyService::class);
 
         $domainUtility = new DomainUtility($leadDomainsModel, $whoisPyService);
-        $this->assertTrue($domainUtility->isIp('123.23'));
-        $this->assertFalse($domainUtility->isIp('google.com'));
-        $this->assertTrue($domainUtility->isIp('127.0.0.1'));
+        $this->assertTrue($domainUtility->hasMoreThanFourNumbers('123.23'));
+        $this->assertFalse($domainUtility->hasMoreThanFourNumbers('google.com'));
+        $this->assertTrue($domainUtility->hasMoreThanFourNumbers('127.0.0.1'));
     }
 }

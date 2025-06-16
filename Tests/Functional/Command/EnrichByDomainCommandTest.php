@@ -51,7 +51,7 @@ class EnrichByDomainCommandTest extends MauticMysqlTestCase
 
     public function testEnrichByDomainWhenInvalidApiKey(): void
     {
-        $this->activatePlugin(true, 'invalidApiKey');
+        $this->activatePlugin(true, 'invaidApiKey');
         $company       = $this->addCompany('Test Company');
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich', ['--by-domain' => 1]);
         $this->assertStringContainsString('You are using an invalid API key', $commandTester->getDisplay());

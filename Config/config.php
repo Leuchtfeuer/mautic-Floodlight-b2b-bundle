@@ -105,6 +105,9 @@ return [
             'mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist' => [
                 'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper::class,
             ],
+            'mautic.leuchtfeuerfloodlightb2b.helper.keywordblacklist' => [
+                'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper::class,
+            ],
             'mautic.leuchtfeuerfloodlightb2b.helper.iplookuprules' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class,
                 'arguments' => [
