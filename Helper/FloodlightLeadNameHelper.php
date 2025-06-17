@@ -29,12 +29,10 @@ class FloodlightLeadNameHelper extends AbstractExtension
      */
     public function getFloodlightLeadName(Lead $lead, bool $lastFirst = false): ?string
     {
-        // Wenn bereits ein Name vorhanden ist, nichts zurückgeben
         if ($lead->getName($lastFirst)) {
             return null;
         }
 
-        // Query für domain und date_added von FloodlightLeadDomains
         $qb = $this->entityManager->createQueryBuilder();
         $qb->select('fld.domain, fld.dateAdded')
             ->from(FloodlightLeadDomains::class, 'fld')
