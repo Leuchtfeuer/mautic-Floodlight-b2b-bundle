@@ -101,9 +101,8 @@ class Status429Strategy
     public function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, $company): void
     {
         $company = $floodlightDTO->fillCompany($company);
-        $this->leadModel->addToCompany($lead, $company);
         $this->companyModel->saveEntity($company);
-
+        $this->leadModel->addToCompany($lead, $company);
     }
 
 
