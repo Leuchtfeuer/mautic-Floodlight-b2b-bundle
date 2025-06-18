@@ -66,7 +66,6 @@ class Status429Strategy
             $this->createNewCompanyDomain($processedData['domain'], $company);
         }
 
-        $this->setLeadFirstNameIfNecessary($lead, $company);
         $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
 
     }
@@ -102,9 +101,8 @@ class Status429Strategy
     public function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, $company): void
     {
         $company = $floodlightDTO->fillCompany($company);
-        $this->leadModel->addToCompany($lead, $company);
         $this->companyModel->saveEntity($company);
-
+        $this->leadModel->addToCompany($lead, $company);
     }
 
 
@@ -133,16 +131,5 @@ class Status429Strategy
             $companyDomain->setCompany($company);
         }
         $this->companyDomainsModel->saveEntity($companyDomain);
-    }
-
-    private function setLeadFirstNameIfNecessary(Lead $lead, Company $company): void
-    {
-        // was wenn firstname zu lange?
-        if (empty($lead->getPrimaryCompany())) {
-            $timestamp = (new DateTime())->format('Ymd-H:i');
-            $newLeadFirstName = $company->getName().' anonymous '.$timestamp;
-            $lead->setFirstname($newLeadFirstName);
-            $this->leadModel->saveEntity($lead);
-        }
     }
 }
