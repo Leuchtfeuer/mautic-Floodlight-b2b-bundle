@@ -17,7 +17,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
+class EnrichCompanyCommand extends ModeratedCommand
 {
     public const DATE_DEFAULT = '1970-01-01 00:00:00';
 
@@ -36,7 +36,7 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
 
     protected function configure(): void
     {
-        $this->setName('leuchtfeuer:floodlight:enrich:domain')
+        $this->setName('leuchtfeuer:floodlight:enrich-companies')
             ->setDescription('Enrich company data with Floodlight data by address');
     }
 
