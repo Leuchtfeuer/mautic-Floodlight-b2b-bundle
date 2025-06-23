@@ -11,7 +11,7 @@ use Mautic\LeadBundle\Entity\Lead;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Command\EnrichmentFloodlightCompanyByAddressCommand;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Command\LookupRetryCommand;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Command\EnrichmentFloodlightCompanyCommand;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
@@ -22,7 +22,7 @@ use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
 
-class EnrichByAddressCommandTest extends MauticMysqlTestCase
+class LookupRetryCommandTest extends MauticMysqlTestCase
 {
     public function setUp(): void
     {
@@ -36,7 +36,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
@@ -52,7 +52,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
@@ -68,7 +68,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
@@ -83,7 +83,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
@@ -109,7 +109,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
@@ -124,7 +124,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryip', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
@@ -140,7 +140,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryip', 2, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
@@ -163,7 +163,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $this->em->persist($successLeadDomain);
         $this->em->flush();
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
@@ -184,7 +184,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
         $LeadDomain404 = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
+        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);

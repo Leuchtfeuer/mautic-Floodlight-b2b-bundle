@@ -19,7 +19,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
+class LookupRetryCommand extends ModeratedCommand
 {
     public const DATE_DEFAULT = '1970-01-01 00:00:00';
 
@@ -39,8 +39,8 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
 
     protected function configure(): void
     {
-        $this->setName('leuchtfeuer:floodlight:enrich:address')
-            ->setDescription('Enrich company data with Floodlight data by address');
+        $this->setName('leuchtfeuer:floodlight:lookup-retries')
+            ->setDescription('Retry lookups with status retry');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -60,7 +60,7 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
         $leadDomains = $this->floodlightLeadDomainsModel->getLeadDomainToEnrichement();
 
         if (empty($leadDomains)) {
-            $output->writeln('<info>No companies to enrich</info>');
+            $output->writeln('<info>No lookups to retry found</info>');
 
             return 0;
         }
@@ -85,7 +85,7 @@ class EnrichmentFloodlightCompanyByAddressCommand extends ModeratedCommand
             $lead = $leadDomain->getContact();
             $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($ipHash, $lead);
         }
-        $output->writeln('<info>Enriching company data DONE!</info>');
+        $output->writeln('<info>Retry for all corresponding lookups done</info>');
 
         return 0;
     }
