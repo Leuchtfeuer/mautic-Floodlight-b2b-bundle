@@ -13,48 +13,21 @@ class AjaxController extends CommonAjaxController
 {
 
     /**
-     * Verifiziere den Floodlight API-Key
+     * Verifiziere die Floodlight API-Credentials
      *
      * @return JsonResponse
      */
     public function verifyFloodlightApiKeyAction(Request $request, FloodlightService $floodlightService, ValidationCredentials $credentials): JsonResponse
     {
-
-        //$apiKey = $request->get('apikey');
-        $apiKey = $request->query->get('apiKey');
-        $credentials->setApiKey($apiKey);
+        $accessKeyId = $request->query->get('apiAccessKeyId');
+        $secretKey = $request->query->get('apiSecretKey');
+        
+        $credentials->setAccessKeyId($accessKeyId);
+        $credentials->setSecretKey($secretKey);
+        
         $apiClient = $floodlightService->getAPIClient();
         $apiClient->setCredentials($credentials);
+        
         return $floodlightService->validateApiKey();
-
-        /*
-        if (empty($apiKey)) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'API-Schlüssel darf nicht leer sein',
-            ]);
-        }
-
-        try {
-            $isValid = $this->floodlightService->verifyApiKey($apiKey);
-            
-            if ($isValid) {
-                return new JsonResponse([
-                    'success' => true,
-                    'message' => 'API-Schlüssel wurde erfolgreich verifiziert!',
-                ]);
-            } else {
-                return new JsonResponse([
-                    'success' => false,
-                    'message' => 'Ungültiger API-Schlüssel. Bitte überprüfen Sie Ihre Eingabe.',
-                ]);
-            }
-        } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Fehler bei der Überprüfung: ' . $e->getMessage(),
-            ], 500);
-        }
-        */
     }
 } 

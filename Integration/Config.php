@@ -52,28 +52,10 @@ class Config
         try {
             $apiKeys = $this->getApiKeys();
 
-            return !empty($apiKeys) && isset($apiKeys['api_key']);
+            return !empty($apiKeys) && isset($apiKeys['api_access_key_id']) && isset($apiKeys['api_secret_key']);
         } catch (IntegrationNotFoundException) {
             return false;
         }
-    }
-
-    public function isFreeTier(): bool
-    {
-        $apiKeys = $this->getApiKeys();
-        if (empty($apiKeys['api_key'])) {
-            return false;
-        }
-        if (str_contains($apiKeys['api_key'], 'free_')) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public function isProTier(): bool
-    {
-        return true;
     }
     
     /**

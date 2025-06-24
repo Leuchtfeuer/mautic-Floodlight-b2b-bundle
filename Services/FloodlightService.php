@@ -19,7 +19,7 @@ class FloodlightService implements FloodlightServiceInterface
     public function __construct(
         private ApiClient $client,
         private LoggerInterface $logger,
-        string $floodlightApiUrl = 'https://api.floodlight-b2b.com'
+        string $floodlightApiUrl = 'https://api-dev.floodlight-b2b.com'
     ) {
         $this->floodlightApiUrl = $floodlightApiUrl;
     }
@@ -135,29 +135,19 @@ class FloodlightService implements FloodlightServiceInterface
     }
 
     /**
-     * Verarbeitet das Ergebnis der API-Key-Validierung und gibt eine entsprechende Meldung zurück
+     * Verarbeitet das Ergebnis der API-Key-Validierung - vereinfachte Version
      */
     private function handleAuthorizationResult(ResponseInterface $result): JsonResponse
     {
         $statusCode = $result->getStatusCode();
-        if (401 === $statusCode) {
-            return new JsonResponse(['message' => 'API key invalid'], Response::HTTP_UNAUTHORIZED);
+        
+        if (200 === $statusCode) {
+            // Status 200 = Credentials sind gültig, egal was der Body sagt
+            return new JsonResponse(['message' => 'Valid credentials'], Response::HTTP_OK);
         }
-
-        $contents = $result->getBody()->getContents();
-        $data = json_decode($contents, true);
-        // Limit exceeded
-        if ($statusCode === 200 && isset($data['remaining']) && $data['remaining'] === 0) {
-            return new JsonResponse(['message' => 'API key valid, but quota exceeded for this period.'], Response::HTTP_TOO_MANY_REQUESTS);
-        }
-
-        // Remaining requests left
-        if ($statusCode === 200 && isset($data['remaining']) && $data['remaining'] >= 0) {
-            return new JsonResponse(['message' => 'API key valid, '.$data['remaining'].' API calls remaining for this period.'], Response::HTTP_OK);
-        }
-
-        //Non of the cases
-        return new JsonResponse(['message' => 'Something went wrong with your validation: '.$statusCode], Response::HTTP_BAD_REQUEST);
+        
+        // Alles andere = Credentials sind ungültig
+        return new JsonResponse(['message' => 'Your credentials are invalid'], Response::HTTP_UNAUTHORIZED);
     }
 
     /**

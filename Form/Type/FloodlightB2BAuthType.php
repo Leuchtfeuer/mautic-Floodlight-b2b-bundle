@@ -6,10 +6,11 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Form\Type;
 
 use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\ButtonType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Length;
 
 class FloodlightB2BAuthType extends AbstractType
 {
@@ -17,27 +18,29 @@ class FloodlightB2BAuthType extends AbstractType
     {
 
         $builder->add(
-            'api_key',
+            'api_access_key_id',
             TextType::class,
             [
-                'label'       => 'leuchtfeuerfloodlightb2b.form.config.floodlight.api_key',
+                'label'       => 'leuchtfeuerfloodlightb2b.form.config.floodlight.api_access_key_id',
                 'label_attr'  => ['class' => 'control-label'],
                 'attr'        => ['class' => 'form-control'],
                 'required'    => true,
                 'constraints' => [
+                    new NotBlank(),
                 ],
             ]
         );
 
         $builder->add(
-            'verify_floodlight_api_key',
-            ButtonType::class,
+            'api_secret_key',
+            TextType::class,
             [
-                'label' => 'mautic.plugin.floodlight.verify_api',
-                'attr'  => [
-                    'class'   => 'btn btn-primary',
-                    'style'   => 'margin-bottom: 10px; padding-left: 30px; padding-right: 30px;',
-                    'onclick' => 'Mautic.verifyFloodlightApiKey(this)',
+                'label'       => 'leuchtfeuerfloodlightb2b.form.config.floodlight.api_secret_key',
+                'label_attr'  => ['class' => 'control-label'],
+                'attr'        => ['class' => 'form-control'],
+                'required'    => true,
+                'constraints' => [
+                    new NotBlank(),
                 ],
             ]
         );
