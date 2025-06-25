@@ -10,8 +10,13 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodligh
 
 class ValidationCredentials extends Credentials
 {
-    private string $accessKeyId;
-    private string $secretKey;
+    private string $accessKeyId = '';
+    private string $secretKey = '';
+    
+    // Own constructor so that integrations helper is not required
+    public function __construct()
+    {
+    }
     
     public function getKeyName(): string
     {
@@ -20,7 +25,6 @@ class ValidationCredentials extends Credentials
 
     public function getApiKey(): string
     {
-        // Basic Auth mit username (Access Key ID) und password (Secret Key)
         if (!empty($this->accessKeyId) && !empty($this->secretKey)) {
             return 'Basic ' . base64_encode($this->accessKeyId . ':' . $this->secretKey);
         }
@@ -33,19 +37,14 @@ class ValidationCredentials extends Credentials
         $this->accessKeyId = $accessKeyId;
     }
     
-    public function setSecretKey(string $secretKey): void
+    public function setApiSecretKey(string $secretKey): void
     {
         $this->secretKey = $secretKey;
     }
-    
-    // Für Backward-Kompatibilität - kann entfernt werden wenn nicht mehr benötigt
-    public function setApiKey(string $apiKey): void
+
+    // Aliase für die Form-Felder-Namen
+    public function setApiAccessKeyId(string $accessKeyId): void
     {
-        // Versuche zu parsen falls das alte Format verwendet wird
-        if (str_contains($apiKey, ':')) {
-            $parts = explode(':', $apiKey, 2);
-            $this->accessKeyId = $parts[0];
-            $this->secretKey = $parts[1];
-        }
+        $this->setAccessKeyId($accessKeyId);
     }
 }

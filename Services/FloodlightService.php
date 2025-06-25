@@ -4,6 +4,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 
 use GuzzleHttp\Exception\ClientException;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ValidationCredentials;
 use Symfony\Component\HttpFoundation\Response;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
 use Psr\Http\Message\ResponseInterface;
@@ -145,7 +146,7 @@ class FloodlightService implements FloodlightServiceInterface
             // Status 200 = Credentials sind gültig, egal was der Body sagt
             return new JsonResponse(['message' => 'Valid credentials'], Response::HTTP_OK);
         }
-        
+
         // Alles andere = Credentials sind ungültig
         return new JsonResponse(['message' => 'Your credentials are invalid'], Response::HTTP_UNAUTHORIZED);
     }
@@ -161,5 +162,32 @@ class FloodlightService implements FloodlightServiceInterface
             return new JsonResponse(['message' => 'Could not connect to API for validation.'], Response::HTTP_SERVICE_UNAVAILABLE);
         }
         return $this->handleAuthorizationResult($result);
+    }
+
+    /**
+     * Validiert API-Credentials direkt und gibt nur true/false zurück
+     * Wird vom Symfony-Validator verwendet für Form-Daten (VOR dem Speichern)
+     */
+    public function validateApiCredentials(string $accessKeyId, string $secretKey): bool
+    {
+        try {
+            // Erstelle ValidationCredentials lokal - das ist für diese eine Verwendung OK
+            $validationCredentials = new ValidationCredentials();
+            $validationCredentials->setApiAccessKeyId($accessKeyId);
+            $validationCredentials->setApiSecretKey($secretKey);
+            
+            // Setze Credentials auf den ApiClient
+            $this->client->setCredentials($validationCredentials);
+            
+            // Verwende die bestehende validateApiKey Methode
+            $jsonResponse = $this->validateApiKey();
+            
+            // Prüfe den HTTP-Status der JsonResponse
+            return $jsonResponse->getStatusCode() === 200;
+            
+        } catch (\Exception $e) {
+            $this->logger->error('FloodlightService validateApiCredentials failed: ' . $e->getMessage());
+            return false;
+        }
     }
 }

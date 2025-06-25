@@ -44,14 +44,14 @@ class EnrichByDomainCommandTest extends MauticMysqlTestCase
 
     public function testEnrichByDomainWhenNoApiKeySet(): void
     {
-        $this->activatePlugin(true, '');
+        $this->activatePlugin(true, '', '');
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich', ['--by-domain' => 1]);
         $this->assertStringContainsString('There is no API key set for the plugin', $commandTester->getDisplay());
     }
 
     public function testEnrichByDomainWhenInvalidApiKey(): void
     {
-        $this->activatePlugin(true, 'invaidApiKey');
+        $this->activatePlugin(true, 'invalidAccessKeyId', 'invalidSecretKey');
         $company       = $this->addCompany('Test Company');
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich', ['--by-domain' => 1]);
         $this->assertStringContainsString('You are using an invalid API key', $commandTester->getDisplay());
@@ -143,7 +143,7 @@ class EnrichByDomainCommandTest extends MauticMysqlTestCase
         $this->assertStringContainsString('No companies to enrich', $commandTester->getDisplay());
     }
 
-    private function activatePlugin(bool $isPublished = true, string $apiKey = 'validApiKey'): void
+    private function activatePlugin(bool $isPublished = true, string $accessKeyId = 'validAccessKeyId', string $secretKey = 'validSecretKey'): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         assert($reloadFacade instanceof ReloadFacade);
@@ -161,8 +161,10 @@ class EnrichByDomainCommandTest extends MauticMysqlTestCase
         $this->em->flush();
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_key]']);
-        $form['integration_config[apiKeys][api_key]']->setValue($apiKey);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
+        $form['integration_config[apiKeys][api_access_key_id]']->setValue($accessKeyId);
+        $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->useCleanupRollback = false;

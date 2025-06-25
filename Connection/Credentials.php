@@ -28,8 +28,7 @@ class Credentials implements HeaderCredentialsInterface
         
         $accessKeyId = $apiKeys['api_access_key_id'] ?? '';
         $secretKey = $apiKeys['api_secret_key'] ?? '';
-        
-        // Basic Auth mit username (Access Key ID) und password (Secret Key)
+
         if (!empty($accessKeyId) && !empty($secretKey)) {
             return 'Basic ' . base64_encode($accessKeyId . ':' . $secretKey);
         }

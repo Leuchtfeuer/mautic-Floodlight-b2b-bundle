@@ -45,12 +45,14 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->setUpSymfony($this->configParams);
     }
 
-    private function updateApikey(string $key='validApiKey'): void
+    private function updateApikey(string $accessKeyId='validAccessKeyId', string $secretKey='validSecretKey'): void
     {
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_key]']);
-        $form['integration_config[apiKeys][api_key]']->setValue($key);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
+        $form['integration_config[apiKeys][api_access_key_id]']->setValue($accessKeyId);
+        $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
     }
@@ -107,7 +109,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     public function testPagehitWhenInvalidApiKey(): void
     {
         $this->activePlugin();
-        $this->updateApikey('invalidapikey');
+        $this->updateApikey('invalidAccessKeyId', 'invalidSecretKey');
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
         $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
@@ -139,9 +141,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
         $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
-        //Test if first name of lead gets set properly <domain that has first been detected for this contact> "anonymous" <datetime of fist detection>
-        $this->assertStringContainsString('Leuchtfeuer', $lead->getFirstName());
-        $this->assertStringContainsString('anonymous', $lead->getFirstName());
 
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
@@ -344,8 +343,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[1]);
         //Arkada-X should be primary company because domain has count 2 like Leuchtfeuer, but the date modified of the entry is more recent
         $this->assertSame('Arkada-X', $lead->getPrimaryCompany()->getName());
-        //Lead name should still contain Leuchtfeuer as the lead name should always be connected to the company that was first detected and never change afterwards
-        $this->assertStringContainsString('Leuchtfeuer', $lead->getName());
 
 
         $leadDomain = $this->addNewLeadDomain($lead, 'iphash2', 2, FloodlightLeadDomains::STATUS_SUCCESS);

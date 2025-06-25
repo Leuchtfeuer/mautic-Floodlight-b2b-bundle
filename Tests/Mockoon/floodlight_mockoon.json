@@ -32,7 +32,7 @@
             {
               "target": "header",
               "modifier": "Authorization",
-              "value": "Bearer invaidApiKey",
+              "value": "Basic aW52YWxpZEFjY2Vzc0tleUlkOmludmFsaWRTZWNyZXRLZXk=",
               "invert": false,
               "operator": "equals"
             }
@@ -100,7 +100,7 @@
             {
               "target": "header",
               "modifier": "Authorization",
-              "value": "Bearer invaidApiKey",
+              "value": "Basic aW52YWxpZEFjY2Vzc0tleUlkOmludmFsaWRTZWNyZXRLZXk=",
               "invert": false,
               "operator": "equals"
             }
@@ -168,7 +168,7 @@
             {
               "target": "header",
               "modifier": "Authorization",
-              "value": "Bearer invaidApiKey",
+              "value": "Basic aW52YWxpZEFjY2Vzc0tleUlkOmludmFsaWRTZWNyZXRLZXk=",
               "invert": false,
               "operator": "equals"
             }
@@ -219,38 +219,6 @@
       "method": "get",
       "endpoint": "v1/auth/usage",
       "responses": [
-        {
-          "uuid": "44087287-f6b3-4e71-afac-c14291aa8024",
-          "body": "{\n    \"statusCode\": 401,\n    \"timestamp\": \"{{{date 'iso'}}}\",\n    \"message\": \"Unauthorized - Invalid API Key\",\n    \"path\": \"{{{request.path}}}\"\n}",
-          "latency": 0,
-          "statusCode": 401,
-          "label": "401 Unauthorized - Invalid API Key",
-          "headers": [
-            {
-              "key": "Content-Type",
-              "value": "application/json"
-            }
-          ],
-          "bodyType": "INLINE",
-          "rules": [
-            {
-              "target": "header",
-              "modifier": "Authorization",
-              "value": "Bearer invaidApiKey",
-              "invert": false,
-              "operator": "equals"
-            }
-          ],
-          "rulesOperator": "OR",
-          "default": false,
-          "filePath": "",
-          "databucketID": "",
-          "sendFileAsBody": false,
-          "disableTemplating": false,
-          "fallbackTo404": false,
-          "crudKey": "id",
-          "callbacks": []
-        },
         {
           "uuid": "a9742ee8-d7fc-4a1d-bba5-9f643077e42d",
           "body": "{\n  \"remaining\": 1000,\n  \"limit\": 1000,\n  \"free\": false,\n  \"next_renewal\": \"Sat, 31 May 2025 22:00:00 GMT\"\n}",
@@ -304,7 +272,7 @@
             {
               "target": "header",
               "modifier": "Authorization",
-              "value": "Bearer invaidApiKey",
+              "value": "Basic aW52YWxpZEFjY2Vzc0tleUlkOmludmFsaWRTZWNyZXRLZXk=",
               "invert": false,
               "operator": "equals"
             }
@@ -370,7 +338,7 @@
             {
               "target": "header",
               "modifier": "Authorization",
-              "value": "Bearer invaidApiKey",
+              "value": "Basic aW52YWxpZEFjY2Vzc0tleUlkOmludmFsaWRTZWNyZXRLZXk=",
               "invert": false,
               "operator": "equals"
             }
@@ -411,7 +379,7 @@
             {
               "target": "header",
               "modifier": "Authorization",
-              "value": "Bearer invaidApiKey",
+              "value": "Basic aW52YWxpZEFjY2Vzc0tleUlkOmludmFsaWRTZWNyZXRLZXk=",
               "invert": false,
               "operator": "equals"
             }

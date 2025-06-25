@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Form\Type;
 
 use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Validator\ValidFloodlightCredentials;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -51,6 +52,9 @@ class FloodlightB2BAuthType extends AbstractType
         $resolver->setDefaults(
             [
                 'integration' => null,
+                'constraints' => [
+                    new ValidFloodlightCredentials(),
+                ],
             ]
         );
     }

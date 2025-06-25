@@ -48,7 +48,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
 
     public function testEnrichWhenApiKeyNotSet()
     {
-        $this->activatePlugin(true, null);
+        $this->activatePlugin(true, null, null);
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
@@ -64,7 +64,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
 
     public function testEnrichIfInvalidApiKey()
     {
-        $this->activatePlugin(true, 'invaidApiKey');
+        $this->activatePlugin(true, 'invalidAccessKeyId', 'invalidSecretKey');
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
@@ -225,7 +225,7 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
      * @throws OptimisticLockException
      * @throws NotSupported
      */
-    private function activatePlugin(bool $isPublished = true, string|null $apiKey = 'validApiKey'): void
+    private function activatePlugin(bool $isPublished = true, string|null $accessKeyId = 'validAccessKeyId', string|null $secretKey = 'validSecretKey'): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
         assert($reloadFacade instanceof ReloadFacade);
@@ -243,9 +243,13 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $this->em->flush();
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_key]']);
-        if($apiKey){
-            $form['integration_config[apiKeys][api_key]']->setValue($apiKey);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
+        if($accessKeyId){
+            $form['integration_config[apiKeys][api_access_key_id]']->setValue($accessKeyId);
+        }
+        if($secretKey){
+            $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
         }
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
