@@ -77,6 +77,7 @@ class FloodlightServiceTest extends TestCase
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $logger            = $this->createMock(LoggerInterface::class);
+        $stream            = $this->createMock(StreamInterface::class);
 
         $guzzleClient->expects(self::any())
             ->method('request')
@@ -87,13 +88,19 @@ class FloodlightServiceTest extends TestCase
         $responseInterface->expects(self::any())
             ->method('getStatusCode')
             ->willReturn(404);
+        $responseInterface->expects(self::any())
+            ->method('getBody')
+            ->willReturn($stream);
+        $stream->expects(self::any())
+            ->method('getContents')
+            ->willReturn('[{"foo": "bar"}]');
 
         $service = new FloodlightService($client, $logger);
 
         $result  = $service->get('1.2.3.4');
         $this->assertIsArray($result);
         $this->assertIsNotBool($result['statusRequestCode']);
-        self::assertSame(404, $result['statusRequestCode']);
+        self::assertSame([['foo' => 'bar'], 'statusRequestCode' => 404], $result);
     }
 
     public function testSuccess200FirstTry(): void

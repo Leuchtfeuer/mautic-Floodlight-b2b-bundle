@@ -32,8 +32,6 @@ class Status404Strategy
     public function process(array $processedData, $lead)
     {
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
-        //@TODO Implement saving IpHash when 404
-        //@TODO add delete old retry entry logic
-        //$this->leadDomainsModel->deleteOldRetryEntries($processedData['details']['floodlight'], $lead);
+        $this->leadDomainsModel->deleteOldRetryEntries($processedData['details']['floodlight'], $lead);
     }
 }

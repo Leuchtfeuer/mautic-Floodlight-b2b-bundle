@@ -64,8 +64,10 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->em->flush();
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_key]']);
-        $form['integration_config[apiKeys][api_key]']->setValue('pro_123');
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
+        $form['integration_config[apiKeys][api_access_key_id]']->setValue('test_access_key_id');
+        $form['integration_config[apiKeys][api_secret_key]']->setValue('test_secret_key');
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->useCleanupRollback = false;

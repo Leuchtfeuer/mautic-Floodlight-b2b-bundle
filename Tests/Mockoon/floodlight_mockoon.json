@@ -11,7 +11,7 @@
     {
       "uuid": "e8dd18af-a914-4da0-a608-a061fd77d3a1",
       "type": "http",
-      "documentation": "Handles IP lookup for 217.91.35.16 with valid/invalid API key scenarios",
+      "documentation": "Leuchtfeuer - Status 200 by IP",
       "method": "get",
       "endpoint": "v1/companies/ip/217.91.35.16",
       "responses": [
@@ -79,7 +79,7 @@
     {
       "uuid": "c63bccc7-69e6-4896-bea0-83da6ded4a06",
       "type": "http",
-      "documentation": "Get IP Hash",
+      "documentation": "Leuchtfeuer - Status 200 by IP Hash",
       "method": "get",
       "endpoint": "v1/companies/ip/70d96c1eae48442fe5fc5a7f234f3d0f13d3da42",
       "responses": [
@@ -147,7 +147,7 @@
     {
       "uuid": "e2cb6a3d-92be-48e3-aaa8-2cc37f520aa5",
       "type": "http",
-      "documentation": "By domain 200",
+      "documentation": "Leuchtfeuer - Status 200 by domain",
       "method": "get",
       "endpoint": "v1/companies/domain/leuchtfeuer.com",
       "responses": [
@@ -215,7 +215,7 @@
     {
       "uuid": "276e8415-9807-407e-924c-9dec75dfb32b",
       "type": "http",
-      "documentation": "Validation: Empty APi Key",
+      "documentation": "Validation Endpoint",
       "method": "get",
       "endpoint": "v1/auth/usage",
       "responses": [
@@ -251,7 +251,7 @@
     {
       "uuid": "1f3e6bfb-61e0-4361-8451-a5e4d9f76551",
       "type": "http",
-      "documentation": "Arkada-X",
+      "documentation": "Arkada-X - Status 200 by IP",
       "method": "get",
       "endpoint": "v1/companies/ip/185.145.181.191",
       "responses": [
@@ -314,7 +314,7 @@
     {
       "uuid": "e8be13d4-5bfb-415e-a1ce-8a30544ddd96",
       "type": "http",
-      "documentation": "Retry IP",
+      "documentation": "Retry - Status 202 by ip",
       "method": "get",
       "endpoint": "v1/companies/ip/retryip",
       "responses": [
@@ -358,7 +358,7 @@
     {
       "uuid": "1d352527-d7a5-4afe-a4f8-262690eb750e",
       "type": "http",
-      "documentation": "By domain 202",
+      "documentation": "Retry - Status 202 by domain",
       "method": "get",
       "endpoint": "v1/companies/domain/202domain.com",
       "responses": [
@@ -426,13 +426,13 @@
     {
       "uuid": "68960f70-7b3c-468c-b807-567a6d9fb1a9",
       "type": "http",
-      "documentation": "By domain 404",
+      "documentation": "Status 404 by domain",
       "method": "get",
       "endpoint": "v1/companies/domain/localhostdomain1245.com",
       "responses": [
         {
           "uuid": "eccaf790-3007-41f3-b5fb-722bd4d21d76",
-          "body": "{\n    \"statusCode\": 404,\n    \"timestamp\": \"2025-06-05T06:44:53.262Z\",\n    \"message\": \"Not Found\",\n    \"path\": \"/v1/companies/domain/localhostdomain1245.com\"\n}",
+          "body": "{\n    \"statusCode\": 404,\n    \"timestamp\": \"2025-06-26T07:28:01.402Z\",\n    \"message\": \"Not Found Exception\",\n    \"path\": \"/v1/companies/ip/127.0.0.1\",\n    \"ip_hash\": \"27c40461109bc9c4605842be8d44b9c5ec7a621c\"\n}",
           "latency": 0,
           "statusCode": 404,
           "label": "404 by domain",
@@ -638,6 +638,78 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "9ffcf995-2559-4e5a-809d-efd45e2f0db4",
+      "type": "http",
+      "documentation": "Status 404 by ip",
+      "method": "get",
+      "endpoint": "v1/companies/ip/127.0.0.1",
+      "responses": [
+        {
+          "uuid": "a2bb0561-fdfb-47c0-9c51-c19b237e58b9",
+          "body": "{\n    \"statusCode\": 404,\n    \"timestamp\": \"2025-06-26T07:40:30.420Z\",\n    \"message\": \"Not Found Exception\",\n    \"path\": \"/v1/companies/ip/127.0.0.1\",\n    \"ip_hash\": \"404hash\"\n}",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "404 by ip",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e1a446e6-e6a6-4723-a888-6a131d50289b",
+      "type": "http",
+      "documentation": "Status 404 by iphash",
+      "method": "get",
+      "endpoint": "v1/companies/ip/404hash",
+      "responses": [
+        {
+          "uuid": "02eb8eb5-2bc4-4df7-95f7-7ee3b1067587",
+          "body": "{\n    \"statusCode\": 404,\n    \"timestamp\": \"2025-06-26T07:40:30.420Z\",\n    \"message\": \"Not Found Exception\",\n    \"path\": \"/v1/companies/ip/127.0.0.1\",\n    \"ip_hash\": \"404hash\"\n}",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "404 by iphash",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -692,6 +764,14 @@
     {
       "type": "route",
       "uuid": "719735cc-691d-4204-b024-3ed20a9216fe"
+    },
+    {
+      "type": "route",
+      "uuid": "9ffcf995-2559-4e5a-809d-efd45e2f0db4"
+    },
+    {
+      "type": "route",
+      "uuid": "e1a446e6-e6a6-4723-a888-6a131d50289b"
     }
   ],
   "proxyMode": false,

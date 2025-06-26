@@ -104,26 +104,19 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $this->assertSame('leuchtfeuer.com', $newLeadCompaniesDomains[0]->getDomain());
     }
 
-    //@TODO: Implement new logic as soon as iphash is returned with 404 response
     public function testEnrichRetryEntryTo404Entry(){
         $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '127.0.0.1', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $this->assertCount(2, $newLeadDomains);
+        $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
         $this->assertEquals(null, $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
+        $this->assertEquals(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $newLeadDomains[0]->getStatus());
         $this->assertEquals(1, $newLeadDomains[0]->getCount());
-
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[1]);
-        $this->assertEquals(null, $newLeadDomains[1]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $newLeadDomains[1]->getStatus());
-        $this->assertEquals(1, $newLeadDomains[1]->getCount());
-        $this->assertEquals(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[1]->getLookupType());
     }
 
     public function testEnrichRetryEntryWhenFloodlightGivesAnother202Response(){
@@ -182,15 +175,14 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
     }
 
     /**
-     * Note: This test can't be implemented before the floodlight API returns the iphash with the 404 response.
      * Description: This test checks the scenario where one 404 entry and one retry entry exist for the same IP hash.
      * When then for the retry we get a 404 response from the floodlight API, the retry entry should be deleted and the count of the 404 entry should be increased.
      * */
-    public function disabledtestOne404EntryAndOneRetryEntry(){
+    public function testOne404EntryAndOneRetryEntry(){
         $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '404iphash', 1, FloodlightLeadDomains::STATUS_RETRY);
-        $LeadDomain404 = $this->addNewLeadDomain($lead, '404iphash', 1, FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $LeadDomain404 = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich:address');
 
@@ -201,10 +193,6 @@ class EnrichByAddressCommandTest extends MauticMysqlTestCase
         $this->assertEquals(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $newLeadDomains[0]->getStatus());
         $this->assertEquals(2, $newLeadDomains[0]->getCount());
     }
-
-    //Es existiert 404er Eintrag und 200er Eintrag und retry limit exceeded Eintrag --> Nichts wird upgetdated
-    //es existiert schon ein 200er Eintrag für Leuchtfeuer und gleichzeitig ein retry Eintrag für den selben iphash --> 200er response --> count vom 200er Eintrag wird erhöht und retry eintrag löschen
-    //ERst wird 202 return, dann 404
 
     private function addNewLeadDomain($lead, string $ipHash, int $count, $status): FloodlightLeadDomains
     {

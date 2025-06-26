@@ -57,17 +57,14 @@ class FloodlightService implements FloodlightServiceInterface
         $statusCode = $response->getStatusCode();
         $body = $response->getBody();
 
-        if (200 === $statusCode || 202 === $statusCode) {
+        if (200 === $statusCode || 202 === $statusCode || 404 === $statusCode) {
             $content = $response->getBody()->getContents();
 
             $result = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
-            $this->logger->debug('FloodlightService get success with content sanitaze jhon throw '.json_last_error_msg());
-
             if (empty($result)) {
                 $result = json_decode($content, false, 512, JSON_THROW_ON_ERROR);
                 $result = (array) $result;
-                $this->logger->debug('FloodlightService get success with content sanitaze jhon throw2 '.json_last_error_msg());
             }
         }
         if (is_array($result)) {

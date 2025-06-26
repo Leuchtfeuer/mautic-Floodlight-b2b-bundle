@@ -168,6 +168,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
         $this->assertSame(null, $leadDomainsHit[0]->getDomain());
+        $this->assertSame('404hash', $leadDomainsHit[0]->getIpHash());
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
 
         $company           = $this->em->getRepository(Company::class)->findAll();
@@ -264,35 +265,24 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
     }
 
-    //@TODO Implement once right 404 Response structure from floodlight server is in place
-    public function disabledtestOldRetryEntryDeletedAfter404Request()
+    public function testOldRetryEntryDeletedAfter404Request()
     {
         $this->activePlugin();
         $this->updateApikey();
         $lead = $this->createLead();
         $this->createHit($lead);
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
         $this->setBackDateModifiedByTwoHours($retryLeadDomain);
 
-        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('127.0.0.1', $lead);
 
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->assertNotEmpty($leadDomainsHit);
         $this->assertCount(1, $leadDomainsHit);
-        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertSame(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
-        $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
-
-        $company           = $this->em->getRepository(Company::class)->findAll();
-        $this->assertNotEmpty($company);
-        $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
-
-        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
-        $this->assertCount(1, $companyDomainsHit);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
-        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
+        $this->assertNull($leadDomainsHit[0]->getDomain());
     }
 
     /**
