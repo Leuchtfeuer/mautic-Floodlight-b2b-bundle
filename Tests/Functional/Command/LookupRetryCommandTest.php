@@ -30,7 +30,7 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
     }
 
 
-    public function testEnrichWhenPluginNotPublished()
+    public function testEnrichWhenPluginNotPublished(): void
     {
         $this->activatePlugin(false);
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
@@ -46,7 +46,7 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
         $this->assertEquals(1, $newLeadDomains[0]->getCount());
     }
 
-    public function testEnrichWhenApiKeyNotSet()
+    public function testEnrichWhenApiKeyNotSet(): void
     {
         $this->activatePlugin(true, null, null);
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
@@ -62,7 +62,7 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
         $this->assertEquals(1, $newLeadDomains[0]->getCount());
     }
 
-    public function testEnrichIfInvalidApiKey()
+    public function testEnrichIfInvalidApiKey(): void
     {
         $this->activatePlugin(true, 'invalidAccessKeyId', 'invalidSecretKey');
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
@@ -78,7 +78,8 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
         $this->assertEquals(1, $newLeadDomains[0]->getCount());
     }
 
-    public function testEnrichRetryEntryToSuccessEntry(){
+    public function testEnrichRetryEntryToSuccessEntry(): void
+    {
         $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
@@ -104,7 +105,8 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
         $this->assertSame('leuchtfeuer.com', $newLeadCompaniesDomains[0]->getDomain());
     }
 
-    public function testEnrichRetryEntryTo404Entry(){
+    public function testEnrichRetryEntryTo404Entry(): void
+    {
         $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
@@ -119,7 +121,8 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
         $this->assertEquals(1, $newLeadDomains[0]->getCount());
     }
 
-    public function testEnrichRetryEntryWhenFloodlightGivesAnother202Response(){
+    public function testEnrichRetryEntryWhenFloodlightGivesAnother202Response(): void
+    {
         $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryip', 1, FloodlightLeadDomains::STATUS_RETRY);
@@ -135,7 +138,8 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
         $this->assertEquals(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
     }
 
-    public function testEnrichRetryEntryAndExceedRetryLimit(){
+    public function testEnrichRetryEntryAndExceedRetryLimit(): void
+    {
         $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryip', 2, FloodlightLeadDomains::STATUS_RETRY);
@@ -154,7 +158,8 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
      * Description: This test checks the scenario where one success entry and one retry entry exist for the same IP hash.
      * When then for the retry we get a success response from the floodlight API, the retry entry should be deleted and the count of the success entry should be increased.
      * */
-    public function testOneSuccessEntryAndOneRetryEntry(){
+    public function testOneSuccessEntryAndOneRetryEntry(): void
+    {
         $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
@@ -178,7 +183,8 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
      * Description: This test checks the scenario where one 404 entry and one retry entry exist for the same IP hash.
      * When then for the retry we get a 404 response from the floodlight API, the retry entry should be deleted and the count of the 404 entry should be increased.
      * */
-    public function testOne404EntryAndOneRetryEntry(){
+    public function testOne404EntryAndOneRetryEntry(): void
+    {
         $this->activatePlugin();
         $lead        = $this->addLead('Test Lead', 'test11@example.com');
         $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
@@ -194,7 +200,7 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
         $this->assertEquals(2, $newLeadDomains[0]->getCount());
     }
 
-    private function addNewLeadDomain($lead, string $ipHash, int $count, $status): FloodlightLeadDomains
+    private function addNewLeadDomain(Lead $lead, string $ipHash, int $count, string $status): FloodlightLeadDomains
     {
         $floodlightLeadDomain = new FloodlightLeadDomains();
         $floodlightLeadDomain->setDateAdded(new \DateTime());

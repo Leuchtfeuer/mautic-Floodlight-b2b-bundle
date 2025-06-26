@@ -8,14 +8,14 @@ use Symfony\Component\Validator\ConstraintValidator;
 
 class ValidFloodlightCredentialsValidator extends ConstraintValidator
 {
-    private $floodlightService;
+    private FloodlightService $floodlightService;
 
     public function __construct(FloodlightService $floodlightService)
     {
         $this->floodlightService = $floodlightService;
     }
 
-    public function validate($value, Constraint $constraint)
+    public function validate($value, Constraint $constraint): void
     {
         // $value ist das ganze Form-Data-Array - direkt die apiKeys Daten
         if (!is_array($value)) {
@@ -33,6 +33,7 @@ class ValidFloodlightCredentialsValidator extends ConstraintValidator
 
         // Wenn nur eines der Felder leer ist, Fehler
         if (empty($accessKeyId) || empty($secretKey)) {
+            assert($constraint instanceof ValidFloodlightCredentials);
             $this->context->buildViolation($constraint->message)
                 ->addViolation();
             return;
@@ -43,11 +44,13 @@ class ValidFloodlightCredentialsValidator extends ConstraintValidator
             $isValid = $this->floodlightService->validateApiCredentials($accessKeyId, $secretKey);
             
             if (!$isValid) {
+                assert($constraint instanceof ValidFloodlightCredentials);
                 $this->context->buildViolation($constraint->message)
                     ->addViolation();
             }
         } catch (\Exception $e) {
             // Bei einem Fehler (Netzwerk, etc.) als ungültig betrachten
+            assert($constraint instanceof ValidFloodlightCredentials);
             $this->context->buildViolation($constraint->message)
                 ->addViolation();
         }

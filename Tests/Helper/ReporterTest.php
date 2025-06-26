@@ -10,7 +10,8 @@ use Psr\Log\LoggerInterface;
 class ReporterTest extends TestCase{
 
 
-    public function testMessageFromCommand(){
+    public function testMessageFromCommand(): void
+    {
 
 
         $channel = $this->createMock(OutputInterface::class);
@@ -27,7 +28,7 @@ class ReporterTest extends TestCase{
 
     }
 
-    public function testMessageFromCommandWithVerbosity()
+    public function testMessageFromCommandWithVerbosity(): void
     {
         $channel = $this->createMock(OutputInterface::class);
 
@@ -46,7 +47,7 @@ class ReporterTest extends TestCase{
         $this->assertTrue(true);
     }
 
-    public function testLoggingWithLogger()
+    public function testLoggingWithLogger(): void
     {
         $channel = $this->createMock(LoggerInterface::class);
 

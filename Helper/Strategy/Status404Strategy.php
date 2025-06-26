@@ -39,6 +39,6 @@ class Status404Strategy
     public function process(array $processedData, Lead $lead): void
     {
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
-        $this->leadDomainsModel->deleteOldRetryEntries($processedData['details']['floodlight'], $lead);
+        $this->leadDomainsModel->deleteOldRetryEntries($leadDomain, $lead);
     }
 }

@@ -47,141 +47,17 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $this->setUpSymfony($this->configParams);
     }
 
+    // Disabled: getCompanyDomains method was removed
     public function disabledtestUpdateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomainWithHostname(): void
     {
-        $floodlightCompanyDomainModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
-        $lead                         = $this->createLead();
-        $dataDomainFloodlightService  = [
-            'domain'  => 'le-non.de',
-            'status'  => 'valid',
-            'details' => [
-                'hostname' => 'le-non-hostname.de',
-            ],
-        ];
-        $companyDomain = $floodlightCompanyDomainModel->getRepository()->findOneBy(
-            [
-                'domain' => $dataDomainFloodlightService['domain'],
-            ]
-        );
-
-        $this->assertNull($companyDomain);
-
-        assert($floodlightCompanyDomainModel instanceof FloodlightCompanyDomainsModel);
-        // Has no Company Domain and domain is valid ( not blacklisted and not failed )
-        $resultFloodlightCompanyDomain = $floodlightCompanyDomainModel->getCompanyDomains(
-            $lead,
-            $dataDomainFloodlightService
-        );
-
-        $companyDomain2 = $floodlightCompanyDomainModel->getRepository()->findOneBy(
-            [
-                'domain' => $dataDomainFloodlightService['domain'],
-            ]
-        );
-        $this->assertIsArray($resultFloodlightCompanyDomain);
-        $this->assertArrayHasKey('data', $resultFloodlightCompanyDomain);
-        $this->assertIsArray($resultFloodlightCompanyDomain['data']);
-        //        $this->assertArrayHasKey(0, $resultFloodlightCompanyDomain['data']);
-        $this->assertArrayHasKey(0, $resultFloodlightCompanyDomain['data']);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $resultFloodlightCompanyDomain['data'][0]);
-        $this->assertNotNull($companyDomain2);
-        $this->assertNotNull($resultFloodlightCompanyDomain['data'][0]);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $resultFloodlightCompanyDomain['data'][0]);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomain2);
-        $this->assertSame($companyDomain2->getDomain(), $resultFloodlightCompanyDomain['data'][0]->getDomain());
+        $this->markTestSkipped('getCompanyDomains method was removed');
     }
 
+    // Disabled: getCompanyDomains method was removed and constructor changed
     public function disabledtestUpdateOrCreateCompanyAndCompanyDomainAndAddOrCountLeadDomainWithFloodlight(): void
     {
-        $floodlightCompanyDomainModel = new FloodlightCompanyDomainsModel(
-            $this->em,
-            self::getContainer()->get('mautic.security'),
-            self::getContainer()->get('event_dispatcher'),
-            $this->createMock(UrlGeneratorInterface::class),
-            self::getContainer()->get('translator'),
-            $this->createMock(UserHelper::class),
-            $this->createMock(LoggerInterface::class),
-            self::getContainer()->get('mautic.helper.core_parameters'),
-            self::getContainer()->get('mautic.lead.model.company'),
-            self::getContainer()->get('mautic.lead.model.lead'),
-            $this->createMock(NotificationUserHelper::class),
-            self::getContainer()->get('mautic.user.model.user'),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.field')
-        );
-        $lead        = $this->createLead();
-        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
-        $this->assertIsString($fileContent);
-        $dataJson      = json_decode($fileContent, true);
-        $this->assertIsArray($dataJson);
-        $dataDTO       = new FloodlightDTO($dataJson);
-        $companyDomain = new FloodlightCompanyDomains();
-        $companyDomain->setDomain('le-non.de');
-        $companyDomain->setDateAdded(new \DateTime());
-        $companyDomain->setDateModified(new \DateTime());
-        $companyDomain->setIsPrimaryDomain(true);
-        $dataDomainFloodlightService = [
-            'domain'  => 'le-non.de',
-            'status'  => 'valid',
-            'details' => [
-                'floodlight'        => $dataDTO,
-                'statusRequestCode' => 200,
-                'companyDomains'    => [$companyDomain],
-            ],
-        ];
-
-        $companyDomain = $floodlightCompanyDomainModel->getRepository()->findOneBy(
-            [
-                'domain' => $dataDomainFloodlightService['domain'],
-            ]
-        );
-        $this->assertNull($companyDomain);
-
-        // Has no Company Domain and domain is valid ( not blacklisted and not failed )
-        $resultsCompanyDomain = $floodlightCompanyDomainModel->getCompanyDomains(
-            $lead,
-            $dataDomainFloodlightService
-        );
-
-        $companyDomain2 = $floodlightCompanyDomainModel->getRepository()->findOneBy(
-            [
-                'domain' => $dataDomainFloodlightService['domain'],
-            ]
-        );
-        $this->assertNotNull($companyDomain2);
-        $this->assertIsArray($resultsCompanyDomain);
-        $this->assertArrayHasKey('data', $resultsCompanyDomain);
-        $this->assertNotEmpty($resultsCompanyDomain['data']);
-        $this->assertIsArray($resultsCompanyDomain['data']);
-        $this->assertNotEmpty($resultsCompanyDomain['data'][0]);
-        $this->assertNotNull($resultsCompanyDomain['data'][0]);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $resultsCompanyDomain['data'][0]);
-        $this->assertNotNull($resultsCompanyDomain['data'][0]);
-        $this->assertCount(1, $resultsCompanyDomain['data']);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomain2);
-        $this->assertSame($companyDomain2->getDomain(), $resultsCompanyDomain['data'][0]->getDomain());
-
-        // Has no Company Domain and domain is valid ( not blacklisted and not failed ) add count to lead domain
-        $resultsCompanyDomain = $floodlightCompanyDomainModel->getCompanyDomains(
-            $lead,
-            $dataDomainFloodlightService
-        );
-        $this->assertNotNull($resultsCompanyDomain);
+        $this->markTestSkipped('getCompanyDomains method was removed and constructor changed');
     }
 
-    private function createLead(): Lead
-    {
-        $rand = rand(1, 1000000000);
-        $lead = new Lead();
-        $lead->setEmail($rand.'test1@mauit.com');
-        $lead->setFirstname($rand.' first name');
-        $lead->setFirstname($rand.' last name');
-        $lead->setLastActive(new \DateTime());
-        $lead->setIsPublished(true);
-        $lead->setAddress1('address1');
-        $lead->setAddress2('addres 222');
-        $this->em->persist($lead);
-        $this->em->flush();
 
-        return $lead;
-    }
 }

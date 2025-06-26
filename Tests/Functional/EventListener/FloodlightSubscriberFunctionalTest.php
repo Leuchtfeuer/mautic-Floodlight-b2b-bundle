@@ -25,21 +25,13 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodligh
 
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
-    private LeadRepository $leadRepo;
     private FloodlightLeadDomainsRepository $leadDomainRepo;
-    private CompanyRepository $companyRepo;
-    private FloodlightCompanyDomainsRepository $companyDomainRepo;
-    private CompanyLeadRepository $companyLeadRepo;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->leadRepo          = $this->em->getRepository(Lead::class);
         $this->leadDomainRepo    = $this->em->getRepository(FloodlightLeadDomains::class);
-        $this->companyRepo       = $this->em->getRepository(Company::class);
-        $this->companyDomainRepo = $this->em->getRepository(FloodlightCompanyDomains::class);
-        $this->companyLeadRepo   = $this->em->getRepository(CompanyLead::class);
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
     }
@@ -115,7 +107,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals(0, count($totalItemsAfterRequest));
     }
 
-    public function testJustOnePagehit()
+    public function testJustOnePagehit(): void
     {
         $this->activePlugin();
         $this->updateApikey();
@@ -124,7 +116,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals(0, count($totalItemsAfterRequest));
     }
 
-    public function testSuccessPagehit()
+    public function testSuccessPagehit(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -152,7 +144,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
     }
 
-    public function test404Pagehit()
+    public function test404Pagehit(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -166,7 +158,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $leadDomainsHit);
         $this->assertSame(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
-        $this->assertSame(null, $leadDomainsHit[0]->getDomain());
+        $this->assertNull($leadDomainsHit[0]->getDomain());
         $this->assertSame('404hash', $leadDomainsHit[0]->getIpHash());
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
 
@@ -177,7 +169,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEmpty($companyDomainsHit);
     }
 
-    public function test202PagehitThenAnotherOneThatExceedsRetryLimitAfterTwoHours()
+    public function test202PagehitThenAnotherOneThatExceedsRetryLimitAfterTwoHours(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -191,7 +183,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $leadDomainsHit);
         $this->assertSame(FloodlightLeadDomains::STATUS_RETRY, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
-        $this->assertSame(null, $leadDomainsHit[0]->getDomain());
+        $this->assertNull($leadDomainsHit[0]->getDomain());
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
 
         $company           = $this->em->getRepository(Company::class)->findAll();
@@ -213,7 +205,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED, $leadDomainsHit[0]->getStatus());
     }
 
-    public function testThirdSuccessPagehitAddsCountPlusOne()
+    public function testThirdSuccessPagehitAddsCountPlusOne(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -234,7 +226,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
     }
 
-    public function testOldRetryEntryDeletedAfter200Request()
+    public function testOldRetryEntryDeletedAfter200Request(): void
     {
         $this->activePlugin();
         $this->updateApikey();
@@ -264,7 +256,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
     }
 
-    public function testOldRetryEntryDeletedAfter404Request()
+    public function testOldRetryEntryDeletedAfter404Request(): void
     {
         $this->activePlugin();
         $this->updateApikey();
@@ -287,7 +279,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     /**
      * Description: When there was a recent lookup, no new lookup should be done. So the count of the success entry should not increase after the first lookup
      */
-    public function testNoLookupIfAlreadyRecentLookup()
+    public function testNoLookupIfAlreadyRecentLookup(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -613,7 +605,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
     }
 
-    private function addNewLeadDomain($lead, string $ipHash, int $count, $status): FloodlightLeadDomains
+    private function addNewLeadDomain(Lead $lead, string $ipHash, int $count, string $status): FloodlightLeadDomains
     {
         $floodlightLeadDomain = new FloodlightLeadDomains();
         $floodlightLeadDomain->setDateAdded(new \DateTime());
@@ -628,7 +620,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     }
 
 
-    private function processHit($remoteAddress, $lead)
+    private function processHit(string $remoteAddress, Lead $lead): void
     {
         $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
         $request = new \Symfony\Component\HttpFoundation\Request();

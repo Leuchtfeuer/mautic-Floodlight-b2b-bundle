@@ -64,7 +64,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
     public function process(array $processedData, Lead $lead): void
     {
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
-        $this->leadDomainsModel->deleteOldRetryEntries($processedData['details']['floodlight'], $lead);
+        $this->leadDomainsModel->deleteOldRetryEntries($leadDomain, $lead);
 
         $company = $this->companyRepository->findOneBy(['name' => $processedData['details']['floodlight']->getCompanyName()]);
 

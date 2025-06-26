@@ -10,7 +10,7 @@ use Symfony\Component\Validator\Constraint;
  */
 class ValidFloodlightCredentials extends Constraint
 {
-    public $message = 'leuchtfeuer.floodlight.validator.invalid_credentials';
+    public string $message = 'leuchtfeuer.floodlight.validator.invalid_credentials';
 
     public function getTargets()
     {
