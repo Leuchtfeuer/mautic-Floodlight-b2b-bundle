@@ -32,7 +32,11 @@ class Status200Strategy implements StatusCodeStrategyInterface
         return '200';
     }
 
-    public function   prepareData(array $data): array|false
+    /**
+     * @param mixed[] $data
+     * @return mixed[]|false
+     */
+    public function prepareData(array $data): array|false
     {
         $floodlightDTO = new FloodlightDTO($data);
 
@@ -54,11 +58,13 @@ class Status200Strategy implements StatusCodeStrategyInterface
         ];
     }
 
-    public function process(array $processedData, Lead $lead)
+    /**
+     * @param mixed[] $processedData
+     */
+    public function process(array $processedData, Lead $lead): void
     {
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
         $this->leadDomainsModel->deleteOldRetryEntries($processedData['details']['floodlight'], $lead);
-
 
         $company = $this->companyRepository->findOneBy(['name' => $processedData['details']['floodlight']->getCompanyName()]);
 
@@ -87,11 +93,10 @@ class Status200Strategy implements StatusCodeStrategyInterface
         return $company;
     }
 
-    private function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, $company): void
+    private function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company): void
     {
         $company = $floodlightDTO->fillCompany($company);
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
     }
-
 }

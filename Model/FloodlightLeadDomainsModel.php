@@ -113,6 +113,9 @@ class FloodlightLeadDomainsModel extends FormModel
         return $leadDomain;
     }
 
+    /**
+     * @param mixed[] $dataDomain
+     */
     public function getLeadDomainByContactDomainStatusAndIphash(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
         $floodlightLeadDomain =  $this->getRepository()->findOneBy(
@@ -132,7 +135,10 @@ class FloodlightLeadDomainsModel extends FormModel
         return $floodlightLeadDomain;
     }
 
-    private function floodlightLeadDomainFactory($lead, $dataDomain): FloodlightLeadDomains
+    /**
+     * @param mixed[] $dataDomain
+     */
+    private function floodlightLeadDomainFactory(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
         $leadDomain = $this->getEntity();
         $leadDomain->setContact($lead);
@@ -159,7 +165,7 @@ class FloodlightLeadDomainsModel extends FormModel
         $floodlightLeadDomain->setCount($floodlightLeadDomain->getCount() + 1);
     }
 
-    public function deleteOldRetryEntries($leadDomain, $lead): void
+    public function deleteOldRetryEntries(FloodlightLeadDomains $leadDomain, Lead $lead): void
     {
         $domainToDelete = $this->getRepository()->findOneBy(
             [
@@ -174,7 +180,7 @@ class FloodlightLeadDomainsModel extends FormModel
         }
     }
 
-    public function setStatusToRetryLimitExceededIfTooHighCount($leadDomain): void
+    public function setStatusToRetryLimitExceededIfTooHighCount(FloodlightLeadDomains $leadDomain): void
     {
         if ($leadDomain->getCount() >= 3) {
             $leadDomain->setStatus(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED);

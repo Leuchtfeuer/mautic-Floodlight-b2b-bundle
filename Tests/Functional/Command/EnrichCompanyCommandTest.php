@@ -184,17 +184,5 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         return $company;
     }
 
-    private function addCompanyCompanyDomain(string $domain, Company $company): FloodlightCompanyDomains
-    {
-        $companyDomain = new FloodlightCompanyDomains();
-        $companyDomain->setCompany($company);
-        $companyDomain->setDomain($domain);
-        $companyDomain->setIsPrimaryDomain(true);
-        $companyDomain->setDateAdded(new \DateTime());
-        $companyDomain->setDateModified(new \DateTime());
-        $this->em->persist($companyDomain);
-        $this->em->flush();
 
-        return $companyDomain;
-    }
 }

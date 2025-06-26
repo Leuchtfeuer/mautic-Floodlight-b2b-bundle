@@ -20,7 +20,7 @@ class Reporter
         }
     }
 
-    public function setChannel(LoggerInterface|OutputInterface $channel)
+    public function setChannel(LoggerInterface|OutputInterface $channel): void
     {
         $this->channel = $channel;
     }

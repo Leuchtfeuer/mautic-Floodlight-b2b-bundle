@@ -6,6 +6,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 interface FloodlightServiceInterface
 {
+    /**
+     * @return mixed[]|false
+     */
     public function get(string $ip): bool|array;
     
     /**

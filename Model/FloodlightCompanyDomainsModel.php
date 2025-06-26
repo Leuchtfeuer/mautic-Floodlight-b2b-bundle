@@ -8,17 +8,10 @@ use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\CoreBundle\Model\FormModel;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Translation\Translator;
-use Mautic\IntegrationsBundle\Sync\Notification\Helper\UserHelper as NotificationUserHelper;
 use Mautic\LeadBundle\Entity\Company;
-use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
-use Mautic\LeadBundle\Model\LeadModel;
-use Mautic\UserBundle\Model\UserModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -35,10 +28,6 @@ class FloodlightCompanyDomainsModel extends FormModel
         LoggerInterface $logger,
         CoreParametersHelper $coreParametersHelper,
         private CompanyModel $companiesModel,
-        private LeadModel $leadModel,
-        private NotificationUserHelper $notificationUserHelper,
-        private UserModel $userModel,
-        private FieldHelper $fieldHelper,
     ) {
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $logger, $coreParametersHelper);
     }
@@ -65,32 +54,6 @@ class FloodlightCompanyDomainsModel extends FormModel
         assert($entity instanceof FloodlightCompanyDomains);
 
         return $entity;
-    }
-
-    /**
-     * @param array<string> $details
-     */
-    private function updateFieldWhoisDetails(FloodlightCompanyDomains $companyDomain, array $details): void
-    {
-        $companyDomain->getCompany()->addUpdatedField(
-            'iplookup_whois_json',
-            json_encode($this->transformDetails($details), JSON_FORCE_OBJECT)
-        );
-        $this->companiesModel->saveEntity($companyDomain->getCompany());
-    }
-
-    /**
-     * @param array<string> $details
-     *
-     * @return array<string>
-     */
-    private function transformDetails(array $details): array
-    {
-        return [
-            'whois_company_name' => $details['company_name'],
-            'whois_is_isp'       => $details['is_isp'],
-            'whois_is_dialup'    => $details['is_dialup'],
-        ];
     }
 
     private function cleanDomain(?string $domain): ?string
@@ -191,6 +154,9 @@ class FloodlightCompanyDomainsModel extends FormModel
         return empty($host) ? null : preg_replace('/^www\./', '', $host);
     }
 
+    /**
+     * @return mixed[]
+     */
     public function getExistingCompanyDomain(string $domain): array
     {
         return $this->getRepository()->findBy(
@@ -205,7 +171,6 @@ class FloodlightCompanyDomainsModel extends FormModel
         // Save company domain
         $companiesDomains = $floodlightDTO->fillCompaniesDomain($this, $company);
 
-
         if (!empty($companiesDomains)) {
             foreach ($companiesDomains as $companiesDomain) {
                 $companiesDomain->setDomain($this->cleanDomain($companiesDomain->getDomain()));
@@ -214,6 +179,5 @@ class FloodlightCompanyDomainsModel extends FormModel
         }
 
         return $companiesDomains[0];
-
     }
 }

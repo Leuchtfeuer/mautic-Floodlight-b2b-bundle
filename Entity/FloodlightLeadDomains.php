@@ -22,7 +22,7 @@ class FloodlightLeadDomains
     public const LOOKUP_TYPE_WHOIS = 'whois';
 
     /**
-     * @var int
+     * @var string
      */
     private $id;
 
@@ -139,9 +139,9 @@ class FloodlightLeadDomains
      *
      * @return int
      */
-    public function getId()
+    public function getId(): int
     {
-        return $this->id;
+        return (int) $this->id;
     }
 
     public function getContact(): ?Lead

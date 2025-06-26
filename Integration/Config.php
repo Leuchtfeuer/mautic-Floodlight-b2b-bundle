@@ -66,7 +66,7 @@ class Config
             $integration = $this->getIntegrationEntity();
             $featureSettings = $integration->getFeatureSettings();
             
-            return !empty($featureSettings['integration']['strict_gdpr']) && (bool) $featureSettings['integration']['strict_gdpr'];
+            return (bool) $featureSettings['integration']['strict_gdpr'];
         } catch (IntegrationNotFoundException) {
             return false;
         }

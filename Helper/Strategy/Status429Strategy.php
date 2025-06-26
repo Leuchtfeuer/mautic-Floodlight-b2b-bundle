@@ -26,6 +26,10 @@ class Status429Strategy
         private FloodlightCompanyDomainsModel $companyDomainsModel,
     )
     {}
+
+    /**
+     * @return mixed[]
+     */
     public function prepareData(string $remoteAddr): array
     {
         $hostByAddrData = $this->domainUtility->getDomainByGetHostByAddr($remoteAddr);
@@ -45,7 +49,10 @@ class Status429Strategy
         return [];
     }
 
-    public function process(array $processedData, $lead)
+    /**
+     * @param mixed[] $processedData
+     */
+    public function process(array $processedData, Lead $lead): void
     {
         if(empty($processedData)){
             //$this->reporter->notify('quota exceeded and also no data found via DNS and Whois lookup');
@@ -56,21 +63,22 @@ class Status429Strategy
 
         $company = $this->companyRepository->findOneBy(['name' => $processedData['domain']]);
 
-        if(empty($company)) {
+        if(null === $company) {
             $company = $this->createNewCompany($processedData['domain'], $processedData['details'], $lead);
         }
 
-
         $companyDomain = $this->companyDomainsModel->getExistingCompanyDomain($processedData['domain']);
-        if (empty($companyDomain) && !empty($company)) {
+        if (empty($companyDomain) && null !== $company) {
             $this->createNewCompanyDomain($processedData['domain'], $company);
         }
 
         $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
-
     }
 
-    public function createNewCompany($domain, $details, Lead $lead): Company
+    /**
+     * @param mixed $details
+     */
+    public function createNewCompany(string $domain, $details, Lead $lead): Company
     {
         //$userIds       = $this->notificationUserHelper->getAdminUsers();
         //$user          = $this->userModel->getEntity($userIds[0]);
@@ -98,13 +106,12 @@ class Status429Strategy
         return $company;
     }
 
-    public function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, $company): void
+    public function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company): void
     {
         $company = $floodlightDTO->fillCompany($company);
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
     }
-
 
     /**
      * @param array<string> $details
@@ -120,7 +127,7 @@ class Status429Strategy
         ];
     }
 
-    private function createNewCompanyDomain($domain, Company $company): void
+    private function createNewCompanyDomain(string $domain, Company $company): void
     {
         $companyDomain = new FloodlightCompanyDomains();
         $companyDomain->setDomain($domain);

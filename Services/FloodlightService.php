@@ -31,7 +31,7 @@ class FloodlightService implements FloodlightServiceInterface
     }
 
     /**
-     * @return array<mixed>|bool
+     * @return mixed[]|false
      */
     public function get(string $ip): array|bool
     {
@@ -100,6 +100,9 @@ class FloodlightService implements FloodlightServiceInterface
         return $this->makeRequest($url);
     }
 
+    /**
+     * @return mixed[]|false
+     */
     public function getByDomain(string $domain): bool|array
     {
 

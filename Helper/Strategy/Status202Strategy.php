@@ -11,13 +11,17 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+
 class Status202Strategy
 {
-
     public function __construct(
         private readonly FloodlightLeadDomainsModel $leadDomainsModel,
-
     )    {}
+
+    /**
+     * @param mixed[] $data
+     * @return mixed[]
+     */
     public function prepareData(array $data): array
     {
         $floodlightDTO = new FloodlightDTO($data);
@@ -28,7 +32,6 @@ class Status202Strategy
         $newFloodlightDTO->setDomains([]);
         $floodlightDTO = $newFloodlightDTO;
 
-
         return [
             'status'  => $status,
             'domain'  => null,
@@ -38,10 +41,12 @@ class Status202Strategy
                 'statusRequest' => $data['statusRequestCode'],
             ],
         ];
-
     }
 
-    public function process(array $processedData, $lead)
+    /**
+     * @param mixed[] $processedData
+     */
+    public function process(array $processedData, Lead $lead): void
     {
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
         $this->leadDomainsModel->setStatusToRetryLimitExceededIfTooHighCount($leadDomain);

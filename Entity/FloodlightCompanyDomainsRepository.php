@@ -6,6 +6,9 @@ use Mautic\CoreBundle\Entity\CommonRepository;
 
 class FloodlightCompanyDomainsRepository extends CommonRepository
 {
+    /**
+     * @return array<mixed>
+     */
     public function getCompaniesByLeadId(int $leadId, ?string $domain = null): array
     {
         $q = $this->_em->getConnection()->createQueryBuilder();
