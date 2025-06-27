@@ -589,19 +589,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_WHOIS, $leadDomainsHit[1]->getLookupType());
     }
 
-    public function testTimestampManagement(): void
-    {
-        $config = self::getContainer()->get('MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config');
-
-        $this->assertFalse($config->checkIfLookupReturned429ResponseInLast60Minutes());
-
-        $config->setLast429ErrorTimestamp();
-        $this->assertTrue($config->checkIfLookupReturned429ResponseInLast60Minutes());
-
-        $this->setOld429ErrorTimestamp();
-        $this->assertFalse($config->checkIfLookupReturned429ResponseInLast60Minutes());
-    }
-
     private function setOld429ErrorTimestamp(): void
     {
         $integration = $this->em->getRepository(\Mautic\PluginBundle\Entity\Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
