@@ -480,55 +480,151 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     }
 
 
-/*
- * Test is not yet necessary but might be needed once merging logic is clear
-    public function disabledtestNoNewCompanyCreatedWhenAlreadyExistedBeforeFloodlight(){
-        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
-        $this->updateApikey('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
-        assert($floodlightSubscriber instanceof FloodlightSubscriber);
-
-        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-
+    public function test429TimestampSetAfter429FloodlightLookup(): void
+    {
+        $ip = '86.101.230.58';
+        
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+        
         $lead = $this->createLead();
-        $hit  = $this->createHit($lead, '217.91.35.16');
+        $this->activePlugin();
+        $this->updateApikey();
+        
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
 
-        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
-
-        $floodlightSubscriber->onPageHit($pageHitEventMock1);
-
-        //createCompanyLeuchtfeuer
-        $companyLeuchtfeuer = new Company();
-        $companyLeuchtfeuer->setName('Leuchtfeuer Digital Marketing GmbH');
-        //$companyLeuchtfeuer->setWebsite('https://leuchtfeuer.com/marketing-technologie/');
-
-        $this->em->persist($companyLeuchtfeuer);
-        $this->em->flush();
-
-        $companies           = $this->em->getRepository(Company::class)->findAll();
-        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertCount(1,$companies);
-        $this->assertEmpty($leadDomains);
-        $this->assertEmpty($companyDomains);
-
-
-
-        $request = new \Symfony\Component\HttpFoundation\Request();
-        $request->server->set('REMOTE_ADDR', '217.91.35.16');
-        $hit2              = $this->createHit($lead, '217.91.35.16');
-        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock2->expects($this->exactly(2))->method('getHit')->willReturn($hit2);
-        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock2);
-        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomains[0]);
-        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomains[0]->getDomain()]);
-        $companies          = $this->em->getRepository(Company::class)->findAll();
-        $this->assertCount(1,$leadDomains);
-        $this->assertCount(1,$companyDomains);
-        $this->assertCount(1,$companies);
+        $config = self::getContainer()->get('MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config');
+        $this->assertTrue($config->checkIfLookupReturned429ResponseInLast60Minutes());
     }
-*/
+
+    public function testNoFloodlightLookupWhen429TimestampLessThan60MinutesAgo(): void
+    {
+        $ip1 = '86.101.230.58';
+        $ip2 = '217.91.35.16';
+        
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+        
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        
+        $this->processHit($ip1, $lead);
+        $this->processHit($ip1, $lead);
+        
+        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
+        
+        $this->processHit($ip2, $lead);
+        
+        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertCount(2, $leadDomainsHit);
+        
+        foreach ($leadDomainsHit as $entry) {
+            $this->assertNotSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $entry->getLookupType());
+            $this->assertContains($entry->getLookupType(), [
+                FloodlightLeadDomains::LOOKUP_TYPE_DNS, 
+                FloodlightLeadDomains::LOOKUP_TYPE_WHOIS
+            ]);
+        }
+    }
+
+    public function testFloodlightLookupIsUsedWhen429TimestampIsMoreThan60MinutesAgo(): void
+    {
+        $ip1 = '86.101.230.58';
+        $ip2 = '217.91.35.16';
+        
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+        
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+
+        $this->processHit($ip1, $lead);
+        $this->processHit($ip1, $lead);
+
+        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[0]->getLookupType());
+        
+        $this->setOld429ErrorTimestamp();
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
+
+        $this->processHit($ip2, $lead);
+        
+        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(
+            ['contact' => $lead], 
+            ['dateAdded' => 'DESC']
+        );
+        $this->assertCount(2, $leadDomainsHit);
+        
+        $newestEntry = $leadDomainsHit[0];
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $newestEntry->getLookupType());
+    }
+
+    public function testAllLookupsAreDnsOrWhoisWhen429TimestampIsLessThan60MinutesAgo(): void
+    {
+        $ip1 = '86.101.230.58';
+        $ip2 = '86.101.230.57';
+        
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+        
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        
+        $this->processHit($ip1, $lead);
+        $this->processHit($ip1, $lead);
+        
+        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
+        
+        $this->processHit($ip2, $lead);
+        
+        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(
+            ['contact' => $lead], 
+            ['dateAdded' => 'ASC']
+        );
+        $this->assertCount(2, $leadDomainsHit);
+        
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[0]->getLookupType());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_WHOIS, $leadDomainsHit[1]->getLookupType());
+    }
+
+    public function testTimestampManagement(): void
+    {
+        $config = self::getContainer()->get('MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config');
+
+        $this->assertFalse($config->checkIfLookupReturned429ResponseInLast60Minutes());
+
+        $config->setLast429ErrorTimestamp();
+        $this->assertTrue($config->checkIfLookupReturned429ResponseInLast60Minutes());
+
+        $this->setOld429ErrorTimestamp();
+        $this->assertFalse($config->checkIfLookupReturned429ResponseInLast60Minutes());
+    }
+
+    private function setOld429ErrorTimestamp(): void
+    {
+        $config = self::getContainer()->get('MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config');
+        $integration = $config->getIntegrationEntity();
+        $featureSettings = $integration->getFeatureSettings();
+        
+        if (!isset($featureSettings['integration'])) {
+            $featureSettings['integration'] = [];
+        }
+
+        $featureSettings['integration']['last_429_error'] = time() - (61 * 60);
+        $integration->setFeatureSettings($featureSettings);
+
+        $integrationsHelper = self::getContainer()->get('Mautic\IntegrationsBundle\Helper\IntegrationsHelper');
+        $integrationsHelper->saveIntegrationConfiguration($integration);
+        
+        // Force refresh der Entity um Cache zu umgehen
+        $this->em->refresh($integration);
+    }
 
     private function createHit(Lead $lead, string $ipAdress = '127.0.0.1'): Hit
     {
@@ -613,16 +709,18 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     private function mockDnsLookupResultDependingOnIp(): void
     {
-        // Prüfen ob bereits definiert
+        // Check if already defined
         if (function_exists('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Helper\\Utility\\gethostbyaddr')) {
             return;
         }
         
-        // EINMALIG alle Cases hardcoded definieren
+        // Define all cases once
         $mockCode = "
         namespace MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Helper\\Utility {
             function gethostbyaddr(\$ip) {
                 switch (\$ip) {
+                    case '217.91.35.16':
+                        return 'mail.leuchtfeuer.com';
                     case '86.101.230.57':
                         return '11.11.11.11';
                     case '86.101.230.58':

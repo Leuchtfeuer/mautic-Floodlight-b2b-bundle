@@ -107,18 +107,22 @@ class IpLookupRulesHelper
         return true;
     }
 
-    /**
-     * @return array<string, mixed>|false
-     */
+
     public function getAndProcessFloodlightApiData(string $remoteAddr, $lead): void
     {
+        // When there was a floodlight request which returned 429 response in the last 60 minutes, we use dns and whois lookup directly
+        if ($this->config->checkIfLookupReturned429ResponseInLast60Minutes()) {
+            $processData = $this->status429Strategy->prepareData($remoteAddr);
+            $this->status429Strategy->process($processData, $lead);
+            return;
+        }
 
         $data = $this->floodlightService->get($remoteAddr);
-
 
         if (!$this->checkIfInListOfValidRequestStatuses($data)) {
             // invalidStatusStrategy
             //@TODO: should there be logged anything?
+            return;
         }
 
         if($data['statusRequestCode'] == 200){
@@ -137,6 +141,9 @@ class IpLookupRulesHelper
         }
 
         if($data['statusRequestCode'] == 429){
+
+            $this->config->setLast429ErrorTimestamp();
+            
             $processData = $this->status429Strategy->prepareData($remoteAddr);
             $this->status429Strategy->process($processData, $lead);
         }

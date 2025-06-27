@@ -180,7 +180,7 @@ class FloodlightService implements FloodlightServiceInterface
             $jsonResponse = $this->validateApiKey();
             
             // Prüfe den HTTP-Status der JsonResponse
-            return $jsonResponse->getStatusCode() === 200;
+            return ($jsonResponse->getStatusCode() === 200 || $jsonResponse->getStatusCode() === 429);
             
         } catch (\Exception $e) {
             $this->logger->error('FloodlightService validateApiCredentials failed: ' . $e->getMessage());
