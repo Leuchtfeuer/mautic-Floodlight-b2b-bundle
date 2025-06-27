@@ -520,14 +520,9 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         
         $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
         $this->assertCount(2, $leadDomainsHit);
-        
-        foreach ($leadDomainsHit as $entry) {
-            $this->assertNotSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $entry->getLookupType());
-            $this->assertContains($entry->getLookupType(), [
-                FloodlightLeadDomains::LOOKUP_TYPE_DNS, 
-                FloodlightLeadDomains::LOOKUP_TYPE_WHOIS
-            ]);
-        }
+
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[0]->getLookupType());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[1]->getLookupType());
     }
 
     public function testFloodlightLookupIsUsedWhen429TimestampIsMoreThan60MinutesAgo(): void
@@ -561,6 +556,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         
         $newestEntry = $leadDomainsHit[0];
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $newestEntry->getLookupType());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[1]->getLookupType());
     }
 
     public function testAllLookupsAreDnsOrWhoisWhen429TimestampIsLessThan60MinutesAgo(): void
@@ -608,8 +604,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     private function setOld429ErrorTimestamp(): void
     {
-        $config = self::getContainer()->get('MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config');
-        $integration = $config->getIntegrationEntity();
+        $integration = $this->em->getRepository(\Mautic\PluginBundle\Entity\Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
         $featureSettings = $integration->getFeatureSettings();
         
         if (!isset($featureSettings['integration'])) {
@@ -618,12 +613,9 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $featureSettings['integration']['last_429_error'] = time() - (61 * 60);
         $integration->setFeatureSettings($featureSettings);
-
-        $integrationsHelper = self::getContainer()->get('Mautic\IntegrationsBundle\Helper\IntegrationsHelper');
-        $integrationsHelper->saveIntegrationConfiguration($integration);
-        
-        // Force refresh der Entity um Cache zu umgehen
-        $this->em->refresh($integration);
+        $this->em->persist($integration);
+        $this->em->flush();
+        $this->em->clear();
     }
 
     private function createHit(Lead $lead, string $ipAdress = '127.0.0.1'): Hit
