@@ -10,11 +10,8 @@ use Twig\TwigFunction;
 
 class FloodlightLeadNameHelper extends AbstractExtension
 {
-    private EntityManagerInterface $entityManager;
-
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(private EntityManagerInterface $entityManager)
     {
-        $this->entityManager = $entityManager;
     }
 
     public function getFunctions(): array
@@ -46,12 +43,13 @@ class FloodlightLeadNameHelper extends AbstractExtension
 
         $result = $qb->getQuery()->getOneOrNullResult();
 
-        if ($result) {
+        if (is_array($result) && isset($result['domain'], $result['dateAdded'])) {
             $domain = $result['domain'];
-            $timestamp = $result['dateAdded']->format('Ymd-H:i');
+            $timestamp = $result['dateAdded'] instanceof \DateTime ? $result['dateAdded']->format('Ymd-H:i') : '';
+
             return $domain . ' anonymous ' . $timestamp;
         }
 
         return null;
     }
-} 
+}

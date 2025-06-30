@@ -2,19 +2,10 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Model;
 
-use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
-use Mautic\IntegrationsBundle\Sync\Notification\Helper\UserHelper as NotificationUserHelper;
-use Mautic\LeadBundle\Entity\Company;
-use Mautic\LeadBundle\Entity\Lead;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
 {
@@ -58,6 +49,4 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
     {
         $this->markTestSkipped('getCompanyDomains method was removed and constructor changed');
     }
-
-
 }

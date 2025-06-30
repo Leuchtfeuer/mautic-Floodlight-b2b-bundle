@@ -4,35 +4,22 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Helper;
 
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
-use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\Lead;
-use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\PageBundle\Entity\Hit;
-use Mautic\PageBundle\Model\PageModel;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status202Strategy;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status401Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status404Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status429Strategy;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
-use Psr\Log\LoggerInterface;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
-use Mautic\LeadBundle\Model\CompanyModel;
-
 
 class IpLookupRulesHelperTest extends MauticMysqlTestCase
 {
@@ -74,8 +61,6 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->setUpSymfony($this->configParams);
     }
 
-
-
     // Disabled: getAndProcessFloodlightApiData returns void, not array
     public function disabledtestGetDomainMethod(): void
     {
@@ -111,6 +96,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
             $this->createMock(Status202Strategy::class),
             $this->createMock(Status404Strategy::class),
             $this->createMock(Status429Strategy::class),
+            $this->createMock(Config::class)
         );
         $lead = $this->createLead();
         $hit  = $this->createHit($lead);
@@ -125,7 +111,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->markTestSkipped('getAndProcessFloodlightApiData returns void and evaluate method removed');
     }
 
-    // Disabled: Multiple interface changes and removed methods  
+    // Disabled: Multiple interface changes and removed methods
     public function disabledtestEvaluateWithFloodlightWithNoGetPrimaryDomain(): void
     {
         $this->markTestSkipped('getAndProcessFloodlightApiData returns void and evaluate method removed');
@@ -163,6 +149,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
             $this->createMock(Status202Strategy::class),
             $this->createMock(Status404Strategy::class),
             $this->createMock(Status429Strategy::class),
+            $this->createMock(Config::class)
         );
         // Test with just one hit
         $lead    = $this->createLead();

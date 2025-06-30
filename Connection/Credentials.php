@@ -23,16 +23,20 @@ class Credentials implements HeaderCredentialsInterface
     public function getApiKey(): string
     {
         $integration = $this->integrationsHelper->getIntegration(LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME);
-        $config = $integration->getIntegrationConfiguration();
-        $apiKeys = $config->getApiKeys();
-        
+        $config      = $integration->getIntegrationConfiguration();
+        $apiKeys     = $config->getApiKeys();
+
+        if (!is_array($apiKeys)) {
+            return '';
+        }
+
         $accessKeyId = $apiKeys['api_access_key_id'] ?? '';
-        $secretKey = $apiKeys['api_secret_key'] ?? '';
+        $secretKey   = $apiKeys['api_secret_key'] ?? '';
 
         if (!empty($accessKeyId) && !empty($secretKey)) {
-            return 'Basic ' . base64_encode($accessKeyId . ':' . $secretKey);
+            return 'Basic '.base64_encode($accessKeyId.':'.$secretKey);
         }
-        
+
         return '';
     }
 }

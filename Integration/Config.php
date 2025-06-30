@@ -16,6 +16,7 @@ class Config
     {
         try {
             $integration = $this->getIntegrationEntity();
+
             return (bool) $integration->getIsPublished();
         } catch (IntegrationNotFoundException) {
             return false;
@@ -39,6 +40,7 @@ class Config
     {
         try {
             $integration = $this->getIntegrationEntity();
+
             return $integration->getApiKeys() ?: [];
         } catch (IntegrationNotFoundException) {
             return [];
@@ -49,23 +51,22 @@ class Config
     {
         try {
             $apiKeys = $this->getApiKeys();
+
             return !empty($apiKeys) && isset($apiKeys['api_access_key_id']) && isset($apiKeys['api_secret_key']);
         } catch (IntegrationNotFoundException) {
             return false;
         }
     }
-    
+
     /**
-     * Checks if strict GDPR mode is enabled
-     * 
-     * @return bool
+     * Checks if strict GDPR mode is enabled.
      */
     public function isStrictGdprMode(): bool
     {
         try {
-            $integration = $this->getIntegrationEntity();
+            $integration     = $this->getIntegrationEntity();
             $featureSettings = $integration->getFeatureSettings();
-            
+
             return (bool) $featureSettings['integration']['strict_gdpr'];
         } catch (IntegrationNotFoundException) {
             return false;
@@ -75,37 +76,36 @@ class Config
     public function setLast429ErrorTimestamp(): void
     {
         try {
-            $integration = $this->getIntegrationEntity();
+            $integration     = $this->getIntegrationEntity();
             $featureSettings = $integration->getFeatureSettings();
-            
+
             if (!isset($featureSettings['integration'])) {
                 $featureSettings['integration'] = [];
             }
-            
+
             $featureSettings['integration']['last_429_error'] = time();
             $integration->setFeatureSettings($featureSettings);
-            
+
             $this->integrationsHelper->saveIntegrationConfiguration($integration);
         } catch (IntegrationNotFoundException) {
             // Ignore if integration not found
         }
     }
 
-
     public function checkIfLookupReturned429ResponseInLast60Minutes(): bool
     {
         try {
-            $integration = $this->getIntegrationEntity();
+            $integration     = $this->getIntegrationEntity();
             $featureSettings = $integration->getFeatureSettings();
-            
+
             if (!isset($featureSettings['integration']['last_429_error'])) {
                 return false;
             }
-            
-            $last429Error = (int) $featureSettings['integration']['last_429_error'];
-            $currentTime = time();
+
+            $last429Error          = (int) $featureSettings['integration']['last_429_error'];
+            $currentTime           = time();
             $sixtyMinutesInSeconds = 60 * 60;
-            
+
             return ($currentTime - $last429Error) < $sixtyMinutesInSeconds;
         } catch (IntegrationNotFoundException) {
             return false;

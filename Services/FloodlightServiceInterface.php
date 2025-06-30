@@ -10,9 +10,9 @@ interface FloodlightServiceInterface
      * @return mixed[]|false
      */
     public function get(string $ip): bool|array;
-    
+
     /**
-     * Validates API credentials against the Floodlight endpoint
+     * Validates API credentials against the Floodlight endpoint.
      */
     public function validateApiKey(): JsonResponse;
 }

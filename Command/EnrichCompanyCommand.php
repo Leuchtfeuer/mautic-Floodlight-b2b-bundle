@@ -65,8 +65,8 @@ class EnrichCompanyCommand extends ModeratedCommand
 
         foreach ($companyDomains as $companyDomain) {
             assert($companyDomain instanceof FloodlightCompanyDomains);
-            $domain = $companyDomain->getDomain();
-            $company = $companyDomain->getCompany();
+            $domain                = $companyDomain->getDomain();
+            $company               = $companyDomain->getCompany();
             $companyEnrichmentDate = $company->getFieldValue('f4b_enrichment_date');
             if (null === $domain) {
                 continue;
@@ -88,7 +88,6 @@ class EnrichCompanyCommand extends ModeratedCommand
                 $output->writeln('<error>You are using an invalid API key</error>');
                 continue;
             }
-
 
             if (Response::HTTP_NOT_FOUND === $result['statusRequestCode']) {
                 $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
@@ -132,8 +131,8 @@ class EnrichCompanyCommand extends ModeratedCommand
 
             $this->flCompanyDomainsModel->saveEntity($companyDomain);
 
-            $output->writeln('<info>Company data updated ' . $company->getName() . '</info>');
-            $output->writeln('<info>CompanyDomain ' . $companyDomain->getDomain() . ' data updated</info>');
+            $output->writeln('<info>Company data updated '.$company->getName().'</info>');
+            $output->writeln('<info>CompanyDomain '.$companyDomain->getDomain().' data updated</info>');
             $output->writeln(PHP_EOL);
         }
 

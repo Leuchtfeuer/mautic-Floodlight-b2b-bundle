@@ -52,14 +52,17 @@ class FloodlightSubscriber implements EventSubscriberInterface
         assert($request instanceof Request);
         $remoteAddr = $request->server->get('REMOTE_ADDR');
 
+        if (!is_string($remoteAddr)) {
+            return;
+        }
+
         $this->ipLookupRulesHelper->setChannel($this->logger);
 
         if (empty($remoteAddr)) {
-            //@TODO no ip for page hit - this should be notified
+            // @TODO no ip for page hit - this should be notified
             $this->ipLookupRulesHelper->notifyNoDataFromGetDomain();
         }
 
         $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($remoteAddr, $event->getHit()->getLead());
-
     }
 }

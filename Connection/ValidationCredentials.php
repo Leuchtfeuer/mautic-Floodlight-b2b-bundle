@@ -4,20 +4,16 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection;
 
-use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\Credentials\HeaderCredentialsInterface;
-use Mautic\IntegrationsBundle\Helper\IntegrationsHelper;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
-
 class ValidationCredentials extends Credentials
 {
     private string $accessKeyId = '';
-    private string $secretKey = '';
-    
+    private string $secretKey   = '';
+
     // Own constructor so that integrations helper is not required
     public function __construct()
     {
     }
-    
+
     public function getKeyName(): string
     {
         return 'Authorization';
@@ -26,9 +22,9 @@ class ValidationCredentials extends Credentials
     public function getApiKey(): string
     {
         if (!empty($this->accessKeyId) && !empty($this->secretKey)) {
-            return 'Basic ' . base64_encode($this->accessKeyId . ':' . $this->secretKey);
+            return 'Basic '.base64_encode($this->accessKeyId.':'.$this->secretKey);
         }
-        
+
         return '';
     }
 
@@ -36,7 +32,7 @@ class ValidationCredentials extends Credentials
     {
         $this->accessKeyId = $accessKeyId;
     }
-    
+
     public function setApiSecretKey(string $secretKey): void
     {
         $this->secretKey = $secretKey;

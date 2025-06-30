@@ -63,15 +63,15 @@ class WhoisPyService
 
     public function execute(string $ip): false|string|null
     {
-        $pluginDir = __DIR__ . '/..';
-        $pythonModulesPath = $pluginDir . '/PythonModules';
+        $pluginDir         = __DIR__.'/..';
+        $pythonModulesPath = $pluginDir.'/PythonModules';
 
         $envVar = '';
         if (is_dir($pythonModulesPath)) {
-            $envVar = 'PYTHONPATH=' . escapeshellarg($pythonModulesPath) . ' ';
+            $envVar = 'PYTHONPATH='.escapeshellarg($pythonModulesPath).' ';
         }
 
-        $command = $envVar . 'python3 ' . escapeshellarg($this->whoisPyPathFile) . ' -ipaddr ' . escapeshellarg($ip);
+        $command = $envVar.'python3 '.escapeshellarg($this->whoisPyPathFile).' -ipaddr '.escapeshellarg($ip);
 
         return shell_exec($command);
     }

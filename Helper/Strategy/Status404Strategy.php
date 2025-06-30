@@ -11,22 +11,24 @@ class Status404Strategy
 {
     public function __construct(
         private FloodlightLeadDomainsModel $leadDomainsModel,
-    )    {}
+    ) {
+    }
 
     /**
      * @param mixed[] $data
+     *
      * @return mixed[]
      */
     public function prepareData(array $data): array
     {
         $floodlightDTO = new FloodlightDTO($data);
-        $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+        $status        = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
 
         return [
-            'status'  => $status,
-            'domain'  => null,
+            'status'     => $status,
+            'domain'     => null,
             'lookupType' => FloodlightLeadDomains::LOOKUP_TYPE_API,
-            'details' => [
+            'details'    => [
                 'floodlight'    => $floodlightDTO,
                 'statusRequest' => $data['statusRequestCode'],
             ],

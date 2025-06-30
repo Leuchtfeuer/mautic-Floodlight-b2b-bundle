@@ -3,8 +3,8 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection;
 
 use GuzzleHttp\ClientInterface;
-use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\HttpFactory;
 use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\Credentials\HeaderCredentialsInterface;
+use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\HttpFactory;
 use Mautic\IntegrationsBundle\Exception\PluginNotConfiguredException;
 
 class ApiClient

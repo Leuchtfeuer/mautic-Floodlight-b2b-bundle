@@ -45,19 +45,18 @@ return [
                     'mautic.lead.model.company',
                     'mautic.lead.model.lead',
                     'mautic.leuchtfeuerfloodlightb2b.helper.field',
-                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain'
+                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status202strategy' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status202Strategy::class,
                 'arguments' => [
-                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'
+                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status401strategy' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status401Strategy::class,
                 'arguments' => [
-
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status404strategy' => [
@@ -82,18 +81,17 @@ return [
                 'arguments' => [
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
                     'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice',
-
                 ],
             ],
-                'mautic.floodlight_lead_name_helper' => [
-                    'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FloodlightLeadNameHelper::class,
-                    'arguments' => [
-                        'doctrine.orm.entity_manager',
-                    ],
-                    'tags' => [
-                        'twig.extension',
-                    ],
+            'mautic.floodlight_lead_name_helper' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FloodlightLeadNameHelper::class,
+                'arguments' => [
+                    'doctrine.orm.entity_manager',
                 ],
+                'tags' => [
+                    'twig.extension',
+                ],
+            ],
         ],
         'helpers' => [
             'mautic.leuchtfeuerfloodlightb2b.helper.install' => [
@@ -128,6 +126,7 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.status202strategy',
                     'mautic.leuchtfeuerfloodlightb2b.status404strategy',
                     'mautic.leuchtfeuerfloodlightb2b.status429strategy',
+                    'mautic.integration.leuchtfeuerfloodlightb2b.config',
                 ],
             ],
         ],

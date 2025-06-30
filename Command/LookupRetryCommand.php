@@ -5,9 +5,8 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Command;
 use Mautic\CoreBundle\Command\ModeratedCommand;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\PathsHelper;
+use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
@@ -17,7 +16,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\HttpFoundation\Response;
 
 class LookupRetryCommand extends ModeratedCommand
 {
@@ -69,20 +67,20 @@ class LookupRetryCommand extends ModeratedCommand
             assert($leadDomain instanceof FloodlightLeadDomains);
             $ipHash = $leadDomain->getIpHash();
             if (null === $ipHash) {
-                $output->writeln('<error>Lead domain ' . $leadDomain->getDomain() . ' without IP hash</error>');
+                $output->writeln('<error>Lead domain '.$leadDomain->getDomain().' without IP hash</error>');
 
                 continue;
             }
             if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                 $output->writeln('<comment>===============================================================</comment>');
-                $output->writeln('<comment> IP hash: ' . $ipHash . '</comment>');
+                $output->writeln('<comment> IP hash: '.$ipHash.'</comment>');
                 $output->writeln('<comment>===============================================================</comment>');
             }
-
 
             $this->ipLookupRulesHelper->setChannel($output);
 
             $lead = $leadDomain->getContact();
+            \assert($lead instanceof Lead);
             $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($ipHash, $lead);
         }
         $output->writeln('<info>Retry for all corresponding lookups done</info>');

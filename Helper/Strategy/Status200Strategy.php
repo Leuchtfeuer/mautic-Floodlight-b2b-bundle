@@ -2,7 +2,6 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy;
 
-use DateTime;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyRepository;
 use Mautic\LeadBundle\Entity\Lead;
@@ -25,7 +24,8 @@ class Status200Strategy implements StatusCodeStrategyInterface
         private LeadModel $leadModel,
         private FieldHelper $fieldHelper,
         private DomainUtility $domainUtility
-    ) {}
+    ) {
+    }
 
     public function getStatusCode(): string
     {
@@ -34,9 +34,18 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
     /**
      * @param mixed[] $data
-     * @return mixed[]|false
+     *
+     * @return array{
+     *     status: string,
+     *     domain: string,
+     *     lookupType: string,
+     *     details: array{
+     *         floodlight: FloodlightDTO,
+     *         statusRequest: mixed
+     *     }
+     * }
      */
-    public function prepareData(array $data): array|false
+    public function prepareData(array $data): array
     {
         $floodlightDTO = new FloodlightDTO($data);
 
@@ -48,10 +57,10 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $status = $this->domainUtility->getStatusDomain($domain);
 
         return [
-            'status'  => $status,
-            'domain'  => $this->domainUtility->cleanDomain($domain),
+            'status'     => $status,
+            'domain'     => $this->domainUtility->cleanDomain($domain),
             'lookupType' => FloodlightLeadDomains::LOOKUP_TYPE_API,
-            'details' => [
+            'details'    => [
                 'floodlight'    => $floodlightDTO,
                 'statusRequest' => $data['statusRequestCode'],
             ],
@@ -59,7 +68,15 @@ class Status200Strategy implements StatusCodeStrategyInterface
     }
 
     /**
-     * @param mixed[] $processedData
+     * @param array{
+     *      status: string,
+     *      domain: string,
+     *      lookupType: string,
+     *      details: array{
+     *          floodlight: FloodlightDTO,
+     *          statusRequest: mixed
+     *      }
+     *  } $processedData
      */
     public function process(array $processedData, Lead $lead): void
     {
@@ -71,8 +88,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         if(empty($company)) {
             $this->fieldHelper->updateProperties($processedData['details']['floodlight']);
             $company = $this->createNewCompany($processedData['details']['floodlight'], $lead);
-        }
-        else{
+        } else {
             $this->updateCompany($processedData['details']['floodlight'], $lead, $company);
         }
 
@@ -87,9 +103,11 @@ class Status200Strategy implements StatusCodeStrategyInterface
     private function createNewCompany(FloodlightDTO $floodlightDTO, Lead $lead): Company
     {
         $company       = $this->companyModel->getEntity();
+        \assert($company instanceof Company);
         $company       = $floodlightDTO->fillCompany($company);
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
+
         return $company;
     }
 

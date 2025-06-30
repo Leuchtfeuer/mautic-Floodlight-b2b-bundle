@@ -4,20 +4,17 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Form\Type;
 
-use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Validator\ValidFloodlightCredentials;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\Length;
 
 class FloodlightB2BAuthType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-
         $builder->add(
             'api_access_key_id',
             TextType::class,

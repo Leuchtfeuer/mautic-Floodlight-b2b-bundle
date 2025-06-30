@@ -8,11 +8,12 @@ use Mautic\PageBundle\Entity\Hit;
 use Mautic\PageBundle\Model\PageModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status202Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status404Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status429Strategy;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -29,6 +30,7 @@ class IpLookupRulesHelper
         private Status202Strategy $status202Strategy,
         private Status404Strategy $status404Strategy,
         private Status429Strategy $status429Strategy,
+        private Config $config,
     ) {
         $this->parameterLoader = new ParameterLoader();
     }
@@ -91,6 +93,7 @@ class IpLookupRulesHelper
         ) {
             return false;
         }
+
         return true;
     }
 
@@ -100,41 +103,45 @@ class IpLookupRulesHelper
         if ($this->config->checkIfLookupReturned429ResponseInLast60Minutes()) {
             $processData = $this->status429Strategy->prepareData($remoteAddr);
             $this->status429Strategy->process($processData, $lead);
+
             return;
         }
 
         $data = $this->floodlightService->get($remoteAddr);
 
-        if (!$this->checkIfInListOfValidRequestStatuses($data)) {
-            // invalidStatusStrategy
-            //@TODO: should there be logged anything?
+        if(!is_array($data)){
             return;
         }
 
-        if($data['statusRequestCode'] == 200){
+        if (!$this->checkIfInListOfValidRequestStatuses($data)) {
+            // invalidStatusStrategy
+            // @TODO: should there be logged anything?
+            return;
+        }
+
+        if (200 == $data['statusRequestCode']) {
             $processData = $this->status200Strategy->prepareData($data);
             $this->status200Strategy->process($processData, $lead);
         }
 
-        if($data['statusRequestCode'] == 202){
+        if (202 == $data['statusRequestCode']) {
             $processData = $this->status202Strategy->prepareData($data);
             $this->status202Strategy->process($processData, $lead);
         }
 
-        if($data['statusRequestCode'] == 404){
+        if (404 == $data['statusRequestCode']) {
             $processData = $this->status404Strategy->prepareData($data);
             $this->status404Strategy->process($processData, $lead);
         }
 
-        if($data['statusRequestCode'] == 429){
-
+        if (429 == $data['statusRequestCode']) {
             $this->config->setLast429ErrorTimestamp();
 
             $processData = $this->status429Strategy->prepareData($remoteAddr);
             $this->status429Strategy->process($processData, $lead);
         }
 
-        if($data['statusRequestCode'] == 401) {
+        if (401 == $data['statusRequestCode']) {
             $this->reporter->notify('Floodlight API returned 401 Unauthorized. Please check your API credentials.');
         }
     }

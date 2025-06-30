@@ -8,11 +8,8 @@ use Symfony\Component\Validator\ConstraintValidator;
 
 class ValidFloodlightCredentialsValidator extends ConstraintValidator
 {
-    private FloodlightService $floodlightService;
-
-    public function __construct(FloodlightService $floodlightService)
+    public function __construct(private FloodlightService $floodlightService)
     {
-        $this->floodlightService = $floodlightService;
     }
 
     public function validate($value, Constraint $constraint): void
@@ -21,10 +18,10 @@ class ValidFloodlightCredentialsValidator extends ConstraintValidator
         if (!is_array($value)) {
             return;
         }
-        
+
         // Die Felder sind direkt im Array, nicht in einem Sub-Array
         $accessKeyId = isset($value['api_access_key_id']) ? trim($value['api_access_key_id']) : '';
-        $secretKey = isset($value['api_secret_key']) ? trim($value['api_secret_key']) : '';
+        $secretKey   = isset($value['api_secret_key']) ? trim($value['api_secret_key']) : '';
 
         // Wenn beide Felder leer sind, keine Validierung durchführen
         if (empty($accessKeyId) && empty($secretKey)) {
@@ -36,19 +33,20 @@ class ValidFloodlightCredentialsValidator extends ConstraintValidator
             assert($constraint instanceof ValidFloodlightCredentials);
             $this->context->buildViolation($constraint->message)
                 ->addViolation();
+
             return;
         }
 
         // Validiere die Credentials gegen die API
         try {
             $isValid = $this->floodlightService->validateApiCredentials($accessKeyId, $secretKey);
-            
+
             if (!$isValid) {
                 assert($constraint instanceof ValidFloodlightCredentials);
                 $this->context->buildViolation($constraint->message)
                     ->addViolation();
             }
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             // Bei einem Fehler (Netzwerk, etc.) als ungültig betrachten
             assert($constraint instanceof ValidFloodlightCredentials);
             $this->context->buildViolation($constraint->message)

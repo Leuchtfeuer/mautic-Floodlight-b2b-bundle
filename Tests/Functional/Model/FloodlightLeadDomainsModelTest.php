@@ -39,7 +39,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
     {
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
         assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
-        $lead = new Lead();
+        $lead          = new Lead();
         $domain        = 'leuchtfeuer.com';
         $leadDomain    = $this->addNewLeadDomainModel($domain);
         $domain        = $leadDomain->getDomain();
@@ -76,10 +76,10 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $this->assertIsArray($dataJson);
         $floodlightDTO = new FloodlightDTO($dataJson);
         $dataDomain    = [
-            'domain'  => $domain,
-            'status'  => 'valid',
+            'domain'     => $domain,
+            'status'     => 'valid',
             'lookupType' => FloodlightLeadDomains::LOOKUP_TYPE_API,
-            'details' => [
+            'details'    => [
                 'floodlight'        => $floodlightDTO,
                 'statusRequestCode' => 200,
                 'companyDomains'    => [new FloodlightCompanyDomains()],

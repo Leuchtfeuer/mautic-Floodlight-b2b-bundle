@@ -4,15 +4,11 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Model;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
-use Mautic\LeadBundle\Entity\Lead;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 
 class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
 {
@@ -96,6 +92,4 @@ class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
     }
-
-
 }

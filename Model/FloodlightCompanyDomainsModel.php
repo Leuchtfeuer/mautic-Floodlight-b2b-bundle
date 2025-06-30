@@ -80,7 +80,7 @@ class FloodlightCompanyDomainsModel extends FormModel
     {
         try {
             $connection = $this->em->getConnection();
-            $query = $connection->createQueryBuilder()
+            $query      = $connection->createQueryBuilder()
                 ->select('id')
                 ->from(MAUTIC_TABLE_PREFIX.'companies', 'c')
                 ->where('c.f4b_enrichment_date IS NULL OR c.f4b_enrichment_date = :enrichmentDate')
@@ -108,7 +108,7 @@ class FloodlightCompanyDomainsModel extends FormModel
     public function saveDomainsForNonFloodlightCompanies(): void
     {
         $connection = $this->em->getConnection();
-        $query = $connection->createQueryBuilder()
+        $query      = $connection->createQueryBuilder()
             ->select('c.id')
             ->from(MAUTIC_TABLE_PREFIX.'companies', 'c')
             ->where('c.f4b_companyfloodlight_id IS NULL')
@@ -149,7 +149,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         }
 
         $parsed = parse_url($url);
-        $host = $parsed['host'] ?? '';
+        $host   = $parsed['host'] ?? '';
 
         return empty($host) ? null : preg_replace('/^www\./', '', $host);
     }

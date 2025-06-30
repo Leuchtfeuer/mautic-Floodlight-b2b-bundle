@@ -72,14 +72,13 @@ class FloodlightLeadDomainsModel extends FormModel
     public function isBlackListed(string $domain): bool
     {
         $keywordBlacklist = (new KeywordBlacklistHelper())->get();
-        $domainLower = strtolower($domain);
+        $domainLower      = strtolower($domain);
 
         foreach ($keywordBlacklist as $keyword) {
             if (str_contains($domainLower, strtolower($keyword))) {
                 return true;
             }
         }
-
 
         $blacklist = (new DomainBlacklistHelper())->get();
 
@@ -103,7 +102,7 @@ class FloodlightLeadDomainsModel extends FormModel
         $leadDomain = $this->getLeadDomainByContactDomainStatusAndIphash($lead, $dataDomain);
 
         $this->increaseLeadDomainCount($leadDomain);
-        //set status should be removed at later point
+        // set status should be removed at later point
         $leadDomain->setStatus($dataDomain['status']);
         $leadDomain->setDateModified(new \DateTime());
         $leadDomain->setLookupType($dataDomain['lookupType']);
@@ -123,8 +122,8 @@ class FloodlightLeadDomainsModel extends FormModel
                 'contact'    => $lead,
                 'domain'     => $dataDomain['domain'],
                 'status'     => $dataDomain['status'],
-                //To be added once floodlight server returns 404 with ipHash
-                //'ipHash'    => $dataDomain['details']['floodlight']->getIpHash(),
+                // To be added once floodlight server returns 404 with ipHash
+                // 'ipHash'    => $dataDomain['details']['floodlight']->getIpHash(),
             ]
         );
 
@@ -157,6 +156,7 @@ class FloodlightLeadDomainsModel extends FormModel
         ) {
             $leadDomain->setIpHash($dataDomain['details']['floodlight']->getIpHash());
         }
+
         return $leadDomain;
     }
 
@@ -170,7 +170,7 @@ class FloodlightLeadDomainsModel extends FormModel
         $domainToDelete = $this->getRepository()->findOneBy(
             [
                 'contact'    => $lead,
-                'ipHash'    => $leadDomain->getIpHash(),
+                'ipHash'     => $leadDomain->getIpHash(),
                 'status'     => FloodlightLeadDomains::STATUS_RETRY,
             ]
         );
@@ -232,7 +232,6 @@ class FloodlightLeadDomainsModel extends FormModel
         if (empty($result)) {
             return;
         }
-
 
         $primaryDomain = $result[0]['domain'];
         $companyDomain = $this->getRepositoryFloodlightCompanyDomains()->findOneBy([
