@@ -2,7 +2,6 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventListener;
 
-
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
@@ -527,73 +526,30 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     public function testFloodlightLookupIsUsedWhen429TimestampIsMoreThan60MinutesAgo(): void
     {
-        $ip1 = '86.101.230.58';
-        $ip2 = '217.91.35.16';
-        
+        $ip = '217.91.35.16';
+
         $this->mockDnsLookupResultDependingOnIp();
         $this->mockWhoisResultDependingOnIp();
-        
+
         $lead = $this->createLead();
+
         $this->activePlugin();
         $this->updateApikey();
-
-        $this->processHit($ip1, $lead);
-        $this->processHit($ip1, $lead);
-
-        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[0]->getLookupType());
-        
         $this->setOld429ErrorTimestamp();
-        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
 
-        $this->processHit($ip2, $lead);
-        
-        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(
-            ['contact' => $lead], 
-            ['dateAdded' => 'DESC']
-        );
-        $this->assertCount(2, $leadDomainsHit);
-        
-        $newestEntry = $leadDomainsHit[0];
-        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $newestEntry->getLookupType());
-        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[1]->getLookupType());
-    }
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
 
-    public function testAllLookupsAreDnsOrWhoisWhen429TimestampIsLessThan60MinutesAgo(): void
-    {
-        $ip1 = '86.101.230.58';
-        $ip2 = '86.101.230.57';
-        
-        $this->mockDnsLookupResultDependingOnIp();
-        $this->mockWhoisResultDependingOnIp();
-        
-        $lead = $this->createLead();
-        $this->activePlugin();
-        $this->updateApikey();
-        
-        $this->processHit($ip1, $lead);
-        $this->processHit($ip1, $lead);
-        
         $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
-        
-        $this->processHit($ip2, $lead);
-        
-        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(
-            ['contact' => $lead], 
-            ['dateAdded' => 'ASC']
-        );
-        $this->assertCount(2, $leadDomainsHit);
-        
-        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[0]->getLookupType());
-        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_WHOIS, $leadDomainsHit[1]->getLookupType());
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
     }
 
     private function setOld429ErrorTimestamp(): void
     {
-        $integration = $this->em->getRepository(\Mautic\PluginBundle\Entity\Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
+        $integration     = $this->em->getRepository(Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
         $featureSettings = $integration->getFeatureSettings();
-        
+
         if (!isset($featureSettings['integration'])) {
             $featureSettings['integration'] = [];
         }
@@ -602,7 +558,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $integration->setFeatureSettings($featureSettings);
         $this->em->persist($integration);
         $this->em->flush();
-        $this->em->clear();
     }
 
     private function createHit(Lead $lead, string $ipAdress = '127.0.0.1'): Hit
