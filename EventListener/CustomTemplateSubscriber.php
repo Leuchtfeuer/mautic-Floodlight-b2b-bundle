@@ -24,10 +24,10 @@ class CustomTemplateSubscriber implements EventSubscriberInterface
 
     public function addLeadNameContent(CustomContentEvent $event): void
     {
-        if (in_array($event->getContext(), ['lead.name', 'lead.grid', 'lead.list.name'])) {
+        if (in_array($event->getContext(), ['lead.grid', 'lead.list.name', 'lead.company.list.name', 'lead.form.name', 'lead.detail.name'])) {
             $vars = $event->getVars();
 
-            $lead = $vars['item'] ?? $vars['contact'] ?? null;
+            $lead = $vars['item'] ?? $vars['contact'] ?? $vars['lead'] ?? null;
 
             if ($lead instanceof Lead && !$lead->getName()) {
                 $floodlightName = $this->leadNameHelper->getFloodlightLeadName($lead);
