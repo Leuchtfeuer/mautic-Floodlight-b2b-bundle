@@ -531,7 +531,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $this->activePlugin();
         $this->updateApikey();
-        $this->setOld429ErrorTimestamp();
+        $this->setOutdated429Timestamp();
 
         $this->processHit($ip, $lead);
         $this->processHit($ip, $lead);
@@ -542,7 +542,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
     }
 
-    private function setOld429ErrorTimestamp(): void
+    private function setOutdated429Timestamp(): void
     {
         $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
         $this->assertInstanceOf(Integration::class, $integration);
@@ -557,7 +557,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
             $featureSettings['integration'] = [];
         }
 
-        $featureSettings['integration']['last_429_error'] = time() - (61 * 60);
+        $featureSettings['integration']['last_429_timestamp'] = time() - (61 * 60);
         $integration->setFeatureSettings($featureSettings);
         $this->em->persist($integration);
         $this->em->flush();

@@ -78,7 +78,7 @@ class Config
         }
     }
 
-    public function setLast429ErrorTimestamp(): void
+    public function setLast429Timestamp(): void
     {
         try {
             $integration     = $this->getIntegrationEntity();
@@ -92,7 +92,7 @@ class Config
                 $featureSettings['integration'] = [];
             }
 
-            $featureSettings['integration']['last_429_error'] = time();
+            $featureSettings['integration']['last_429_timestamp'] = time();
             $integration->setFeatureSettings($featureSettings);
 
             $this->integrationsHelper->saveIntegrationConfiguration($integration);
@@ -110,15 +110,15 @@ class Config
             if (!is_array($featureSettings)
                 || !isset($featureSettings['integration'])
                 || !is_array($featureSettings['integration'])
-                || !isset($featureSettings['integration']['last_429_error'])) {
+                || !isset($featureSettings['integration']['last_429_timestamp'])) {
                 return false;
             }
 
-            $last429Error          = (int) $featureSettings['integration']['last_429_error'];
+            $last429timestamp          = (int) $featureSettings['integration']['last_429_timestamp'];
             $currentTime           = time();
             $sixtyMinutesInSeconds = 60 * 60;
 
-            return ($currentTime - $last429Error) < $sixtyMinutesInSeconds;
+            return ($currentTime - $last429timestamp) < $sixtyMinutesInSeconds;
         } catch (IntegrationNotFoundException) {
             return false;
         }

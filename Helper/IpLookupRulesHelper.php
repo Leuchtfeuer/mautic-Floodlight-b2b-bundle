@@ -135,7 +135,7 @@ class IpLookupRulesHelper
         }
 
         if (429 == $data['statusRequestCode']) {
-            $this->config->setLast429ErrorTimestamp();
+            $this->config->setLast429Timestamp();
 
             $processData = $this->status429Strategy->prepareData($remoteAddr);
             $this->status429Strategy->process($processData, $lead);
