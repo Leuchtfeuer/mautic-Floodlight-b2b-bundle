@@ -12,6 +12,7 @@ use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Model\CompanyModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -28,6 +29,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         LoggerInterface $logger,
         CoreParametersHelper $coreParametersHelper,
         private CompanyModel $companiesModel,
+        private DomainUtility $domainUtility
     ) {
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $logger, $coreParametersHelper);
     }
@@ -54,23 +56,6 @@ class FloodlightCompanyDomainsModel extends FormModel
         assert($entity instanceof FloodlightCompanyDomains);
 
         return $entity;
-    }
-
-    private function cleanDomain(?string $domain): ?string
-    {
-        if (is_null($domain)) {
-            return null;
-        }
-        $parts = explode('.', $domain);
-        reset($parts);
-        $firstPart = current($parts);
-        preg_match_all('/\d/', $firstPart, $matches);
-        reset($parts);
-        if (count($matches[0]) > 1) {
-            return implode('.', array_slice($parts, 1));
-        }
-
-        return $domain;
     }
 
     /**
@@ -125,7 +110,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         $companies = $this->companiesModel->getEntities(['ids' => $companyIds]);
 
         foreach ($companies as $company) {
-            $domain = $this->extractDomainFromCompanywebsite($company->getCompanywebsite());
+            $domain = $this->domainUtility->cleanDomain($company->getCompanywebsite());
 
             if (!$domain || !empty($this->getExistingCompanyDomain($domain))) {
                 continue;
@@ -140,18 +125,6 @@ class FloodlightCompanyDomainsModel extends FormModel
 
             $this->saveEntity($companyDomain);
         }
-    }
-
-    private function extractDomainFromCompanywebsite(?string $url): ?string
-    {
-        if (empty($url)) {
-            return null;
-        }
-
-        $parsed = parse_url($url);
-        $host   = $parsed['host'] ?? '';
-
-        return empty($host) ? null : preg_replace('/^www\./', '', $host);
     }
 
     /**
@@ -173,7 +146,7 @@ class FloodlightCompanyDomainsModel extends FormModel
 
         if (!empty($companiesDomains)) {
             foreach ($companiesDomains as $companiesDomain) {
-                $companiesDomain->setDomain($this->cleanDomain($companiesDomain->getDomain()));
+                $companiesDomain->setDomain($this->domainUtility->cleanDomain($companiesDomain->getDomain()));
             }
             $this->saveEntities($companiesDomains);
         }

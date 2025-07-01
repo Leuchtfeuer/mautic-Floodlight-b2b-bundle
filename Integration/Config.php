@@ -115,8 +115,8 @@ class Config
             }
 
             $last429timestamp          = (int) $featureSettings['integration']['last_429_timestamp'];
-            $currentTime           = time();
-            $sixtyMinutesInSeconds = 60 * 60;
+            $currentTime               = time();
+            $sixtyMinutesInSeconds     = 60 * 60;
 
             return ($currentTime - $last429timestamp) < $sixtyMinutesInSeconds;
         } catch (IntegrationNotFoundException) {
