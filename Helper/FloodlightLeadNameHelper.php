@@ -21,9 +21,6 @@ class FloodlightLeadNameHelper extends AbstractExtension
         ];
     }
 
-    /**
-     * Erstellt einen Floodlight-spezifischen Lead-Namen wenn kein regulärer Name vorhanden ist.
-     */
     public function getFloodlightLeadName(Lead $lead, bool $lastFirst = false): ?string
     {
         if ($lead->getName($lastFirst)) {
@@ -44,10 +41,10 @@ class FloodlightLeadNameHelper extends AbstractExtension
         $result = $qb->getQuery()->getOneOrNullResult();
 
         if (is_array($result) && isset($result['domain'], $result['dateAdded'])) {
-            $domain = $result['domain'];
+            $domain    = $result['domain'];
             $timestamp = $result['dateAdded'] instanceof \DateTime ? $result['dateAdded']->format('Ymd-H:i') : '';
 
-            return $domain . ' anonymous ' . $timestamp;
+            return $domain.' anonymous '.$timestamp;
         }
 
         return null;

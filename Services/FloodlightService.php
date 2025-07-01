@@ -44,7 +44,7 @@ class FloodlightService implements FloodlightServiceInterface
      */
     private function handleResult(ResponseInterface $response): array
     {
-        $result     = [
+        $result = [
             'statusRequestCode' => 0,
         ];
 
@@ -53,16 +53,19 @@ class FloodlightService implements FloodlightServiceInterface
         if (200 === $statusCode || 202 === $statusCode || 404 === $statusCode) {
             $content = $response->getBody()->getContents();
 
-            $result = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            $decodedResult = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
-            if (empty($result)) {
-                $result = json_decode($content, false, 512, JSON_THROW_ON_ERROR);
-                $result = (array) $result;
+            if (empty($decodedResult)) {
+                $decodedResult = json_decode($content, false, 512, JSON_THROW_ON_ERROR);
+                $decodedResult = (array) $decodedResult;
+            }
+
+            if (is_array($decodedResult)) {
+                $result = $decodedResult;
             }
         }
-        if (is_array($result)) {
-            $result['statusRequestCode'] = $statusCode;
-        }
+
+        $result['statusRequestCode'] = $statusCode;
 
         return $result;
     }

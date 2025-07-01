@@ -43,7 +43,7 @@ class WhoisPyService
         }
         $jsonResult = json_decode($output, true, 512, JSON_THROW_ON_ERROR);
 
-        if (empty($jsonResult)) {
+        if (!is_array($jsonResult) || empty($jsonResult)) {
             $this->logger->error('WhoisPyService fail: '.$output);
 
             return [];

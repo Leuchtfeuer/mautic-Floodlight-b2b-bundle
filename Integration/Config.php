@@ -40,8 +40,9 @@ class Config
     {
         try {
             $integration = $this->getIntegrationEntity();
+            $apiKeys     = $integration->getApiKeys();
 
-            return $integration->getApiKeys() ?: [];
+            return is_array($apiKeys) ? $apiKeys : [];
         } catch (IntegrationNotFoundException) {
             return [];
         }
@@ -67,7 +68,11 @@ class Config
             $integration     = $this->getIntegrationEntity();
             $featureSettings = $integration->getFeatureSettings();
 
-            return (bool) $featureSettings['integration']['strict_gdpr'];
+            return is_array($featureSettings)
+                   && isset($featureSettings['integration'])
+                   && is_array($featureSettings['integration'])
+                   && isset($featureSettings['integration']['strict_gdpr'])
+                   && (bool) $featureSettings['integration']['strict_gdpr'];
         } catch (IntegrationNotFoundException) {
             return false;
         }
@@ -79,7 +84,11 @@ class Config
             $integration     = $this->getIntegrationEntity();
             $featureSettings = $integration->getFeatureSettings();
 
-            if (!isset($featureSettings['integration'])) {
+            if (!is_array($featureSettings)) {
+                $featureSettings = [];
+            }
+
+            if (!isset($featureSettings['integration']) || !is_array($featureSettings['integration'])) {
                 $featureSettings['integration'] = [];
             }
 
@@ -98,7 +107,10 @@ class Config
             $integration     = $this->getIntegrationEntity();
             $featureSettings = $integration->getFeatureSettings();
 
-            if (!isset($featureSettings['integration']['last_429_error'])) {
+            if (!is_array($featureSettings)
+                || !isset($featureSettings['integration'])
+                || !is_array($featureSettings['integration'])
+                || !isset($featureSettings['integration']['last_429_error'])) {
                 return false;
             }
 

@@ -101,7 +101,7 @@ class FieldHelper
     private function getFieldsWithPropertiesToUpdate(array $fieldsAllowedToBeUpdated, FloodlightDTO $dataFloodlight): array|false
     {
         $requestDataFloodlight = $dataFloodlight->getPureData();
-        $result = [];
+        $result                = [];
 
         foreach ($fieldsAllowedToBeUpdated as $key => $fieldAllowedToBeUpdated) {
             if (!is_array($fieldAllowedToBeUpdated) || !array_key_exists('alias', $fieldAllowedToBeUpdated)) {
@@ -143,7 +143,7 @@ class FieldHelper
             return false;
         }
 
-        foreach ($result as $key => $values) {
+        foreach ($result as $values) {
             if (!is_array($values)) {
                 return false;
             }

@@ -189,6 +189,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $this->processHit('retryip', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
 
         $this->processHit('retryip', $lead);
@@ -207,6 +208,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('217.91.35.16', $lead);
 
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
         $this->processHit('217.91.35.16', $lead);
 
@@ -301,21 +303,29 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('217.91.35.16', $lead);
         $this->processHit('217.91.35.16', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
         $this->processHit('217.91.35.16', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
         $this->processHit('185.145.181.191', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[1]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[1]);
         // Leuchtfeuer should be primary company because domain has count 2 and Arkada-X has only count 1
-        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $lead->getPrimaryCompany()->getName());
+        $primaryCompany = $lead->getPrimaryCompany();
+        $this->assertInstanceOf(Company::class, $primaryCompany);
+        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $primaryCompany->getName());
 
         $this->processHit('185.145.181.191', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[1]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[1]);
         // Arkada-X should be primary company because domain has count 2 like Leuchtfeuer, but the date modified of the entry is more recent
-        $this->assertSame('Arkada-X', $lead->getPrimaryCompany()->getName());
+        $primaryCompany = $lead->getPrimaryCompany();
+        $this->assertInstanceOf(Company::class, $primaryCompany);
+        $this->assertSame('Arkada-X', $primaryCompany->getName());
 
         $leadDomain = $this->addNewLeadDomain($lead, 'iphash2', 2, FloodlightLeadDomains::STATUS_SUCCESS);
         $leadDomain->setDomain('leuchtfeuer.com');
@@ -323,7 +333,9 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
         $this->processHit('185.145.181.191', $lead);
         // Leuchtfeuer should be primary company because the count of both lead domain entries for domain 'leuchtfeuer.com' get aggregated, so the count is 4 and the count for the Arkada-X domain is only three.
-        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $lead->getPrimaryCompany()->getName());
+        $primaryCompany = $lead->getPrimaryCompany();
+        $this->assertInstanceOf(Company::class, $primaryCompany);
+        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $primaryCompany->getName());
     }
 
     public function test429PagehitWithFailingDnsLookupAndSuccessfulWhoisLookup(): void
@@ -494,6 +506,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit($ip1, $lead);
 
         $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
 
         $this->processHit($ip2, $lead);
@@ -501,6 +514,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
         $this->assertCount(2, $leadDomainsHit);
 
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[1]);
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[0]->getLookupType());
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[1]->getLookupType());
     }
@@ -523,15 +538,22 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
         $this->assertCount(1, $leadDomainsHit);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
     }
 
     private function setOld429ErrorTimestamp(): void
     {
-        $integration     = $this->em->getRepository(Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
+        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
+        $this->assertInstanceOf(Integration::class, $integration);
+
         $featureSettings = $integration->getFeatureSettings();
 
-        if (!isset($featureSettings['integration'])) {
+        if (!is_array($featureSettings)) {
+            $featureSettings = [];
+        }
+
+        if (!isset($featureSettings['integration']) || !is_array($featureSettings['integration'])) {
             $featureSettings['integration'] = [];
         }
 

@@ -109,7 +109,7 @@ class IpLookupRulesHelper
 
         $data = $this->floodlightService->get($remoteAddr);
 
-        if(!is_array($data)){
+        if (!is_array($data)) {
             return;
         }
 

@@ -17,7 +17,12 @@ class Status404Strategy
     /**
      * @param mixed[] $data
      *
-     * @return mixed[]
+     * @return array{
+     *     status: string,
+     *     domain: string|null,
+     *     lookupType: string,
+     *     details: mixed
+     * }
      */
     public function prepareData(array $data): array
     {
@@ -36,7 +41,12 @@ class Status404Strategy
     }
 
     /**
-     * @param mixed[] $processedData
+     * @param array{
+     *     status: string,
+     *     domain: string|null,
+     *     lookupType: string,
+     *     details: mixed
+     * } $processedData
      */
     public function process(array $processedData, Lead $lead): void
     {

@@ -72,9 +72,15 @@ class DomainUtility
 
             // Entferne Protokoll falls vorhanden
             $cleanInput = preg_replace('#^https?://#', '', $domain);
+            if (null === $cleanInput) {
+                return 'Domain could not be cleaned';
+            }
 
             // Entferne www. falls vorhanden
             $cleanInput = preg_replace('#^www\.#', '', $cleanInput);
+            if (null === $cleanInput) {
+                return 'Domain could not be cleaned';
+            }
 
             // Entferne Pfad, Query-Parameter etc.
             $cleanInput = parse_url('http://'.$cleanInput, PHP_URL_HOST) ?: $cleanInput;
@@ -106,8 +112,9 @@ class DomainUtility
      */
     public function getDomainByGetHostByAddr(string $remoteAddr): array
     {
-        $domain      = gethostbyaddr($remoteAddr);
-        $cleanDomain = $this->cleanDnsOrWhoisDomain($domain);
+        $domain       = gethostbyaddr($remoteAddr);
+        $domainString = false !== $domain ? $domain : null;
+        $cleanDomain  = $this->cleanDnsOrWhoisDomain($domainString);
 
         if ('Domain could not be cleaned' === $cleanDomain) {
             $cleanDomain = null;

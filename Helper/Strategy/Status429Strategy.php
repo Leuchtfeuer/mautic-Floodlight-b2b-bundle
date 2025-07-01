@@ -27,7 +27,12 @@ class Status429Strategy
     }
 
     /**
-     * @return mixed[]
+     * @return array{
+     *     status: string,
+     *     domain: string,
+     *     lookupType: string,
+     *     details: array{hostname?: string, pyservice?: mixed}
+     * }|array{}
      */
     public function prepareData(string $remoteAddr): array
     {
@@ -51,7 +56,12 @@ class Status429Strategy
     }
 
     /**
-     * @param mixed[] $processedData
+     * @param array{
+     *     status: string,
+     *     domain: string,
+     *     lookupType: string,
+     *     details: array{hostname?: string, pyservice?: mixed}
+     * }|array{} $processedData
      */
     public function process(array $processedData, Lead $lead): void
     {
@@ -64,12 +74,12 @@ class Status429Strategy
 
         $company = $this->companyRepository->findOneBy(['name' => $processedData['domain']]);
 
-        if (null === $company) {
+        if (empty($company)) {
             $company = $this->createNewCompany($processedData['domain'], $processedData['details'], $lead);
         }
 
         $companyDomain = $this->companyDomainsModel->getExistingCompanyDomain($processedData['domain']);
-        if (empty($companyDomain) && null !== $company) {
+        if (empty($companyDomain)) {
             $this->createNewCompanyDomain($processedData['domain'], $company);
         }
 
@@ -84,6 +94,7 @@ class Status429Strategy
         // $userIds       = $this->notificationUserHelper->getAdminUsers();
         // $user          = $this->userModel->getEntity($userIds[0]);
         $company       = $this->companyModel->getEntity();
+        \assert($company instanceof Company);
 
         $company->setName($domain);
         $company->setWebsite($domain);
@@ -93,7 +104,7 @@ class Status429Strategy
         // $company->setModifiedBy($user);
         // $company->setOwner($user);
 
-        if (!empty($details) && isset($details['pyservice']) && is_array($details['pyservice'])) {
+        if (!empty($details) && is_array($details) && isset($details['pyservice']) && is_array($details['pyservice'])) {
             $company->addUpdatedField('f4b_iplookup_whois_json', json_encode($this->transformDetails($details['pyservice']), JSON_THROW_ON_ERROR));
         }
 

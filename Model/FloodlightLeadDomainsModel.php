@@ -95,7 +95,12 @@ class FloodlightLeadDomainsModel extends FormModel
     }
 
     /**
-     * @param array<string,string|mixed> $dataDomain
+     * @param array{
+     *     status: string,
+     *     domain: string|null,
+     *     lookupType: string,
+     *     details: mixed
+     * } $dataDomain
      */
     public function addNewLeadDomainOrCountPlusOneInLeadDomain(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
@@ -113,11 +118,16 @@ class FloodlightLeadDomainsModel extends FormModel
     }
 
     /**
-     * @param mixed[] $dataDomain
+     * @param array{
+     *     status: string,
+     *     domain: string|null,
+     *     lookupType: string,
+     *     details: mixed
+     * } $dataDomain
      */
     public function getLeadDomainByContactDomainStatusAndIphash(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
-        $floodlightLeadDomain =  $this->getRepository()->findOneBy(
+        $floodlightLeadDomain = $this->getRepository()->findOneBy(
             [
                 'contact'    => $lead,
                 'domain'     => $dataDomain['domain'],
@@ -131,11 +141,18 @@ class FloodlightLeadDomainsModel extends FormModel
             return $this->floodlightLeadDomainFactory($lead, $dataDomain);
         }
 
+        \assert($floodlightLeadDomain instanceof FloodlightLeadDomains);
+
         return $floodlightLeadDomain;
     }
 
     /**
-     * @param mixed[] $dataDomain
+     * @param array{
+     *     status: string,
+     *     domain: string|null,
+     *     lookupType: string,
+     *     details: mixed
+     * } $dataDomain
      */
     private function floodlightLeadDomainFactory(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
@@ -148,8 +165,7 @@ class FloodlightLeadDomainsModel extends FormModel
         $leadDomain->setCount(0);
         $leadDomain->setIpHash('local');
         if (
-            is_array($dataDomain)
-            && array_key_exists('details', $dataDomain)
+            array_key_exists('details', $dataDomain)
             && is_array($dataDomain['details'])
             && array_key_exists('floodlight', $dataDomain['details'])
             && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
@@ -229,7 +245,7 @@ class FloodlightLeadDomainsModel extends FormModel
 
         $result = $qb->getQuery()->getResult();
 
-        if (empty($result)) {
+        if (empty($result) || !is_array($result) || !isset($result[0]) || !is_array($result[0]) || !isset($result[0]['domain'])) {
             return;
         }
 

@@ -85,7 +85,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
         $company = $this->companyRepository->findOneBy(['name' => $processedData['details']['floodlight']->getCompanyName()]);
 
-        if(empty($company)) {
+        if (empty($company)) {
             $this->fieldHelper->updateProperties($processedData['details']['floodlight']);
             $company = $this->createNewCompany($processedData['details']['floodlight'], $lead);
         } else {

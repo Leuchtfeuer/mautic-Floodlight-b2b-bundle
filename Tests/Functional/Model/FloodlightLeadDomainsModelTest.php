@@ -49,9 +49,10 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $this->assertIsArray($dataJson);
         $floodlightDTO = new FloodlightDTO($dataJson);
         $dataDomain    = [
-            'domain'  => $domain,
-            'status'  => 'valid',
-            'details' => [
+            'domain'     => $domain,
+            'status'     => 'valid',
+            'lookupType' => FloodlightLeadDomains::LOOKUP_TYPE_API,
+            'details'    => [
                 'floodlight'        => $floodlightDTO,
                 'statusRequestCode' => 200,
                 'companyDomains'    => [new FloodlightCompanyDomains()],
