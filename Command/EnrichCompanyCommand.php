@@ -63,6 +63,12 @@ class EnrichCompanyCommand extends ModeratedCommand
             return 0;
         }
 
+        if (true === $this->config->checkIfLookupReturned429ResponseInLast60Minutes()) {
+            $output->writeln('<error>Floodlight quota exceeded, please try again later</error>');
+
+            return 0;
+        }
+
         foreach ($companyDomains as $companyDomain) {
             assert($companyDomain instanceof FloodlightCompanyDomains);
             $domain                = $companyDomain->getDomain();
@@ -113,6 +119,12 @@ class EnrichCompanyCommand extends ModeratedCommand
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
                     $output->writeln('<error>Lead domain '.$companyDomain->getDomain().' with request 202, enrichment date set to current date</error>');
                 }
+                continue;
+            }
+
+            if (Response::HTTP_TOO_MANY_REQUESTS === $result['statusRequestCode']) {
+                $output->writeln('<error>Floodlight quota exceeded</error>');
+                $this->config->setLast429Timestamp();
                 continue;
             }
 

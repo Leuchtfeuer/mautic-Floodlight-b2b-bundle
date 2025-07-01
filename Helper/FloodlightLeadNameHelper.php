@@ -44,7 +44,7 @@ class FloodlightLeadNameHelper extends AbstractExtension
             $domain    = $result['domain'];
             $timestamp = $result['dateAdded'] instanceof \DateTime ? $result['dateAdded']->format('Ymd-H:i') : '';
 
-            return $domain.' anonymous '.$timestamp;
+            return 'anonymous '.$timestamp.' '.$domain;
         }
 
         return null;
