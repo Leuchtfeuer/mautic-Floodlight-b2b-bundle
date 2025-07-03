@@ -77,6 +77,7 @@ class FloodlightServiceTest extends TestCase
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $logger            = $this->createMock(LoggerInterface::class);
+        $stream            = $this->createMock(StreamInterface::class);
 
         $guzzleClient->expects(self::any())
             ->method('request')
@@ -87,13 +88,19 @@ class FloodlightServiceTest extends TestCase
         $responseInterface->expects(self::any())
             ->method('getStatusCode')
             ->willReturn(404);
+        $responseInterface->expects(self::any())
+            ->method('getBody')
+            ->willReturn($stream);
+        $stream->expects(self::any())
+            ->method('getContents')
+            ->willReturn('[{"foo": "bar"}]');
 
         $service = new FloodlightService($client, $logger);
 
         $result  = $service->get('1.2.3.4');
         $this->assertIsArray($result);
         $this->assertIsNotBool($result['statusRequestCode']);
-        self::assertSame(404, $result['statusRequestCode']);
+        self::assertSame([['foo' => 'bar'], 'statusRequestCode' => 404], $result);
     }
 
     public function testSuccess200FirstTry(): void
@@ -138,19 +145,19 @@ class FloodlightServiceTest extends TestCase
         $stream->expects(self::any())
             ->method('getContents')
             ->willReturn('{"statusCode": 401, "timestamp": "2025-04-04T06:46:53.840Z", "message": "Unauthorized", "path": "/v1/auth/usage"}');
-        
+
         $guzzleClient->expects(self::any())
             ->method('request')
             ->willReturn($responseInterface);
-        
+
         $client->expects(self::any())
             ->method('getClient')
             ->willReturn($guzzleClient);
-        
+
         $responseInterface->expects(self::any())
             ->method('getStatusCode')
             ->willReturn(401);
-        
+
         $responseInterface->expects(self::any())
             ->method('getBody')
             ->willReturn($stream);
@@ -169,7 +176,7 @@ class FloodlightServiceTest extends TestCase
             'path' => '/v1/auth/usage',
             'statusRequestCode' => 401
         ];
-        
+
         $service->expects(self::once())
             ->method('handleResult')
             ->willReturn($expectedResult);

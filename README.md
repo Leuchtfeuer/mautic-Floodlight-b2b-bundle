@@ -33,9 +33,9 @@ Once the plugin is installed and configured, it will automatically start detecti
 
 The plugin also allows you to run two commands:
 
-1. leuchtfeuer:floodlight:enrich --by-domain (also available as leuchtfeuer:floodlight:enrich:domain)
+1. leuchtfeuer:floodlight:enrich-companies
    - This command enriches companies that have been saved manually (there won't be more than two tries to enrich these companies)
-2. leuchtfeuer:floodlight:enrich --by-address (also available as leuchtfeuer:floodlight:enrich:address)
+2. leuchtfeuer:floodlight:lookup-retries
    - This command makes sure all the lookups are done again which have the status retry (as Floodlight could not provide the company data on the first try)
 
 The standalone command leuchtfeuer:floodlight:enrich will not work without the `--by-domain` or `--by-address` options.

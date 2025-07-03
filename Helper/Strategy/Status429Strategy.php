@@ -2,7 +2,6 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy;
 
-use DateTime;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyRepository;
 use Mautic\LeadBundle\Entity\Lead;
@@ -24,14 +23,24 @@ class Status429Strategy
         private CompanyModel $companyModel,
         private readonly LeadModel $leadModel,
         private FloodlightCompanyDomainsModel $companyDomainsModel,
-    )
-    {}
+    ) {
+    }
+
+    /**
+     * @return array{
+     *     status: string,
+     *     domain: string,
+     *     lookupType: string,
+     *     details: array{hostname?: string, pyservice?: mixed}
+     * }|array{}
+     */
     public function prepareData(string $remoteAddr): array
     {
         $hostByAddrData = $this->domainUtility->getDomainByGetHostByAddr($remoteAddr);
         if (FloodlightLeadDomains::STATUS_SUCCESS === $hostByAddrData['status']
         ) {
             $hostByAddrData['lookupType'] = FloodlightLeadDomains::LOOKUP_TYPE_DNS;
+
             return $hostByAddrData;
         }
 
@@ -39,72 +48,79 @@ class Status429Strategy
         if (FloodlightLeadDomains::STATUS_SUCCESS === $pyServiceData['status']
         ) {
             $pyServiceData['lookupType'] = FloodlightLeadDomains::LOOKUP_TYPE_WHOIS;
+
             return $pyServiceData;
         }
 
         return [];
     }
 
-    public function process(array $processedData, $lead)
+    /**
+     * @param array{
+     *     status: string,
+     *     domain: string,
+     *     lookupType: string,
+     *     details: array{hostname?: string, pyservice?: mixed}
+     * }|array{} $processedData
+     */
+    public function process(array $processedData, Lead $lead): void
     {
-        if(empty($processedData)){
-            //$this->reporter->notify('quota exceeded and also no data found via DNS and Whois lookup');
+        if (empty($processedData)) {
+            // $this->reporter->notify('quota exceeded and also no data found via DNS and Whois lookup');
             return;
         }
 
-        $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
+        $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
 
         $company = $this->companyRepository->findOneBy(['name' => $processedData['domain']]);
 
-        if(empty($company)) {
+        if (empty($company)) {
             $company = $this->createNewCompany($processedData['domain'], $processedData['details'], $lead);
         }
 
-
         $companyDomain = $this->companyDomainsModel->getExistingCompanyDomain($processedData['domain']);
-        if (empty($companyDomain) && !empty($company)) {
+        if (empty($companyDomain)) {
             $this->createNewCompanyDomain($processedData['domain'], $company);
         }
 
         $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
-
     }
 
-    public function createNewCompany($domain, $details, Lead $lead): Company
+    /**
+     * @param mixed $details
+     */
+    public function createNewCompany(string $domain, $details, Lead $lead): Company
     {
-        //$userIds       = $this->notificationUserHelper->getAdminUsers();
-        //$user          = $this->userModel->getEntity($userIds[0]);
+        // $userIds       = $this->notificationUserHelper->getAdminUsers();
+        // $user          = $this->userModel->getEntity($userIds[0]);
         $company       = $this->companyModel->getEntity();
+        \assert($company instanceof Company);
 
         $company->setName($domain);
         $company->setWebsite($domain);
         $company->setDateAdded(new \DateTime());
         $company->setIsPublished(true);
-        //$company->setCreatedBy($user);
-        //$company->setModifiedBy($user);
-        //$company->setOwner($user);
+        // $company->setCreatedBy($user);
+        // $company->setModifiedBy($user);
+        // $company->setOwner($user);
 
-        if (!empty($details) && isset($details['pyservice']) && is_array($details['pyservice'])) {
+        if (!empty($details) && is_array($details) && isset($details['pyservice']) && is_array($details['pyservice'])) {
             $company->addUpdatedField('f4b_iplookup_whois_json', json_encode($this->transformDetails($details['pyservice']), JSON_THROW_ON_ERROR));
         }
 
         $this->companyModel->saveEntity($company);
-
-        if (null !== $lead) {
-            $this->leadModel->addToCompany($lead, $company);
-            $this->leadModel->saveEntity($lead);
-        }
+        $this->leadModel->addToCompany($lead, $company);
+        $this->leadModel->saveEntity($lead);
 
         return $company;
     }
 
-    public function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, $company): void
+    public function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company): void
     {
         $company = $floodlightDTO->fillCompany($company);
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
     }
-
 
     /**
      * @param array<string> $details
@@ -120,7 +136,7 @@ class Status429Strategy
         ];
     }
 
-    private function createNewCompanyDomain($domain, Company $company): void
+    private function createNewCompanyDomain(string $domain, Company $company): void
     {
         $companyDomain = new FloodlightCompanyDomains();
         $companyDomain->setDomain($domain);

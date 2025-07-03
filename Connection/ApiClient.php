@@ -3,8 +3,8 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection;
 
 use GuzzleHttp\ClientInterface;
+use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\Credentials\HeaderCredentialsInterface;
 use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\HttpFactory;
-use Mautic\IntegrationsBundle\Auth\Provider\AuthCredentialsInterface;
 use Mautic\IntegrationsBundle\Exception\PluginNotConfiguredException;
 
 class ApiClient
@@ -17,7 +17,7 @@ class ApiClient
     /**
      * @throws PluginNotConfiguredException
      */
-    private function getCredentials(): AuthCredentialsInterface
+    private function getCredentials(): HeaderCredentialsInterface
     {
         return $this->credentials;
     }

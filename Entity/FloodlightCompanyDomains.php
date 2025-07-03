@@ -19,7 +19,6 @@ class FloodlightCompanyDomains
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
 
-
     //    private ?int $codeStatusRequest = null;
 
     public static function loadMetadata(ClassMetadata $metadata): void

@@ -3,25 +3,20 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 
 use GuzzleHttp\Exception\ClientException;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials;
-use Symfony\Component\HttpFoundation\Response;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ValidationCredentials;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Mautic\IntegrationsBundle\Auth\Provider\ApiKey\HttpFactory;
+use Symfony\Component\HttpFoundation\Response;
 
 class FloodlightService implements FloodlightServiceInterface
 {
-    private string $floodlightApiUrl;
     public const FLOODLIGHT_VERSION = 'v1';
 
-    public function __construct(
-        private ApiClient $client,
-        private LoggerInterface $logger,
-        string $floodlightApiUrl = 'https://api.floodlight-b2b.com'
-    ) {
-        $this->floodlightApiUrl = $floodlightApiUrl;
+    public function __construct(private ApiClient $client, private LoggerInterface $logger, private string $floodlightApiUrl = 'https://api-dev.floodlight-b2b.com')
+    {
     }
 
     public function getAPIClient(): ApiClient
@@ -30,7 +25,7 @@ class FloodlightService implements FloodlightServiceInterface
     }
 
     /**
-     * @return array<mixed>|bool
+     * @return mixed[]|false
      */
     public function get(string $ip): array|bool
     {
@@ -49,29 +44,28 @@ class FloodlightService implements FloodlightServiceInterface
      */
     private function handleResult(ResponseInterface $response): array
     {
-        $result     = [
+        $result = [
             'statusRequestCode' => 0,
         ];
 
         $statusCode = $response->getStatusCode();
-        $body = $response->getBody();
 
-        if (200 === $statusCode || 202 === $statusCode) {
+        if (200 === $statusCode || 202 === $statusCode || 404 === $statusCode) {
             $content = $response->getBody()->getContents();
 
-            $result = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            $decodedResult = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
-            $this->logger->debug('FloodlightService get success with content sanitaze jhon throw '.json_last_error_msg());
+            if (empty($decodedResult)) {
+                $decodedResult = json_decode($content, false, 512, JSON_THROW_ON_ERROR);
+                $decodedResult = (array) $decodedResult;
+            }
 
-            if (empty($result)) {
-                $result = json_decode($content, false, 512, JSON_THROW_ON_ERROR);
-                $result = (array) $result;
-                $this->logger->debug('FloodlightService get success with content sanitaze jhon throw2 '.json_last_error_msg());
+            if (is_array($decodedResult)) {
+                $result = $decodedResult;
             }
         }
-        if (is_array($result)) {
-            $result['statusRequestCode'] = $statusCode;
-        }
+
+        $result['statusRequestCode'] = $statusCode;
 
         return $result;
     }
@@ -80,6 +74,7 @@ class FloodlightService implements FloodlightServiceInterface
     {
         try {
             $myClient = $this->client->getClient();
+
             return $this->client->getClient()->request('GET', $url);
         } catch (ClientException $e) {
             if ($e->hasResponse()) {
@@ -93,75 +88,63 @@ class FloodlightService implements FloodlightServiceInterface
         return false;
     }
 
-    /**
-     * @return ResponseInterface|false
-     */
     private function getCompanyByIp(string $ip): ResponseInterface|false
     {
         $url = sprintf('%s/%s/companies/ip/%s', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION, $ip);
+
         return $this->makeRequest($url);
     }
 
+    /**
+     * @return mixed[]|false
+     */
     public function getByDomain(string $domain): bool|array
     {
-
         $response   = $this->getCompanyByDomain($domain);
         // Check if don't have response
 
         if (false === $response) {
             return false;
         }
+
         return $this->handleResult($response);
     }
 
-    /**
-     * @return ResponseInterface|false
-     */
     private function getCompanyByDomain(string $domainName): ResponseInterface|false
     {
         $url = sprintf('%s/%s/companies/domain/%s', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION, $domainName);
+
         return $this->makeRequest($url);
     }
 
     /**
-     * Prüft den Status der API-Autorisierung
-     * 
-     * @return ResponseInterface|false
+     * Prüft den Status der API-Autorisierung.
      */
     public function getAuthorizationStatus(): ResponseInterface|false
     {
         $url = sprintf('%s/%s/auth/usage', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION);
+
         return $this->makeRequest($url);
     }
 
     /**
-     * Verarbeitet das Ergebnis der API-Key-Validierung und gibt eine entsprechende Meldung zurück
+     * Verarbeitet das Ergebnis der API-Key-Validierung - vereinfachte Version.
      */
     private function handleAuthorizationResult(ResponseInterface $result): JsonResponse
     {
         $statusCode = $result->getStatusCode();
-        if (401 === $statusCode) {
-            return new JsonResponse(['message' => 'API key invalid'], Response::HTTP_UNAUTHORIZED);
+
+        if (200 === $statusCode) {
+            // Status 200 = Credentials sind gültig, egal was der Body sagt
+            return new JsonResponse(['message' => 'Valid credentials'], Response::HTTP_OK);
         }
 
-        $contents = $result->getBody()->getContents();
-        $data = json_decode($contents, true);
-        // Limit exceeded
-        if ($statusCode === 200 && isset($data['remaining']) && $data['remaining'] === 0) {
-            return new JsonResponse(['message' => 'API key valid, but quota exceeded for this period.'], Response::HTTP_TOO_MANY_REQUESTS);
-        }
-
-        // Remaining requests left
-        if ($statusCode === 200 && isset($data['remaining']) && $data['remaining'] >= 0) {
-            return new JsonResponse(['message' => 'API key valid, '.$data['remaining'].' API calls remaining for this period.'], Response::HTTP_OK);
-        }
-
-        //Non of the cases
-        return new JsonResponse(['message' => 'Something went wrong with your validation: '.$statusCode], Response::HTTP_BAD_REQUEST);
+        // Alles andere = Credentials sind ungültig
+        return new JsonResponse(['message' => 'Your credentials are invalid'], Response::HTTP_UNAUTHORIZED);
     }
 
     /**
-     * Prüft den Status der API-Autorisierung und gibt eine lesbare Meldung zurück
+     * Prüft den Status der API-Autorisierung und gibt eine lesbare Meldung zurück.
      */
     public function validateApiKey(): JsonResponse
     {
@@ -170,6 +153,34 @@ class FloodlightService implements FloodlightServiceInterface
         if (false === $result) {
             return new JsonResponse(['message' => 'Could not connect to API for validation.'], Response::HTTP_SERVICE_UNAVAILABLE);
         }
+
         return $this->handleAuthorizationResult($result);
+    }
+
+    /**
+     * Validiert API-Credentials direkt und gibt nur true/false zurück
+     * Wird vom Symfony-Validator verwendet für Form-Daten (VOR dem Speichern).
+     */
+    public function validateApiCredentials(string $accessKeyId, string $secretKey): bool
+    {
+        try {
+            // Erstelle ValidationCredentials lokal - das ist für diese eine Verwendung OK
+            $validationCredentials = new ValidationCredentials();
+            $validationCredentials->setApiAccessKeyId($accessKeyId);
+            $validationCredentials->setApiSecretKey($secretKey);
+
+            // Setze Credentials auf den ApiClient
+            $this->client->setCredentials($validationCredentials);
+
+            // Verwende die bestehende validateApiKey Methode
+            $jsonResponse = $this->validateApiKey();
+
+            // Prüfe den HTTP-Status der JsonResponse
+            return 200 === $jsonResponse->getStatusCode() || 429 === $jsonResponse->getStatusCode();
+        } catch (\Exception $e) {
+            $this->logger->error('FloodlightService validateApiCredentials failed: '.$e->getMessage());
+
+            return false;
+        }
     }
 }

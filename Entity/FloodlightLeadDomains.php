@@ -10,19 +10,19 @@ use Symfony\Component\Validator\Mapping\ClassMetadata as ValidatorClassMetadata;
 
 class FloodlightLeadDomains
 {
-    public const STATUS_NO_DATA_FOUND = '404';
+    public const STATUS_NO_DATA_FOUND        = '404';
     public const STATUS_RETRY_LIMIT_EXCEEDED = 'retry limit exceeded';
-    public const STATUS_IP_DOMAIN = 'ip domain';
-    public const STATUS_SUCCESS = 'success';
-    public const STATUS_UNKNOWN_ERROR = 'unknown error';
-    public const STATUS_BLACKLISTED = 'blacklisted';
-    public const STATUS_RETRY = 'retry';
-    public const LOOKUP_TYPE_API = 'API';
-    public const LOOKUP_TYPE_DNS = 'dns';
-    public const LOOKUP_TYPE_WHOIS = 'whois';
+    public const STATUS_IP_DOMAIN            = 'ip domain';
+    public const STATUS_SUCCESS              = 'success';
+    public const STATUS_UNKNOWN_ERROR        = 'unknown error';
+    public const STATUS_BLACKLISTED          = 'blacklisted';
+    public const STATUS_RETRY                = 'retry';
+    public const LOOKUP_TYPE_API             = 'API';
+    public const LOOKUP_TYPE_DNS             = 'dns';
+    public const LOOKUP_TYPE_WHOIS           = 'whois';
 
     /**
-     * @var int
+     * @var string
      */
     private $id;
 
@@ -49,7 +49,7 @@ class FloodlightLeadDomains
             ->setCustomRepositoryClass(FloodlightLeadDomainsRepository::class)
             ->addIndex(['contact_id'], 'lead_domains_lead_id')
             ->addIndex(['domain'], 'lead_domains_domain');
-            //->addIndex(['ip_hash'], 'lead_domains_ip_hash');
+        // ->addIndex(['ip_hash'], 'lead_domains_ip_hash');
 
         $builder->addBigIntIdField();
         $builder->addContact(true, 'CASCADE');
@@ -136,12 +136,10 @@ class FloodlightLeadDomains
 
     /**
      * Get id.
-     *
-     * @return int
      */
-    public function getId()
+    public function getId(): int
     {
-        return $this->id;
+        return (int) $this->id;
     }
 
     public function getContact(): ?Lead

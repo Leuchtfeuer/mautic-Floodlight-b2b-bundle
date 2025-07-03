@@ -11,12 +11,11 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 
 class LeuchtfeuerFloodlightB2BExtension extends Extension
 {
-    private const DEFAULT_FLOODLIGHT_API_URL = 'https://api.floodlight-b2b.com';
-    private const ENV_FLOODLIGHT_API_URL = 'FLOODLIGHT_API_URL'; // Environment variable name
-    private const PARAM_FLOODLIGHT_API_URL = 'mautic.leuchtfeuerfloodlightb2b.floodlight_api_url';
+    private const DEFAULT_FLOODLIGHT_API_URL = 'https://api-dev.floodlight-b2b.com';
+    private const ENV_FLOODLIGHT_API_URL     = 'FLOODLIGHT_API_URL'; // Environment variable name
+    private const PARAM_FLOODLIGHT_API_URL   = 'mautic.leuchtfeuerfloodlightb2b.floodlight_api_url';
     // Suffix for the key Mautic uses to store bundle parameters
     private const MAUTIC_BUNDLE_PARAMS_SUFFIX = '.parameters';
-
 
     public function load(array $configs, ContainerBuilder $container): void
     {
@@ -34,7 +33,7 @@ class LeuchtfeuerFloodlightB2BExtension extends Extension
             // Mautic stores bundle parameters under 'mautic.' + extension_alias + '.parameters'
             // The extension_alias for LeuchtfeuerFloodlightB2BExtension is 'leuchtfeuer_floodlight_b2_b' (or similar based on exact Bundle name)
             // The parent::getAlias() method will return the correct, simple alias.
-            $mauticConventionBundleParamsKey = 'mautic.' . $this->getAlias() . self::MAUTIC_BUNDLE_PARAMS_SUFFIX;
+            $mauticConventionBundleParamsKey = 'mautic.'.$this->getAlias().self::MAUTIC_BUNDLE_PARAMS_SUFFIX;
 
             if ($container->hasParameter($mauticConventionBundleParamsKey)) {
                 $bundleParameters = $container->getParameter($mauticConventionBundleParamsKey);

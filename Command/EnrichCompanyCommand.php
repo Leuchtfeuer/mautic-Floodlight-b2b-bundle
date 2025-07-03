@@ -17,7 +17,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
+class EnrichCompanyCommand extends ModeratedCommand
 {
     public const DATE_DEFAULT = '1970-01-01 00:00:00';
 
@@ -36,7 +36,7 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
 
     protected function configure(): void
     {
-        $this->setName('leuchtfeuer:floodlight:enrich:domain')
+        $this->setName('leuchtfeuer:floodlight:enrich-companies')
             ->setDescription('Enrich company data with Floodlight data by address');
     }
 
@@ -63,10 +63,16 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
             return 0;
         }
 
+        if (true === $this->config->checkIfLookupReturned429ResponseInLast60Minutes()) {
+            $output->writeln('<error>Floodlight quota exceeded, please try again later</error>');
+
+            return 0;
+        }
+
         foreach ($companyDomains as $companyDomain) {
             assert($companyDomain instanceof FloodlightCompanyDomains);
-            $domain = $companyDomain->getDomain();
-            $company = $companyDomain->getCompany();
+            $domain                = $companyDomain->getDomain();
+            $company               = $companyDomain->getCompany();
             $companyEnrichmentDate = $company->getFieldValue('f4b_enrichment_date');
             if (null === $domain) {
                 continue;
@@ -88,7 +94,6 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
                 $output->writeln('<error>You are using an invalid API key</error>');
                 continue;
             }
-
 
             if (Response::HTTP_NOT_FOUND === $result['statusRequestCode']) {
                 $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
@@ -117,6 +122,12 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
                 continue;
             }
 
+            if (Response::HTTP_TOO_MANY_REQUESTS === $result['statusRequestCode']) {
+                $output->writeln('<error>Floodlight quota exceeded</error>');
+                $this->config->setLast429Timestamp();
+                continue;
+            }
+
             if (Response::HTTP_OK !== $result['statusRequestCode']) {
                 $this->flCompanyDomainsModel->saveEntity($companyDomain);
                 $output->writeln('<error>Error '.$companyDomain->getDomain().' status  '.$result['statusRequestCode'].'</error>');
@@ -132,8 +143,8 @@ class EnrichmentFloodlightCompanyByDomainCommand extends ModeratedCommand
 
             $this->flCompanyDomainsModel->saveEntity($companyDomain);
 
-            $output->writeln('<info>Company data updated ' . $company->getName() . '</info>');
-            $output->writeln('<info>CompanyDomain ' . $companyDomain->getDomain() . ' data updated</info>');
+            $output->writeln('<info>Company data updated '.$company->getName().'</info>');
+            $output->writeln('<info>CompanyDomain '.$companyDomain->getDomain().' data updated</info>');
             $output->writeln(PHP_EOL);
         }
 

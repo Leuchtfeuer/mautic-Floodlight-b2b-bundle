@@ -2,6 +2,7 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy;
 
+use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
@@ -10,30 +11,46 @@ class Status404Strategy
 {
     public function __construct(
         private FloodlightLeadDomainsModel $leadDomainsModel,
-    )    {}
+    ) {
+    }
+
+    /**
+     * @param mixed[] $data
+     *
+     * @return array{
+     *     status: string,
+     *     domain: string|null,
+     *     lookupType: string,
+     *     details: mixed
+     * }
+     */
     public function prepareData(array $data): array
     {
         $floodlightDTO = new FloodlightDTO($data);
-        $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
-
+        $status        = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
 
         return [
-            'status'  => $status,
-            'domain'  => null,
+            'status'     => $status,
+            'domain'     => null,
             'lookupType' => FloodlightLeadDomains::LOOKUP_TYPE_API,
-            'details' => [
+            'details'    => [
                 'floodlight'    => $floodlightDTO,
                 'statusRequest' => $data['statusRequestCode'],
             ],
         ];
-
     }
 
-    public function process(array $processedData, $lead)
+    /**
+     * @param array{
+     *     status: string,
+     *     domain: string|null,
+     *     lookupType: string,
+     *     details: mixed
+     * } $processedData
+     */
+    public function process(array $processedData, Lead $lead): void
     {
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
-        //@TODO Implement saving IpHash when 404
-        //@TODO add delete old retry entry logic
-        //$this->leadDomainsModel->deleteOldRetryEntries($processedData['details']['floodlight'], $lead);
+        $this->leadDomainsModel->deleteOldRetryEntries($leadDomain, $lead);
     }
 }

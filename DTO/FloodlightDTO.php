@@ -1043,7 +1043,7 @@ class FloodlightDTO implements DTOInterface
             $company->addUpdatedField('f4b_companystate_code', $this->getCompanyStateCode());
         }
         if (200 === $this->getStatusHttpRequest()) {
-            //$companyDomain->setEnrichmentDate(new \DateTime());
+            // $companyDomain->setEnrichmentDate(new \DateTime());
             $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
         }
 

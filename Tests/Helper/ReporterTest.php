@@ -2,17 +2,15 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Helper;
 
-
-use PHPUnit\Framework\TestCase;
-use Symfony\Component\Console\Output\OutputInterface;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter;
+use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-class ReporterTest extends TestCase{
+use Symfony\Component\Console\Output\OutputInterface;
 
-
-    public function testMessageFromCommand(){
-
-
+class ReporterTest extends TestCase
+{
+    public function testMessageFromCommand(): void
+    {
         $channel = $this->createMock(OutputInterface::class);
 
         $channel->expects($this->once()) // Or ->any(), depending on what you want
@@ -24,10 +22,9 @@ class ReporterTest extends TestCase{
 
         $reporter->notify('someText');
         $this->assertTrue(true);
-
     }
 
-    public function testMessageFromCommandWithVerbosity()
+    public function testMessageFromCommandWithVerbosity(): void
     {
         $channel = $this->createMock(OutputInterface::class);
 
@@ -42,11 +39,11 @@ class ReporterTest extends TestCase{
         $reporter = new Reporter();
         $reporter->setChannel($channel);
 
-        $reporter->notify('someText',OutputInterface::VERBOSITY_VERBOSE);
+        $reporter->notify('someText', OutputInterface::VERBOSITY_VERBOSE);
         $this->assertTrue(true);
     }
 
-    public function testLoggingWithLogger()
+    public function testLoggingWithLogger(): void
     {
         $channel = $this->createMock(LoggerInterface::class);
 
@@ -60,5 +57,4 @@ class ReporterTest extends TestCase{
         $reporter->notify('someText');
         $this->assertTrue(true);
     }
-
 }

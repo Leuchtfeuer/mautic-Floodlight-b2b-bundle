@@ -2,55 +2,41 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventListener;
 
-
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
-use Mautic\LeadBundle\Entity\CompanyLead;
-use Mautic\LeadBundle\Entity\CompanyLeadRepository;
-use Mautic\LeadBundle\Entity\CompanyRepository;
 use Mautic\LeadBundle\Entity\Lead;
-use Mautic\LeadBundle\Entity\LeadRepository;
 use Mautic\PageBundle\Entity\Hit;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
-
-
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
-    private LeadRepository $leadRepo;
     private FloodlightLeadDomainsRepository $leadDomainRepo;
-    private CompanyRepository $companyRepo;
-    private FloodlightCompanyDomainsRepository $companyDomainRepo;
-    private CompanyLeadRepository $companyLeadRepo;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->leadRepo          = $this->em->getRepository(Lead::class);
-        $this->leadDomainRepo    = $this->em->getRepository(FloodlightLeadDomains::class);
-        $this->companyRepo       = $this->em->getRepository(Company::class);
-        $this->companyDomainRepo = $this->em->getRepository(FloodlightCompanyDomains::class);
-        $this->companyLeadRepo   = $this->em->getRepository(CompanyLead::class);
+        $this->leadDomainRepo     = $this->em->getRepository(FloodlightLeadDomains::class);
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
     }
 
-    private function updateApikey(string $key='validApiKey'): void
+    private function updateApikey(string $accessKeyId='validAccessKeyId', string $secretKey='validSecretKey'): void
     {
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_key]']);
-        $form['integration_config[apiKeys][api_key]']->setValue($key);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
+        $form['integration_config[apiKeys][api_access_key_id]']->setValue($accessKeyId);
+        $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
     }
@@ -107,14 +93,14 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     public function testPagehitWhenInvalidApiKey(): void
     {
         $this->activePlugin();
-        $this->updateApikey('invalidapikey');
+        $this->updateApikey('invalidAccessKeyId', 'invalidSecretKey');
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
         $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
         $this->assertEquals(0, count($totalItemsAfterRequest));
     }
 
-    public function testJustOnePagehit()
+    public function testJustOnePagehit(): void
     {
         $this->activePlugin();
         $this->updateApikey();
@@ -123,7 +109,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals(0, count($totalItemsAfterRequest));
     }
 
-    public function testSuccessPagehit()
+    public function testSuccessPagehit(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -139,9 +125,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
         $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
-        //Test if first name of lead gets set properly <domain that has first been detected for this contact> "anonymous" <datetime of fist detection>
-        $this->assertStringContainsString('Leuchtfeuer', $lead->getFirstName());
-        $this->assertStringContainsString('anonymous', $lead->getFirstName());
 
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
@@ -154,7 +137,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
     }
 
-    public function test404Pagehit()
+    public function test404Pagehit(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -168,7 +151,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $leadDomainsHit);
         $this->assertSame(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
-        $this->assertSame(null, $leadDomainsHit[0]->getDomain());
+        $this->assertNull($leadDomainsHit[0]->getDomain());
+        $this->assertSame('404hash', $leadDomainsHit[0]->getIpHash());
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
 
         $company           = $this->em->getRepository(Company::class)->findAll();
@@ -178,7 +162,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEmpty($companyDomainsHit);
     }
 
-    public function test202PagehitThenAnotherOneThatExceedsRetryLimitAfterTwoHours()
+    public function test202PagehitThenAnotherOneThatExceedsRetryLimitAfterTwoHours(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -192,7 +176,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $leadDomainsHit);
         $this->assertSame(FloodlightLeadDomains::STATUS_RETRY, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
-        $this->assertSame(null, $leadDomainsHit[0]->getDomain());
+        $this->assertNull($leadDomainsHit[0]->getDomain());
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
 
         $company           = $this->em->getRepository(Company::class)->findAll();
@@ -205,6 +189,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $this->processHit('retryip', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
 
         $this->processHit('retryip', $lead);
@@ -214,7 +199,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED, $leadDomainsHit[0]->getStatus());
     }
 
-    public function testThirdSuccessPagehitAddsCountPlusOne()
+    public function testThirdSuccessPagehitAddsCountPlusOne(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -223,6 +208,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('217.91.35.16', $lead);
 
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
         $this->processHit('217.91.35.16', $lead);
 
@@ -235,7 +221,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
     }
 
-    public function testOldRetryEntryDeletedAfter200Request()
+    public function testOldRetryEntryDeletedAfter200Request(): void
     {
         $this->activePlugin();
         $this->updateApikey();
@@ -265,41 +251,30 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
     }
 
-    //@TODO Implement once right 404 Response structure from floodlight server is in place
-    public function disabledtestOldRetryEntryDeletedAfter404Request()
+    public function testOldRetryEntryDeletedAfter404Request(): void
     {
         $this->activePlugin();
         $this->updateApikey();
         $lead = $this->createLead();
         $this->createHit($lead);
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
         $this->setBackDateModifiedByTwoHours($retryLeadDomain);
 
-        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('127.0.0.1', $lead);
 
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->assertNotEmpty($leadDomainsHit);
         $this->assertCount(1, $leadDomainsHit);
-        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $leadDomainsHit[0]->getStatus());
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertSame(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $leadDomainsHit[0]->getStatus());
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
-        $this->assertSame('leuchtfeuer.com', $leadDomainsHit[0]->getDomain());
-
-        $company           = $this->em->getRepository(Company::class)->findAll();
-        $this->assertNotEmpty($company);
-        $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
-
-        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
-        $this->assertCount(1, $companyDomainsHit);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
-        $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
+        $this->assertNull($leadDomainsHit[0]->getDomain());
     }
 
     /**
-     * Description: When there was a recent lookup, no new lookup should be done. So the count of the success entry should not increase after the first lookup
+     * Description: When there was a recent lookup, no new lookup should be done. So the count of the success entry should not increase after the first lookup.
      */
-    public function testNoLookupIfAlreadyRecentLookup()
+    public function testNoLookupIfAlreadyRecentLookup(): void
     {
         $lead = $this->createLead();
         $this->activePlugin();
@@ -319,7 +294,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $leadDomainsHit);
         $this->assertSame(1, $leadDomainsHit[0]->getCount());
     }
-
 
     public function testPrimaryCompanySetCorretcly(): void
     {
@@ -329,32 +303,39 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('217.91.35.16', $lead);
         $this->processHit('217.91.35.16', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
         $this->processHit('217.91.35.16', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
         $this->processHit('185.145.181.191', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[1]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[1]);
-        //Leuchtfeuer should be primary company because domain has count 2 and Arkada-X has only count 1
-        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $lead->getPrimaryCompany()->getName());
+        // Leuchtfeuer should be primary company because domain has count 2 and Arkada-X has only count 1
+        $primaryCompany = $lead->getPrimaryCompany();
+        $this->assertInstanceOf(Company::class, $primaryCompany);
+        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $primaryCompany->getName());
 
         $this->processHit('185.145.181.191', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[1]);
         $this->setBackDateModifiedByTwoHours($leadDomainsHit[1]);
-        //Arkada-X should be primary company because domain has count 2 like Leuchtfeuer, but the date modified of the entry is more recent
-        $this->assertSame('Arkada-X', $lead->getPrimaryCompany()->getName());
-        //Lead name should still contain Leuchtfeuer as the lead name should always be connected to the company that was first detected and never change afterwards
-        $this->assertStringContainsString('Leuchtfeuer', $lead->getName());
-
+        // Arkada-X should be primary company because domain has count 2 like Leuchtfeuer, but the date modified of the entry is more recent
+        $primaryCompany = $lead->getPrimaryCompany();
+        $this->assertInstanceOf(Company::class, $primaryCompany);
+        $this->assertSame('Arkada-X', $primaryCompany->getName());
 
         $leadDomain = $this->addNewLeadDomain($lead, 'iphash2', 2, FloodlightLeadDomains::STATUS_SUCCESS);
         $leadDomain->setDomain('leuchtfeuer.com');
         $this->em->persist($leadDomain);
         $this->em->flush();
         $this->processHit('185.145.181.191', $lead);
-        //Leuchtfeuer should be primary company because the count of both lead domain entries for domain 'leuchtfeuer.com' get aggregated, so the count is 4 and the count for the Arkada-X domain is only three.
-        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $lead->getPrimaryCompany()->getName());
+        // Leuchtfeuer should be primary company because the count of both lead domain entries for domain 'leuchtfeuer.com' get aggregated, so the count is 4 and the count for the Arkada-X domain is only three.
+        $primaryCompany = $lead->getPrimaryCompany();
+        $this->assertInstanceOf(Company::class, $primaryCompany);
+        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $primaryCompany->getName());
     }
 
     public function test429PagehitWithFailingDnsLookupAndSuccessfulWhoisLookup(): void
@@ -421,7 +402,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
         $this->assertSame($company[0]->getId(), $companyDomainsHit[0]->getCompany()->getId());
     }
-
 
     public function test429PagehitWithFailingDnsLookupAndWhoisLookupWithBlacklistedKeywordInDomain(): void
     {
@@ -492,56 +472,96 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEmpty($companyDomainsHit);
     }
 
+    public function test429TimestampSetAfter429FloodlightLookup(): void
+    {
+        $ip = '86.101.230.58';
 
-/*
- * Test is not yet necessary but might be needed once merging logic is clear
-    public function disabledtestNoNewCompanyCreatedWhenAlreadyExistedBeforeFloodlight(){
-        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
-        $this->updateApikey('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjMwLCJmcmVlIjpmYWxzZSwiaWF0IjoxNzQxMjY5MTM0fQ.X2hk5QvfRP2JhpgsaUO-Q_fQftKPEat9Ibr9ANBKw00');
-        assert($floodlightSubscriber instanceof FloodlightSubscriber);
-
-        $pageHitEventMock1 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
 
         $lead = $this->createLead();
-        $hit  = $this->createHit($lead, '217.91.35.16');
+        $this->activePlugin();
+        $this->updateApikey();
 
-        $pageHitEventMock1->expects($this->exactly(1))->method('getHit')->willReturn($hit);
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
 
-        $floodlightSubscriber->onPageHit($pageHitEventMock1);
-
-        //createCompanyLeuchtfeuer
-        $companyLeuchtfeuer = new Company();
-        $companyLeuchtfeuer->setName('Leuchtfeuer Digital Marketing GmbH');
-        //$companyLeuchtfeuer->setWebsite('https://leuchtfeuer.com/marketing-technologie/');
-
-        $this->em->persist($companyLeuchtfeuer);
-        $this->em->flush();
-
-        $companies           = $this->em->getRepository(Company::class)->findAll();
-        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
-        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertCount(1,$companies);
-        $this->assertEmpty($leadDomains);
-        $this->assertEmpty($companyDomains);
-
-
-
-        $request = new \Symfony\Component\HttpFoundation\Request();
-        $request->server->set('REMOTE_ADDR', '217.91.35.16');
-        $hit2              = $this->createHit($lead, '217.91.35.16');
-        $pageHitEventMock2 = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock2->expects($this->exactly(2))->method('getHit')->willReturn($hit2);
-        $pageHitEventMock2->expects($this->exactly(1))->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock2);
-        $leadDomains    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomains[0]);
-        $companyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomains[0]->getDomain()]);
-        $companies          = $this->em->getRepository(Company::class)->findAll();
-        $this->assertCount(1,$leadDomains);
-        $this->assertCount(1,$companyDomains);
-        $this->assertCount(1,$companies);
+        $config = self::getContainer()->get('MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config');
+        $this->assertTrue($config->checkIfLookupReturned429ResponseInLast60Minutes());
     }
-*/
+
+    public function testNoFloodlightLookupWhen429TimestampLessThan60MinutesAgo(): void
+    {
+        $ip1 = '86.101.230.58';
+        $ip2 = '217.91.35.16';
+
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+
+        $this->processHit($ip1, $lead);
+        $this->processHit($ip1, $lead);
+
+        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->setBackDateModifiedByTwoHours($leadDomainsHit[0]);
+
+        $this->processHit($ip2, $lead);
+
+        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertCount(2, $leadDomainsHit);
+
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[1]);
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[0]->getLookupType());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_DNS, $leadDomainsHit[1]->getLookupType());
+    }
+
+    public function testFloodlightLookupIsUsedWhen429TimestampIsMoreThan60MinutesAgo(): void
+    {
+        $ip = '217.91.35.16';
+
+        $this->mockDnsLookupResultDependingOnIp();
+        $this->mockWhoisResultDependingOnIp();
+
+        $lead = $this->createLead();
+
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->setOutdated429Timestamp();
+
+        $this->processHit($ip, $lead);
+        $this->processHit($ip, $lead);
+
+        $leadDomainsHit = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
+        $this->assertCount(1, $leadDomainsHit);
+        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
+    }
+
+    private function setOutdated429Timestamp(): void
+    {
+        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
+        $this->assertInstanceOf(Integration::class, $integration);
+
+        $featureSettings = $integration->getFeatureSettings();
+
+        if (!is_array($featureSettings)) {
+            $featureSettings = [];
+        }
+
+        if (!isset($featureSettings['integration']) || !is_array($featureSettings['integration'])) {
+            $featureSettings['integration'] = [];
+        }
+
+        $featureSettings['integration']['last_429_timestamp'] = time() - (61 * 60);
+        $integration->setFeatureSettings($featureSettings);
+        $this->em->persist($integration);
+        $this->em->flush();
+    }
 
     private function createHit(Lead $lead, string $ipAdress = '127.0.0.1'): Hit
     {
@@ -596,7 +616,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
     }
 
-    private function addNewLeadDomain($lead, string $ipHash, int $count, $status): FloodlightLeadDomains
+    private function addNewLeadDomain(Lead $lead, string $ipHash, int $count, string $status): FloodlightLeadDomains
     {
         $floodlightLeadDomain = new FloodlightLeadDomains();
         $floodlightLeadDomain->setDateAdded(new \DateTime());
@@ -610,11 +630,10 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $floodlightLeadDomain;
     }
 
-
-    private function processHit($remoteAddress, $lead)
+    private function processHit(string $remoteAddress, Lead $lead): void
     {
         $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
-        $request = new \Symfony\Component\HttpFoundation\Request();
+        $request              = new \Symfony\Component\HttpFoundation\Request();
         $request->server->set('REMOTE_ADDR', $remoteAddress);
         $hit              = $this->createHit($lead, $remoteAddress);
         $pageHitEventMock = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
@@ -623,19 +642,20 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $floodlightSubscriber->onPageHit($pageHitEventMock);
     }
 
-
     private function mockDnsLookupResultDependingOnIp(): void
     {
-        // Prüfen ob bereits definiert
+        // Check if already defined
         if (function_exists('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Helper\\Utility\\gethostbyaddr')) {
             return;
         }
-        
-        // EINMALIG alle Cases hardcoded definieren
+
+        // Define all cases once
         $mockCode = "
         namespace MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Helper\\Utility {
             function gethostbyaddr(\$ip) {
                 switch (\$ip) {
+                    case '217.91.35.16':
+                        return 'mail.leuchtfeuer.com';
                     case '86.101.230.57':
                         return '11.11.11.11';
                     case '86.101.230.58':
@@ -694,6 +714,3 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         eval($mockCode);
     }
 }
-
-
-

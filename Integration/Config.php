@@ -40,8 +40,9 @@ class Config
     {
         try {
             $integration = $this->getIntegrationEntity();
+            $apiKeys     = $integration->getApiKeys();
 
-            return $integration->getApiKeys() ?: [];
+            return is_array($apiKeys) ? $apiKeys : [];
         } catch (IntegrationNotFoundException) {
             return [];
         }
@@ -52,42 +53,72 @@ class Config
         try {
             $apiKeys = $this->getApiKeys();
 
-            return !empty($apiKeys) && isset($apiKeys['api_key']);
+            return !empty($apiKeys) && isset($apiKeys['api_access_key_id']) && isset($apiKeys['api_secret_key']);
         } catch (IntegrationNotFoundException) {
             return false;
         }
     }
 
-    public function isFreeTier(): bool
-    {
-        $apiKeys = $this->getApiKeys();
-        if (empty($apiKeys['api_key'])) {
-            return false;
-        }
-        if (str_contains($apiKeys['api_key'], 'free_')) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public function isProTier(): bool
-    {
-        return true;
-    }
-    
     /**
-     * Checks if strict GDPR mode is enabled
-     * 
-     * @return bool
+     * Checks if strict GDPR mode is enabled.
      */
     public function isStrictGdprMode(): bool
     {
         try {
-            $integration = $this->getIntegrationEntity();
+            $integration     = $this->getIntegrationEntity();
             $featureSettings = $integration->getFeatureSettings();
-            
-            return !empty($featureSettings['integration']['strict_gdpr']) && (bool) $featureSettings['integration']['strict_gdpr'];
+
+            return is_array($featureSettings)
+                   && isset($featureSettings['integration'])
+                   && is_array($featureSettings['integration'])
+                   && isset($featureSettings['integration']['strict_gdpr'])
+                   && (bool) $featureSettings['integration']['strict_gdpr'];
+        } catch (IntegrationNotFoundException) {
+            return false;
+        }
+    }
+
+    public function setLast429Timestamp(): void
+    {
+        try {
+            $integration     = $this->getIntegrationEntity();
+            $featureSettings = $integration->getFeatureSettings();
+
+            if (!is_array($featureSettings)) {
+                $featureSettings = [];
+            }
+
+            if (!isset($featureSettings['integration']) || !is_array($featureSettings['integration'])) {
+                $featureSettings['integration'] = [];
+            }
+
+            $featureSettings['integration']['last_429_timestamp'] = time();
+            $integration->setFeatureSettings($featureSettings);
+
+            $this->integrationsHelper->saveIntegrationConfiguration($integration);
+        } catch (IntegrationNotFoundException) {
+            // Ignore if integration not found
+        }
+    }
+
+    public function checkIfLookupReturned429ResponseInLast60Minutes(): bool
+    {
+        try {
+            $integration     = $this->getIntegrationEntity();
+            $featureSettings = $integration->getFeatureSettings();
+
+            if (!is_array($featureSettings)
+                || !isset($featureSettings['integration'])
+                || !is_array($featureSettings['integration'])
+                || !isset($featureSettings['integration']['last_429_timestamp'])) {
+                return false;
+            }
+
+            $last429timestamp          = (int) $featureSettings['integration']['last_429_timestamp'];
+            $currentTime               = time();
+            $sixtyMinutesInSeconds     = 60 * 60;
+
+            return ($currentTime - $last429timestamp) < $sixtyMinutesInSeconds;
         } catch (IntegrationNotFoundException) {
             return false;
         }

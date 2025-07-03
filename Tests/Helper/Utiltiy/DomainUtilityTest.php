@@ -12,7 +12,7 @@ class DomainUtilityTest extends TestCase
     public function testIsIp(): void
     {
         $leadDomainsModel = $this->createMock(FloodlightLeadDomainsModel::class);
-        $whoisPyService = $this->createMock(WhoisPyService::class);
+        $whoisPyService   = $this->createMock(WhoisPyService::class);
 
         $domainUtility = new DomainUtility($leadDomainsModel, $whoisPyService);
         $this->assertTrue($domainUtility->hasMoreThanFourNumbers('123.23'));

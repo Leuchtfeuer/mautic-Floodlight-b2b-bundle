@@ -15,7 +15,8 @@ class DomainUtility
     public function __construct(
         private FloodlightLeadDomainsModel $leadDomainsModel,
         private WhoisPyService $whoisPyService,
-    ) {}
+    ) {
+    }
 
     public function getStatusDomain(?string $domain): string
     {
@@ -34,61 +35,42 @@ class DomainUtility
         return FloodlightLeadDomains::STATUS_SUCCESS;
     }
 
+    /**
+     * Clean domain with jeremykendall/php-domain-parser.
+     */
     public function cleanDomain(?string $domain): ?string
     {
-        if (is_null($domain)) {
-            return null;
-        }
-        $parts = explode('.', $domain);
-        reset($parts);
-        $firstPart = current($parts);
-        preg_match_all('/\d/', $firstPart, $matches);
-        reset($parts);
-        if (count($matches[0]) > 1) {
-            return implode('.', array_slice($parts, 1));
-        }
-
-        return $domain;
-    }
-
-    /**
-     * Bereinigt eine Domain mit der jeremykendall/php-domain-parser Bibliothek
-     * und gibt nur den bereinigten Host zurück (registrable domain)
-     */
-    public function cleanDnsOrWhoisDomain(?string $domain): string
-    {
         if (is_null($domain) || empty($domain)) {
-            return 'Domain could not be cleaned';
+            return null;
         }
 
         try {
-            // Initialisiere Rules nur einmal
-            if ($this->rules === null) {
+            if (null === $this->rules) {
                 $this->rules = Rules::fromPath(
                     'https://publicsuffix.org/list/public_suffix_list.dat'
                 );
             }
 
-            // Entferne Protokoll falls vorhanden
             $cleanInput = preg_replace('#^https?://#', '', $domain);
-            
-            // Entferne www. falls vorhanden
-            $cleanInput = preg_replace('#^www\.#', '', $cleanInput);
-            
-            // Entferne Pfad, Query-Parameter etc.
-            $cleanInput = parse_url('http://' . $cleanInput, PHP_URL_HOST) ?: $cleanInput;
+            if (null === $cleanInput) {
+                return null;
+            }
 
-            // Parse die Domain
-            $domainObj = Domain::fromIDNA2008($cleanInput);
+            $cleanInput = preg_replace('#^www\.#', '', $cleanInput);
+            if (null === $cleanInput) {
+                return null;
+            }
+
+            $cleanInput = parse_url('http://'.$cleanInput, PHP_URL_HOST) ?: $cleanInput;
+
+            $domainObj      = Domain::fromIDNA2008($cleanInput);
             $resolvedDomain = $this->rules->resolve($domainObj);
-            
-            // Gib nur den bereinigten Host zurück (registrable domain)
+
             $host = $resolvedDomain->registrableDomain()->toString();
-            
-            return !empty($host) ? $host : 'Domain could not be cleaned';
-            
-        } catch (\Exception $e) {
-            return 'Domain could not be cleaned';
+
+            return !empty($host) ? $host : null;
+        } catch (\Exception) {
+            return null;
         }
     }
 
@@ -106,12 +88,12 @@ class DomainUtility
      */
     public function getDomainByGetHostByAddr(string $remoteAddr): array
     {
-        $domain = gethostbyaddr($remoteAddr);
-        $cleanDomain = $this->cleanDnsOrWhoisDomain($domain);
+        $domain       = gethostbyaddr($remoteAddr);
+        $domainString = false !== $domain ? $domain : null;
+        $cleanDomain  = $this->cleanDomain($domainString);
 
-        if ($cleanDomain === 'Domain could not be cleaned') {
-            $cleanDomain = null;
-            $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+        if (null === $cleanDomain) {
+            $status      = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
         } else {
             $status = $this->getStatusDomain($cleanDomain);
         }
@@ -131,17 +113,15 @@ class DomainUtility
         $domainWhois = $this->whoisPyService->getWhoisData($remoteAddr);
         $cleanDomain = '';
         $details     = [];
-        $status = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
+        $status      = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
 
         if (!empty($domainWhois) && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
-            $domain = $domainWhois['company_domain'];
-            $cleanDomain = $this->cleanDnsOrWhoisDomain($domain);
-            if ($cleanDomain === 'Domain could not be cleaned') {
-                $cleanDomain = null;
-            } else {
-                $domain = $cleanDomain;
+            $domain      = $domainWhois['company_domain'];
+            $cleanDomain = $this->cleanDomain($domain);
+            if (!is_null($cleanDomain)) {
+                $domain  = $cleanDomain;
                 $details = $domainWhois;
-                $status = $this->getStatusDomain($domain);
+                $status  = $this->getStatusDomain($domain);
             }
         }
 
@@ -151,5 +131,4 @@ class DomainUtility
             'details' => ['pyservice' => $details],
         ];
     }
-
 }

@@ -10,11 +10,8 @@ use Twig\TwigFunction;
 
 class FloodlightLeadNameHelper extends AbstractExtension
 {
-    private EntityManagerInterface $entityManager;
-
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(private EntityManagerInterface $entityManager)
     {
-        $this->entityManager = $entityManager;
     }
 
     public function getFunctions(): array
@@ -24,9 +21,6 @@ class FloodlightLeadNameHelper extends AbstractExtension
         ];
     }
 
-    /**
-     * Erstellt einen Floodlight-spezifischen Lead-Namen wenn kein regulärer Name vorhanden ist.
-     */
     public function getFloodlightLeadName(Lead $lead, bool $lastFirst = false): ?string
     {
         if ($lead->getName($lastFirst)) {
@@ -46,12 +40,13 @@ class FloodlightLeadNameHelper extends AbstractExtension
 
         $result = $qb->getQuery()->getOneOrNullResult();
 
-        if ($result) {
-            $domain = $result['domain'];
-            $timestamp = $result['dateAdded']->format('Ymd-H:i');
-            return $domain . ' anonymous ' . $timestamp;
+        if (is_array($result) && isset($result['domain'], $result['dateAdded'])) {
+            $domain    = $result['domain'];
+            $timestamp = $result['dateAdded'] instanceof \DateTime ? $result['dateAdded']->format('Ymd-H:i') : '';
+
+            return 'anonymous '.$timestamp.' '.$domain;
         }
 
         return null;
     }
-} 
+}

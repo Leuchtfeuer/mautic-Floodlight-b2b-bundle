@@ -4,35 +4,22 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Helper;
 
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
-use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\Lead;
-use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\PageBundle\Entity\Hit;
-use Mautic\PageBundle\Model\PageModel;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status202Strategy;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status401Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status404Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status429Strategy;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
-use Psr\Log\LoggerInterface;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
-use Mautic\LeadBundle\Model\CompanyModel;
-
 
 class IpLookupRulesHelperTest extends MauticMysqlTestCase
 {
@@ -64,102 +51,52 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->em->flush();
         $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
         $form    = $crawler->selectButton('Save')->form();
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_key]']);
-        $form['integration_config[apiKeys][api_key]']->setValue('pro_123');
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
+        $form['integration_config[apiKeys][api_access_key_id]']->setValue('test_access_key_id');
+        $form['integration_config[apiKeys][api_secret_key]']->setValue('test_secret_key');
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
     }
 
-    private function getIpLookupRulesHelperMock(): IpLookupRulesHelper
+    // Disabled: getAndProcessFloodlightApiData returns void, not array
+    public function disabledtestGetDomainMethod(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-
-        return new IpLookupRulesHelper(
-            $this->createMock(PageModel::class),
-            $this->createMock(FloodlightLeadDomainsModel::class),
-            new WhoisPyService($logger),
-            $this->createMock(FloodlightCompanyDomainsModel::class),
-            $this->createMock(FloodlightService::class),
-            $this->createMock(Config::class),
-            $this->createMock(FieldHelper::class),
-            $this->createMock(CompanyModel::class),
-            $this->createMock(LeadModel::class),
-            $this->createMock(Reporter::class),
-            $this->createMock(Status200Strategy::class),
-            $this->createMock(DomainUtility::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status401Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-
-        );
+        $this->markTestSkipped('getAndProcessFloodlightApiData returns void, not array');
     }
 
-    //@TODO Impelement logic that doesn't rely on status200StrategyMock that much
-    public function teestGetDomainMethod(): void
-    {
-        $helper = $this->getIpLookupRulesHelperMock();
-        $lead = $this->createLead();
-        $domain = $helper->getAndProcessFloodlightApiData('127.0.0.1', $lead);
-        $this->assertIsArray($domain);
-        $this->assertEquals('localhost', $domain['domain']);
-    }
-
+    // Disabled: getDomainByGetHostByAddr method was removed
     public function disabledtestGetDomainByGetHostByAddr(): void
     {
-        $helper = $this->getIpLookupRulesHelperMock();
-        $result = $helper->getDomainByGetHostByAddr('127.0.0.1');
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('details', $result);
-        $this->assertIsArray($result['details']);
-        $this->assertIsString($result['details']['hostname']);
-        $this->assertEquals('localhost', $result['details']['hostname']);
+        $this->markTestSkipped('getDomainByGetHostByAddr method was removed');
     }
 
+    // Disabled: getDomainByGetHostByAddr method was removed
     public function disabledtestGetGoogleDomainByGetHostByAddr(): void
     {
-        $helper = $this->getIpLookupRulesHelperMock();
-        $result = $helper->getDomainByGetHostByAddr('8.8.8.8');
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('details', $result);
-        $this->assertIsArray($result['details']);
-        $this->assertIsString($result['details']['hostname']);
-        $this->assertEquals('dns.google', $result['details']['hostname']);
+        $this->markTestSkipped('getDomainByGetHostByAddr method was removed');
     }
 
+    // Disabled: getDomainByGetHostByAddr method was removed
     public function disabledtestGetDetailsDomainByGetHostByAddr(): void
     {
-        $helper = $this->getIpLookupRulesHelperMock();
-        $result = $helper->getDomainByGetHostByAddr('127.0.0.1');
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('details', $result);
-        $this->assertIsArray($result['details']);
-        $this->assertIsString($result['details']['hostname']);
-        $this->assertEquals('localhost', $result['details']['hostname']);
+        $this->markTestSkipped('getDomainByGetHostByAddr method was removed');
     }
 
     public function testCheckReturnFalseLessThanTwoTimes(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
         $helper = new IpLookupRulesHelper(
             self::getContainer()->get('mautic.page.model.page'),
             $this->createMock(FloodlightLeadDomainsModel::class),
-            new WhoisPyService($logger),
-            $this->createMock(FloodlightCompanyDomainsModel::class),
             $this->createMock(FloodlightService::class),
-            $this->createMock(Config::class),
-            $this->createMock(FieldHelper::class),
-            $this->createMock(CompanyModel::class),
-            $this->createMock(LeadModel::class),
             $this->createMock(Reporter::class),
             $this->createMock(Status200Strategy::class),
-            $this->createMock(DomainUtility::class),
             $this->createMock(Status202Strategy::class),
-            $this->createMock(Status401Strategy::class),
             $this->createMock(Status404Strategy::class),
             $this->createMock(Status429Strategy::class),
+            $this->createMock(Config::class)
         );
         $lead = $this->createLead();
         $hit  = $this->createHit($lead);
@@ -168,360 +105,51 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->assertFalse($result);
     }
 
-    //@TODO Impelement logic that doesn't rely on status200StrategyMock that much
+    // Disabled: Multiple interface changes and removed methods
     public function disabledtestEvaluateWithGetHostByAddress(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $config = $this->createMock(Config::class);
-        $config->method('isPublished')->willReturn(true);
-        $config->method('isConfigured')->willReturn(true);
-        $config->method('isProTier')->willReturn(false);
-        $leadDomain    = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
-        $companyDomain = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
-        $helper        = new IpLookupRulesHelper(
-            self::getContainer()->get('mautic.page.model.page'),
-            $leadDomain,
-            new WhoisPyService($logger),
-            $companyDomain,
-            $this->createMock(FloodlightService::class),
-            $config,
-            $this->createMock(FieldHelper::class),
-            $this->createMock(CompanyModel::class),
-            $this->createMock(LeadModel::class),
-            $this->createMock(Reporter::class),
-            $this->createMock(Status200Strategy::class),
-            $this->createMock(DomainUtility::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status401Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-        );
-        $lead             = $this->createLead();
-        $hit              = $this->createHit($lead);
-        $ip               = '127.0.0.2';
-        $leadDomain       = $helper->getAndProcessFloodlightApiData($ip, $lead);
-        $this->assertIsArray($leadDomain);
-        $result           = $helper->evaluate($hit, $leadDomain);
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('result', $result);
-        //        $this->assertIsNotArray($result['result']['leadDomain']);
-        $this->assertIsArray($result['result']);
-        $this->assertArrayHasKey('leadDomain', $result['result']);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
-        $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
-        $company = $result['result']['leadDomain']->getContact()->getPrimaryCompany();
-        $this->assertNotNull($company);
-        $this->assertInstanceOf(Company::class, $company);
-        $this->assertArrayHasKey('domain', $leadDomain);
-        $this->assertEquals($leadDomain['domain'], $company->getName());
+        $this->markTestSkipped('getAndProcessFloodlightApiData returns void and evaluate method removed');
     }
 
-    //@TODO Impelement logic that doesn't rely on status200StrategyMock that much
-    public function teestEvaluateWithFloodlightWithNoGetPrimaryDomain(): void
+    // Disabled: Multiple interface changes and removed methods
+    public function disabledtestEvaluateWithFloodlightWithNoGetPrimaryDomain(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $config = $this->createMock(Config::class);
-        $config->method('isPublished')->willReturn(true);
-        $config->method('isConfigured')->willReturn(true);
-        $config->method('isProTier')->willReturn(true);
-        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
-        $this->assertIsString($fileContent);
-        $floodlightData                       = json_decode($fileContent, true);
-        $this->assertIsArray($floodlightData);
-        $floodlightData['statusRequestCode'] = 200;
-        
-        $floodlightServiceMock = $this->createMock(FloodlightService::class);
-        $floodlightServiceMock->method('get')->willReturn($floodlightData);
-
-        // Status200Strategy Mock konfigurieren
-        $status200StrategyMock = $this->createMock(Status200Strategy::class);
-        $status200StrategyMock->method('prepareData')
-            ->willReturn([]); // Gibt leeres Array zurück statt false
-
-        $helper = new IpLookupRulesHelper(
-            self::getContainer()->get('mautic.page.model.page'),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
-            new WhoisPyService($logger),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
-            $floodlightServiceMock,
-            $config,
-            $this->createMock(FieldHelper::class),
-            $this->createMock(CompanyModel::class),
-            $this->createMock(LeadModel::class),
-            $this->createMock(Reporter::class),
-            $status200StrategyMock, // Verwende den konfigurierten Mock
-            $this->createMock(DomainUtility::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status401Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-        );
-        $lead                 = $this->createLead();
-        $hit                  = $this->createHit($lead);
-        $ip                   = '141.43.45.26';
-        $leadDomain           = $helper->getAndProcessFloodlightApiData($ip, $lead);
-        $this->assertIsArray($leadDomain);
-        $leadDomain['status'] = 'valid';
-        $leadDomain['domain'] = 'leuchtfeuer.com';
-        $result               = $helper->evaluate($hit, $leadDomain);
-        $this->assertIsArray($result);
-        $this->assertNotFalse($result);
-        $this->assertArrayHasKey('result', $result);
-        $this->assertIsArray($result['result']);
-        $this->assertArrayHasKey('leadDomain', $result['result']);
-        $this->assertNotFalse($result['result']['leadDomain']);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
-        $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
-
-        $company = $result['result']['leadDomain']->getContact()->getPrimaryCompany();
-        $this->assertNull($company);
+        $this->markTestSkipped('getAndProcessFloodlightApiData returns void and evaluate method removed');
     }
 
-        //@TODO Impelement logic that doesn't rely on status200StrategyMock that much
-    public function teestEvaluateWithFloodlight(): void
+    // Disabled: Multiple interface changes and removed methods
+    public function disabledtestEvaluateWithFloodlight(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $config = $this->createMock(Config::class);
-        $config->method('isPublished')->willReturn(true);
-        $config->method('isConfigured')->willReturn(true);
-        $config->method('isProTier')->willReturn(true);
-        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
-        $this->assertIsString($fileContent);
-        $floodlightData                       = json_decode($fileContent, true);
-        $this->assertIsArray($floodlightData);
-        $floodlightData['statusRequestCode']  = 200;
-        $floodlightServiceMock                = $this->createMock(FloodlightService::class);
-        $floodlightServiceMock->method('get')
-            ->willReturn($floodlightData);
-
-        $floodlightCompanyDomainsModelMock = $this->createMock(FloodlightCompanyDomainsModel::class);
-        $floodlightCompanyDomain           = new FloodlightCompanyDomains();
-        $floodlightCompanyDomainsModelMock->method('getCompanyDomains')
-            ->willReturn([$floodlightCompanyDomain]);
-        $floodlightLeadDomainsModel    = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
-        $floodlightCompanyDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
-        $helper                        = new IpLookupRulesHelper(
-            self::getContainer()->get('mautic.page.model.page'),
-            $floodlightLeadDomainsModel,
-            new WhoisPyService($logger),
-            $floodlightCompanyDomainsModel,
-            $floodlightServiceMock,
-            $config,
-            $this->createMock(FieldHelper::class),
-            $this->createMock(CompanyModel::class),
-            $this->createMock(LeadModel::class),
-            $this->createMock(Reporter::class),
-            $this->createMock(Status200Strategy::class),
-            $this->createMock(DomainUtility::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status401Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-        );
-
-        assert($floodlightCompanyDomainsModel instanceof FloodlightCompanyDomainsModel);
-        $companyDomains = $floodlightCompanyDomainsModel->getRepository()->findAll();
-        $this->assertEmpty($companyDomains);
-        $lead                 = $this->createLead();
-        $hit                  = $this->createHit($lead);
-        $ip                   = '141.43.45.26';
-        $leadDomain           = $helper->getAndProcessFloodlightApiData($ip, $lead);
-        $this->assertIsArray($leadDomain);
-
-        $leadDomain['status'] = 'valid';
-        $leadDomain['domain'] = 'le-non.de';
-        $result               = $helper->evaluate($hit, $leadDomain);
-        $this->assertIsArray($result);
-        $this->assertArrayHasKey('result', $result);
-        $this->assertIsArray($result['result']);
-        $this->assertArrayHasKey('leadDomain', $result['result']);
-        $this->assertNotFalse($result['result']['leadDomain']);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $result['result']['leadDomain']);
-        $this->assertInstanceOf(Lead::class, $result['result']['leadDomain']->getContact());
-
-        $companyDomains = $floodlightCompanyDomainsModel->getRepository()->findAll();
-
-        $this->assertCount(1, $companyDomains);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomains[0]);
-        $company = $companyDomains[0]->getCompany();
-        $this->assertInstanceOf(Company::class, $company);
-        $this->assertNotNull($company);
-        $this->assertInstanceOf(Company::class, $company);
-        $this->assertEquals($floodlightData['companyname'], $company->getName());
-        $this->assertEquals($floodlightData['companyannual_revenue_range'], $company->getFieldValue('f4b_companyannual_revenue_range'));
-        $this->assertEquals($floodlightData['companyindustry'], $company->getIndustry());
-        $this->assertEquals($floodlightData['companyindustry_naics'], $company->getFieldValue('f4b_companyindustry_naicscode'));
+        $this->markTestSkipped('getAndProcessFloodlightApiData returns void and evaluate method removed');
     }
 
     public function disabledtestGetDomainWithFloodLightNoGetPrimaryCompany(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $config = $this->createMock(Config::class);
-        $config->method('isPublished')->willReturn(true);
-        $config->method('isConfigured')->willReturn(true);
-        $config->method('isProTier')->willReturn(true);
-        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
-        $this->assertIsString($fileContent);
-        $floodlightData                       = json_decode($fileContent, true);
-        $this->assertIsArray($floodlightData);
-        $floodlightData['statusRequestCode']  = 202;
-        $floodlightServiceMock                = $this->createMock(FloodlightService::class);
-        $floodlightServiceMock->method('get')
-            ->willReturn($floodlightData);
-
-        $floodlightCompanyDomainsModelMock = $this->createMock(FloodlightCompanyDomainsModel::class);
-        $floodlightCompanyDomain           = new FloodlightCompanyDomains();
-        $floodlightCompanyDomainsModelMock->method('getCompanyDomains')
-            ->willReturn([$floodlightCompanyDomain]);
-        $helper = new IpLookupRulesHelper(
-            self::getContainer()->get('mautic.page.model.page'),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
-            new WhoisPyService($logger),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
-            $floodlightServiceMock,
-            $config,
-            $this->createMock(FieldHelper::class),
-            $this->createMock(CompanyModel::class),
-            $this->createMock(LeadModel::class),
-            $this->createMock(Reporter::class),
-            $this->createMock(Status200Strategy::class),
-            $this->createMock(DomainUtility::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status401Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-        );
-        $lead = $this->createLead();
-        $domain = $helper->getAndProcessFloodlightApiData('127.0.0.1', $lead);
-        $this->assertIsArray($domain);
-        $this->assertArrayHasKey('domain', $domain);
-        $this->assertArrayHasKey('status', $domain);
-        $this->assertEmpty($domain['domain']);
-        $this->assertSame('retry', $domain['status']);
+        $this->markTestSkipped('getAndProcessFloodlightApiData returns void and removed method');
     }
 
     public function disabledtestGetDomainWithFloodLightWith404(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $config = $this->createMock(Config::class);
-        $config->method('isPublished')->willReturn(true);
-        $config->method('isConfigured')->willReturn(true);
-        $config->method('isProTier')->willReturn(true);
-        $fileContent = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
-        $this->assertIsString($fileContent);
-        $floodlightData                       = json_decode($fileContent, true);
-        $this->assertIsArray($floodlightData);
-        $floodlightData['statusRequestCode']  = 404;
-        $floodlightServiceMock                = $this->createMock(FloodlightService::class);
-        $floodlightServiceMock->method('get')
-            ->willReturn($floodlightData);
-
-        $floodlightCompanyDomainsModelMock = $this->createMock(FloodlightCompanyDomainsModel::class);
-        $floodlightCompanyDomain           = new FloodlightCompanyDomains();
-        $floodlightCompanyDomainsModelMock->method('getCompanyDomains')
-            ->willReturn([$floodlightCompanyDomain]);
-        $helper = new IpLookupRulesHelper(
-            self::getContainer()->get('mautic.page.model.page'),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
-            new WhoisPyService($logger),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
-            $floodlightServiceMock,
-            $config,
-            $this->createMock(FieldHelper::class),
-            $this->createMock(CompanyModel::class),
-            $this->createMock(LeadModel::class),
-            $this->createMock(Reporter::class),
-            $this->createMock(Status200Strategy::class),
-            $this->createMock(DomainUtility::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status401Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-        );
-        $lead = $this->createLead();
-        $domain = $helper->getAndProcessFloodlightApiData('127.0.0.1', $lead);
-        $this->assertIsArray($domain);
-        $this->assertArrayHasKey('domain', $domain);
-        $this->assertArrayHasKey('status', $domain);
-        $this->assertArrayHasKey('details', $domain);
-        $this->assertSame($domain['status'], '404');
-        $this->assertEmpty($domain['domain']);
-        $this->assertIsArray($domain['details']);
-        $this->assertArrayHasKey('statusRequest', $domain['details']);
-        $this->assertSame($domain['details']['statusRequest'], 404);
-        assert($domain['details']['floodlight'] instanceof FloodlightDTO);
+        $this->markTestSkipped('getAndProcessFloodlightApiData returns void, not array');
     }
 
     public function disabledtestGetDomainWithFloodLightWith202(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
-        $config = $this->createMock(Config::class);
-        $config->method('isPublished')->willReturn(true);
-        $config->method('isConfigured')->willReturn(true);
-        $config->method('isProTier')->willReturn(true);
-        $fileContent                          = file_get_contents(__DIR__.'/../fixtures/floodlight.json');
-        $this->assertIsString($fileContent);
-        $floodlightData                       = json_decode($fileContent, true);
-        $this->assertIsArray($floodlightData);
-        $floodlightData['statusRequestCode']  = 202;
-        $floodlightServiceMock                = $this->createMock(FloodlightService::class);
-        $floodlightServiceMock->method('get')
-            ->willReturn($floodlightData);
-
-        $floodlightCompanyDomainsModelMock = $this->createMock(FloodlightCompanyDomainsModel::class);
-        $floodlightCompanyDomain           = new FloodlightCompanyDomains();
-        $floodlightCompanyDomainsModelMock->method('getCompanyDomains')
-            ->willReturn([$floodlightCompanyDomain]);
-        $helper = new IpLookupRulesHelper(
-            self::getContainer()->get('mautic.page.model.page'),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
-            new WhoisPyService($logger),
-            self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains'),
-            $floodlightServiceMock,
-            $config,
-            $this->createMock(FieldHelper::class),
-            $this->createMock(CompanyModel::class),
-            $this->createMock(LeadModel::class),
-            $this->createMock(Reporter::class),
-            $this->createMock(Status200Strategy::class),
-            $this->createMock(DomainUtility::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status401Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-        );
-        $lead = $this->createLead();
-        $domain = $helper->getAndProcessFloodlightApiData('123.0.0.1', $lead);
-        $this->assertIsArray($domain);
-        $this->assertArrayHasKey('domain', $domain);
-        $this->assertSame('retry', $domain['status']);
-        $this->assertIsArray($domain['details']);
-        $this->assertArrayHasKey('floodlight', $domain['details']);
-        assert($domain['details']['floodlight'] instanceof FloodlightDTO);
-        $this->assertNotSame($domain['details']['floodlight']->getCompanyName(), $floodlightData['companyname']);
-        $this->assertNotSame($domain['details']['floodlight']->getIpHash(), 'local');
+        $this->markTestSkipped('getAndProcessFloodlightApiData returns void, not array');
     }
 
     public function testCheckIpLookUpCanBeProcessed(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
         $helper = new IpLookupRulesHelper(
             self::getContainer()->get('mautic.page.model.page'),
             self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains'),
-            new WhoisPyService($logger),
-            $this->createMock(FloodlightCompanyDomainsModel::class),
             $this->createMock(FloodlightService::class),
-            $this->createMock(Config::class),
-            $this->createMock(FieldHelper::class),
-            $this->createMock(CompanyModel::class),
-            $this->createMock(LeadModel::class),
             $this->createMock(Reporter::class),
             $this->createMock(Status200Strategy::class),
-            $this->createMock(DomainUtility::class),
             $this->createMock(Status202Strategy::class),
-            $this->createMock(Status401Strategy::class),
             $this->createMock(Status404Strategy::class),
             $this->createMock(Status429Strategy::class),
+            $this->createMock(Config::class)
         );
         // Test with just one hit
         $lead    = $this->createLead();
