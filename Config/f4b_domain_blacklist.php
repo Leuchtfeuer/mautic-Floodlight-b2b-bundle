@@ -113,6 +113,7 @@ thundercloud.uk
 t-ipconnect.de
 tlh.ro
 versanet.de
+vodafone.com
 vodafone.de
 vodafonedsl.it
 vodafone-ip.de
