@@ -10,6 +10,9 @@
       "email": "mautic-plugins@Leuchtfeuer.com"
     }
   ],
+  "require": {
+    "jeremykendall/php-domain-parser": "^6.1"
+  },
   "extra": {
     "install-directory-name": "LeuchtfeuerFloodlightB2BBundle"
   },
