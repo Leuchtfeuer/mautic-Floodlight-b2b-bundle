@@ -599,16 +599,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $lead;
     }
 
-    public function beforeTearDown(): void
-    {
-        /*
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
-        if (file_exists($configPathTo)) {
-            unlink($configPathTo);
-        }
-        */
-    }
-
     private function setBackDateModifiedByTwoHours(FloodlightLeadDomains $leadDomain): void
     {
         $leadDomain->setDateModified(new \DateTime('-2 hours'));

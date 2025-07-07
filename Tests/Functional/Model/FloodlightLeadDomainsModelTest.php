@@ -95,21 +95,24 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
 
     public function disabledtestIsBlackListed(): void
     {
-        $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
-        assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
-        $domain     = 'lfexample.com';
-        $leadDomain = $this->addNewLeadDomainModel($domain);
-        $domain     = $leadDomain->getDomain();
+        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domain        = 'lfexample.com';
+        $leadDomain    = $this->addNewLeadDomainModel($domain);
+        $domain        = $leadDomain->getDomain();
         $this->assertNotNull($domain);
-        $this->assertFalse($floodlightLeadDomainsModel->isBlackListed($domain));
+        $this->assertFalse($domainUtility->isBlackListed($domain));
 
-        (new DomainBlacklistHelper())->add($domain);
-        $this->assertTrue($floodlightLeadDomainsModel->isBlackListed($domain));
+        $domainBalcklistHelper = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist');
+        assert($domainBalcklistHelper instanceof DomainBlacklistHelper);
+        $domainBalcklistHelper->add($domain);
+        $this->assertTrue($domainUtility->isBlackListed($domain));
 
         $leadDomainTwo = $this->addNewLeadDomainModel('test.lfexample.com');
         $domainTwo     = $leadDomainTwo->getDomain();
         $this->assertNotNull($domainTwo);
-        $this->assertTrue($floodlightLeadDomainsModel->isBlackListed($domainTwo));
+        $this->assertTrue($domainUtility->isBlackListed($domainTwo));
+
+        $domainBalcklistHelper->remove($domain);
     }
 
     public function testRecauculatLeadPrimaryCompany(): void
@@ -211,14 +214,6 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         copy($pluginPathFrom, $configPathTo);
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
-    }
-
-    public function beforeTearDown(): void
-    {
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
-        if (file_exists($configPathTo)) {
-            unlink($configPathTo);
-        }
     }
 
     private function addNewLeadDomainModel(string $domain = 'example.com'): FloodlightLeadDomains

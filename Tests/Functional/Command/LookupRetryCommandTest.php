@@ -117,7 +117,7 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
     {
         $this->activatePlugin();
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryip', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryIpHash', 1, FloodlightLeadDomains::STATUS_RETRY);
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
@@ -134,7 +134,7 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
     {
         $this->activatePlugin();
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryip', 2, FloodlightLeadDomains::STATUS_RETRY);
+        $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryIpHash', 2, FloodlightLeadDomains::STATUS_RETRY);
 
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 

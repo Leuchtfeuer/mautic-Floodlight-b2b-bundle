@@ -16,8 +16,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -69,31 +67,6 @@ class FloodlightLeadDomainsModel extends FormModel
         return $entity;
     }
 
-    public function isBlackListed(string $domain): bool
-    {
-        $keywordBlacklist = (new KeywordBlacklistHelper())->get();
-        $domainLower      = strtolower($domain);
-
-        foreach ($keywordBlacklist as $keyword) {
-            if (str_contains($domainLower, strtolower($keyword))) {
-                return true;
-            }
-        }
-
-        $blacklist = (new DomainBlacklistHelper())->get();
-
-        if (!empty($blacklist) && in_array($domain, $blacklist, true)) {
-            return true;
-        }
-        foreach ($blacklist as $blacklistedDomain) {
-            if (fnmatch('*.'.$blacklistedDomain, $domain)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * @param array{
      *     status: string,
@@ -127,13 +100,21 @@ class FloodlightLeadDomainsModel extends FormModel
      */
     public function getLeadDomainByContactDomainStatusAndIphash(Lead $lead, array $dataDomain): FloodlightLeadDomains
     {
+        $ipHash = null;
+        if (isset($dataDomain['details'])
+            && is_array($dataDomain['details'])
+            && isset($dataDomain['details']['floodlight'])
+            && $dataDomain['details']['floodlight'] instanceof FloodlightDTO
+        ) {
+            $ipHash = $dataDomain['details']['floodlight']->getIpHash();
+        }
+
         $floodlightLeadDomain = $this->getRepository()->findOneBy(
             [
                 'contact'    => $lead,
                 'domain'     => $dataDomain['domain'],
                 'status'     => $dataDomain['status'],
-                // To be added once floodlight server returns 404 with ipHash
-                // 'ipHash'    => $dataDomain['details']['floodlight']->getIpHash(),
+                'ipHash'     => $ipHash,
             ]
         );
 

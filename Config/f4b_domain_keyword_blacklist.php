@@ -1,2 +1,2 @@
 floodlightblacklistkeyword
-amazon
+amazon.
