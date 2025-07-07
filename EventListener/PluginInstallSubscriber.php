@@ -286,7 +286,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->installHelper->copyBlacklistFile();
+        $this->installHelper->copyBlacklistFiles();
         foreach (self::FIELD_DATA as $fieldData) {
             $options = [];
             if (isset($fieldData['properties'])) {

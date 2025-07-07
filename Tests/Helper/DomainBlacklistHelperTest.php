@@ -20,8 +20,12 @@ class DomainBlacklistHelperTest extends MauticMysqlTestCase
         if (!file_exists($configPathTo)) {
             copy($pluginPathFrom, $configPathTo);
         }
-        $this->domainBlackList = new DomainBlacklistHelper();
-        $this->domain          = 'foobaa';
+
+        $pathsHelper = self::getContainer()->get('mautic.helper.paths');
+        \assert($pathsHelper instanceof \Mautic\CoreBundle\Helper\PathsHelper);
+        $this->domainBlackList = new DomainBlacklistHelper($pathsHelper);
+
+        $this->domain = 'foobaa';
         $this->domainBlackList->remove('foobaa');
     }
 
@@ -36,6 +40,7 @@ class DomainBlacklistHelperTest extends MauticMysqlTestCase
         $this->assertFalse(in_array($this->domain, $this->domainBlackList->get()));
         $this->domainBlackList->add($this->domain);
         $this->assertTrue(in_array($this->domain, $this->domainBlackList->get()));
+        $this->domainBlackList->remove($this->domain);
     }
 
     public function testRemoveDomain(): void
@@ -44,13 +49,5 @@ class DomainBlacklistHelperTest extends MauticMysqlTestCase
         $this->assertTrue(in_array($this->domain, $this->domainBlackList->get()));
         $this->domainBlackList->remove($this->domain);
         $this->assertFalse(in_array($this->domain, $this->domainBlackList->get()));
-    }
-
-    public function beforeTearDown(): void
-    {
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
-        if (file_exists($configPathTo)) {
-            unlink($configPathTo);
-        }
     }
 }

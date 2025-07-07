@@ -2,7 +2,6 @@ floodlightblacklistdomain.com
 hostglobal.plus
 1and1.org
 cloud.eu
-this-is-a-tor-exit
 accessdomain.com
 akaquill.net
 amazonaws.com

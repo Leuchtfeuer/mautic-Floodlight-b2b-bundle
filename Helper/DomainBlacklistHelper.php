@@ -2,16 +2,21 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
+use Mautic\CoreBundle\Helper\PathsHelper;
+
 class DomainBlacklistHelper
 {
-    public const BLACKLIST_PATH_FILE = __DIR__.'/../../../config/f4b_domain_blacklist.php';
+    private string $blacklistPath;
 
     /**
      * @param array<string> $blacklist
      */
-    public function __construct(private array $blacklist = [])
-    {
-        $this->blacklist = $this->readFile();
+    public function __construct(
+        private PathsHelper $pathsHelper,
+        private array $blacklist = []
+    ) {
+        $this->blacklistPath = $this->pathsHelper->getRootPath().'/config/f4b_domain_blacklist.php';
+        $this->blacklist     = $this->readFile();
     }
 
     /**
@@ -19,7 +24,7 @@ class DomainBlacklistHelper
      */
     private function readFile(): array
     {
-        $fileContent = file_get_contents(self::BLACKLIST_PATH_FILE);
+        $fileContent = file_get_contents($this->blacklistPath);
         if (false === $fileContent) {
             return [];
         }
@@ -39,7 +44,7 @@ class DomainBlacklistHelper
     private function saveFile(): void
     {
         $textFile = implode(PHP_EOL, $this->blacklist);
-        file_put_contents(self::BLACKLIST_PATH_FILE, $textFile);
+        file_put_contents($this->blacklistPath, $textFile);
     }
 
     /**

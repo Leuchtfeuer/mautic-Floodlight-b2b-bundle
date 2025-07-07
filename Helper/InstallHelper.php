@@ -12,13 +12,18 @@ class InstallHelper
     ) {
     }
 
-    public function copyBlacklistFile(): void
+    public function copyBlacklistFiles(): void
     {
-        $blacklistFile = $this->pathsHelper->getRootPath().'/config/f4b_domain_blacklist.php';
-        if (!file_exists($blacklistFile)) {
+        $blacklistFilePath = $this->pathsHelper->getRootPath().'/config/f4b_domain_blacklist.php';
+        if (!file_exists($blacklistFilePath)) {
             $configPath   = $this->pathsHelper->getPluginsPath().'/LeuchtfeuerFloodlightB2BBundle/Config/f4b_domain_blacklist.php';
-            $configPathTo = $this->pathsHelper->getRootPath().'/config/f4b_domain_blacklist.php';
-            copy($configPath, $configPathTo);
+            copy($configPath, $blacklistFilePath);
+        }
+
+        $keywordBlacklistFilePath = $this->pathsHelper->getRootPath().'/config/f4b_domain_keyword_blacklist.php';
+        if (!file_exists($keywordBlacklistFilePath)) {
+            $configPath   = $this->pathsHelper->getPluginsPath().'/LeuchtfeuerFloodlightB2BBundle/Config/f4b_domain_keyword_blacklist.php';
+            copy($configPath, $keywordBlacklistFilePath);
         }
     }
 

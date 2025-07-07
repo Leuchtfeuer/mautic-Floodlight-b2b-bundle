@@ -6,6 +6,7 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
 class FloodlightDTOTest extends MauticMysqlTestCase
 {
@@ -14,6 +15,13 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     public function setUp(): void
     {
         parent::setUp();
+
+        $configPathTo   = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
+        $pluginPathFrom = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
+        if (!file_exists($configPathTo)) {
+            copy($pluginPathFrom, $configPathTo);
+        }
+
         $this->loadDTO();
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);

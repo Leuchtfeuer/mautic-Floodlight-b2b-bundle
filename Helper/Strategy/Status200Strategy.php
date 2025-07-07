@@ -83,6 +83,10 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
         $this->leadDomainsModel->deleteOldRetryEntries($leadDomain, $lead);
 
+        if (FloodlightLeadDomains::STATUS_SUCCESS !== $processedData['status'] || '' === $processedData['domain']) {
+            return;
+        }
+
         $company = $this->companyRepository->findOneBy(['name' => $processedData['details']['floodlight']->getCompanyName()]);
 
         if (empty($company)) {

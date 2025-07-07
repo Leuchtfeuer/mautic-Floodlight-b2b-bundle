@@ -3,7 +3,8 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility;
 
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
 use Pdp\Domain;
 use Pdp\Rules;
@@ -13,8 +14,9 @@ class DomainUtility
     private ?Rules $rules = null;
 
     public function __construct(
-        private FloodlightLeadDomainsModel $leadDomainsModel,
         private WhoisPyService $whoisPyService,
+        private KeywordBlacklistHelper $keywordBlacklistHelper,
+        private DomainBlacklistHelper $domainBlacklistHelper
     ) {
     }
 
@@ -28,7 +30,7 @@ class DomainUtility
             return FloodlightLeadDomains::STATUS_IP_DOMAIN;
         }
 
-        if ($this->leadDomainsModel->isBlackListed($domain)) {
+        if ($this->isBlackListed($domain)) {
             return FloodlightLeadDomains::STATUS_BLACKLISTED;
         }
 
@@ -130,5 +132,30 @@ class DomainUtility
             'domain'  => $cleanDomain,
             'details' => ['pyservice' => $details],
         ];
+    }
+
+    public function isBlackListed(string $domain): bool
+    {
+        $keywordBlacklist = $this->keywordBlacklistHelper->get();
+        $domainLower      = strtolower($domain);
+
+        foreach ($keywordBlacklist as $keyword) {
+            if (str_contains($domainLower, strtolower($keyword))) {
+                return true;
+            }
+        }
+
+        $blacklist = $this->domainBlacklistHelper->get();
+
+        if (!empty($blacklist) && in_array($domain, $blacklist, true)) {
+            return true;
+        }
+        foreach ($blacklist as $blacklistedDomain) {
+            if (fnmatch('*.'.$blacklistedDomain, $domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

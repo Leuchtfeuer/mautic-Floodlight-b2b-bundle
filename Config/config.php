@@ -79,8 +79,9 @@ return [
             'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility::class,
                 'arguments' => [
-                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
                     'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.keywordblacklist',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist',
                 ],
             ],
             'mautic.floodlight_lead_name_helper' => [
@@ -110,10 +111,16 @@ return [
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist' => [
-                'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper::class,
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper::class,
+                'arguments' => [
+                    'mautic.helper.paths',
+                ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.helper.keywordblacklist' => [
-                'class' => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper::class,
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper::class,
+                'arguments' => [
+                    'mautic.helper.paths',
+                ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.helper.iplookuprules' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper::class,
