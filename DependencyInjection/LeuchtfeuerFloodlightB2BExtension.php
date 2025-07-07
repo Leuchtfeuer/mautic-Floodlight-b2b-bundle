@@ -11,7 +11,7 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 
 class LeuchtfeuerFloodlightB2BExtension extends Extension
 {
-    private const DEFAULT_FLOODLIGHT_API_URL = 'https://api-dev.floodlight-b2b.com';
+    private const DEFAULT_FLOODLIGHT_API_URL = 'https://api.floodlight-b2b.com';
     private const ENV_FLOODLIGHT_API_URL     = 'FLOODLIGHT_API_URL'; // Environment variable name
     private const PARAM_FLOODLIGHT_API_URL   = 'mautic.leuchtfeuerfloodlightb2b.floodlight_api_url';
     // Suffix for the key Mautic uses to store bundle parameters
