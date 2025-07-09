@@ -5,7 +5,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 use Mautic\CoreBundle\Helper\PathsHelper;
 
 /**
- * Service to load the embedded jeremykendall/php-domain-parser library.
+ * Service to load the embedded php-domain-parser library.
  */
 class PdpLoader
 {
@@ -22,12 +22,24 @@ class PdpLoader
             return;
         }
 
+        if ($this->isAvailableViaComposer()) {
+            self::$loaded = true;
+
+            return;
+        }
+
         $basePath = $this->pathsHelper->getPluginsPath().'/LeuchtfeuerFloodlightB2BBundle/Vendor/Pdp/src/';
 
         if (!file_exists($basePath.'Rules.php')) {
-            throw new \RuntimeException(sprintf('PHP Domain Parser library files not found in Vendor/Pdp/src/. Expected: %s', $basePath.'Rules.php'));
+            throw new \RuntimeException('PHP Domain Parser library not found');
         }
 
+        $this->loadFiles($basePath);
+        self::$loaded = true;
+    }
+
+    private function loadFiles(string $basePath): void
+    {
         // Load interfaces in right order
         $interfaceFiles = [
             'CannotProcessHost.php',
@@ -44,7 +56,7 @@ class PdpLoader
 
         foreach ($interfaceFiles as $interfaceFile) {
             $filePath = $basePath.$interfaceFile;
-            if (file_exists($filePath)) {
+            if (file_exists($filePath) && !interface_exists('Pdp\\'.pathinfo($interfaceFile, PATHINFO_FILENAME))) {
                 require_once $filePath;
             }
         }
@@ -122,12 +134,15 @@ class PdpLoader
                 require_once $filePath;
             }
         }
-
-        self::$loaded = true;
     }
 
     public function isLoaded(): bool
     {
         return self::$loaded;
+    }
+
+    public function isAvailableViaComposer(): bool
+    {
+        return class_exists('Pdp\\Rules') && class_exists('Pdp\\Domain');
     }
 }
