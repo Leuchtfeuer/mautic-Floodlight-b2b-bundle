@@ -21,6 +21,12 @@ return [
                     '%mautic.leuchtfeuerfloodlightb2b.floodlight_api_url%',
                 ],
             ],
+            'mautic.leuchtfeuerfloodlightb2b.services.pdploader' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader::class,
+                'arguments' => [
+                    'mautic.helper.paths',
+                ],
+            ],
             'mautic.leuchtfeuerfloodlightb2b.connection.credentials' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials::class,
                 'arguments' => [
@@ -83,6 +89,7 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.helper.keywordblacklist',
                     'mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist',
                     'mautic.helper.paths',
+                    'mautic.leuchtfeuerfloodlightb2b.services.pdploader',
                 ],
             ],
             'mautic.floodlight_lead_name_helper' => [

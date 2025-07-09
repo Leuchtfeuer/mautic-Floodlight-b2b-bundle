@@ -13,6 +13,7 @@ return function (ContainerConfigurator $configurator): void {
         ->public();
 
     $excludes = [
+        'Vendor',
     ];
     $services->load('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\', '../')
         ->exclude('../{'.implode(',', array_merge(MauticCoreExtension::DEFAULT_EXCLUDES, $excludes)).'}');
