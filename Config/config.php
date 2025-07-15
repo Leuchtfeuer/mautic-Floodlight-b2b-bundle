@@ -82,6 +82,7 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice',
                     'mautic.leuchtfeuerfloodlightb2b.helper.keywordblacklist',
                     'mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist',
+                    'mautic.helper.paths',
                 ],
             ],
             'mautic.floodlight_lead_name_helper' => [

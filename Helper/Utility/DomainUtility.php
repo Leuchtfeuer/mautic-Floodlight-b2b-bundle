@@ -2,6 +2,7 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility;
 
+use Mautic\CoreBundle\Helper\PathsHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
@@ -16,7 +17,8 @@ class DomainUtility
     public function __construct(
         private WhoisPyService $whoisPyService,
         private KeywordBlacklistHelper $keywordBlacklistHelper,
-        private DomainBlacklistHelper $domainBlacklistHelper
+        private DomainBlacklistHelper $domainBlacklistHelper,
+        private PathsHelper $pathsHelper
     ) {
     }
 
@@ -48,8 +50,9 @@ class DomainUtility
 
         try {
             if (null === $this->rules) {
-                $this->rules = Rules::fromPath(
-                    'https://publicsuffix.org/list/public_suffix_list.dat'
+                $suffixListPath = $this->pathsHelper->getPluginsPath().'/LeuchtfeuerFloodlightB2BBundle/Config/public_suffix_list.dat';
+                $this->rules    = Rules::fromPath(
+                    $suffixListPath
                 );
             }
 
