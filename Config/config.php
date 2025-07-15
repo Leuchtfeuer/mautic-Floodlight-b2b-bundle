@@ -90,7 +90,6 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist',
                     'mautic.helper.paths',
                     'mautic.leuchtfeuerfloodlightb2b.services.pdploader',
-                    'monolog.logger.mautic',
                 ],
             ],
             'mautic.floodlight_lead_name_helper' => [

@@ -10,7 +10,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
 use Pdp\Domain;
 use Pdp\Rules;
-use Psr\Log\LoggerInterface;
 
 class DomainUtility
 {
@@ -22,7 +21,6 @@ class DomainUtility
         private DomainBlacklistHelper $domainBlacklistHelper,
         private PathsHelper $pathsHelper,
         private PdpLoader $pdpLoader,
-        private LoggerInterface $logger,
     ) {
     }
 
@@ -155,7 +153,6 @@ class DomainUtility
             }
 
             if (str_contains($domainLower, strtolower($keyword))) {
-                $this->logger->warning("1 Domain '{$domain}' blacklisted because of keyword '{$keyword}'");
                 return true;
             }
         }
@@ -169,12 +166,10 @@ class DomainUtility
             }
 
             if (strtolower($domain) === strtolower($blacklistedDomain)) {
-                $this->logger->warning("2 Domain '{$domain}' blacklisted because of exact domain match '{$blacklistedDomain}'");
                 return true;
             }
 
-            if (fnmatch('*.' . strtolower($blacklistedDomain), $domainLower)) {
-                $this->logger->warning("3 Domain '{$domain}' blacklisted because of subdomain match '{$blacklistedDomain}'");
+            if (fnmatch('*.'.strtolower($blacklistedDomain), $domainLower)) {
                 return true;
             }
         }
