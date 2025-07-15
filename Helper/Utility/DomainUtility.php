@@ -6,6 +6,7 @@ use Mautic\CoreBundle\Helper\PathsHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
 use Pdp\Domain;
 use Pdp\Rules;
@@ -18,7 +19,8 @@ class DomainUtility
         private WhoisPyService $whoisPyService,
         private KeywordBlacklistHelper $keywordBlacklistHelper,
         private DomainBlacklistHelper $domainBlacklistHelper,
-        private PathsHelper $pathsHelper
+        private PathsHelper $pathsHelper,
+        private PdpLoader $pdpLoader,
     ) {
     }
 
@@ -44,6 +46,8 @@ class DomainUtility
      */
     public function cleanDomain(?string $domain): ?string
     {
+        $this->pdpLoader->load();
+
         if (is_null($domain) || empty($domain)) {
             return null;
         }
