@@ -10,6 +10,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
 use Pdp\Domain;
 use Pdp\Rules;
+use Psr\Log\LoggerInterface;
 
 class DomainUtility
 {
@@ -21,6 +22,7 @@ class DomainUtility
         private DomainBlacklistHelper $domainBlacklistHelper,
         private PathsHelper $pathsHelper,
         private PdpLoader $pdpLoader,
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -147,18 +149,32 @@ class DomainUtility
         $domainLower      = strtolower($domain);
 
         foreach ($keywordBlacklist as $keyword) {
+            $keyword = trim($keyword);
+            if (empty($keyword)) {
+                continue;
+            }
+
             if (str_contains($domainLower, strtolower($keyword))) {
+                $this->logger->warning("1 Domain '{$domain}' blacklisted because of keyword '{$keyword}'");
                 return true;
             }
         }
 
         $blacklist = $this->domainBlacklistHelper->get();
 
-        if (!empty($blacklist) && in_array($domain, $blacklist, true)) {
-            return true;
-        }
         foreach ($blacklist as $blacklistedDomain) {
-            if (fnmatch('*.'.$blacklistedDomain, $domain)) {
+            $blacklistedDomain = trim($blacklistedDomain);
+            if (empty($blacklistedDomain)) {
+                continue;
+            }
+
+            if (strtolower($domain) === strtolower($blacklistedDomain)) {
+                $this->logger->warning("2 Domain '{$domain}' blacklisted because of exact domain match '{$blacklistedDomain}'");
+                return true;
+            }
+
+            if (fnmatch('*.' . strtolower($blacklistedDomain), $domainLower)) {
+                $this->logger->warning("3 Domain '{$domain}' blacklisted because of subdomain match '{$blacklistedDomain}'");
                 return true;
             }
         }
