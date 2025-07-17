@@ -9,7 +9,6 @@ use Mautic\CoreBundle\Model\FormModel;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Translation\Translator;
 use Mautic\LeadBundle\Entity\Company;
-use Mautic\LeadBundle\Model\CompanyModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
@@ -28,7 +27,6 @@ class FloodlightCompanyDomainsModel extends FormModel
         UserHelper $userHelper,
         LoggerInterface $logger,
         CoreParametersHelper $coreParametersHelper,
-        private CompanyModel $companiesModel,
         private DomainUtility $domainUtility
     ) {
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $logger, $coreParametersHelper);
@@ -90,6 +88,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         }
     }
 
+    /*
     public function saveDomainsForNonFloodlightCompanies(): void
     {
         $connection = $this->em->getConnection();
@@ -126,6 +125,7 @@ class FloodlightCompanyDomainsModel extends FormModel
             $this->saveEntity($companyDomain);
         }
     }
+    */
 
     /**
      * @return mixed[]

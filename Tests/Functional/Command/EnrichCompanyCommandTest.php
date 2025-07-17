@@ -44,6 +44,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
     {
         $this->activatePlugin(true, 'invalidAccessKeyId', 'invalidSecretKey');
         $company       = $this->addCompany('Test Company');
+        $companyDomain = $this->addCompanyDomain('leuchtfeuer.com', $company);
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
         $this->assertStringContainsString('You are using an invalid API key', $commandTester->getDisplay());
     }
@@ -55,6 +56,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
     {
         $this->activatePlugin();
         $company       = $this->addCompany('Test Company');
+        $companyDomain = $this->addCompanyDomain('leuchtfeuer.com', $company);
 
         // First 200 command --> company should be updated
         $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
@@ -114,6 +116,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
     {
         $this->activatePlugin();
         $company       = $this->addCompany('Test Company', 'https://localhostdomain1245.com');
+        $companyDomain = $this->addCompanyDomain('localhostdomain1245.com', $company);
 
         // First 404 command, enrichment date should be set to current date
         $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
@@ -170,5 +173,19 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $company;
+    }
+
+    private function addCompanyDomain(string $domain, Company $company): FloodlightCompanyDomains
+    {
+        $companyDomain = new FloodlightCompanyDomains();
+        $companyDomain->setDomain($domain);
+        $companyDomain->setCompany($company);
+        $companyDomain->setIsPrimaryDomain(true);
+        $companyDomain->setDateAdded(new \DateTime());
+        $companyDomain->setDateModified(new \DateTime());
+        $this->em->persist($companyDomain);
+        $this->em->flush();
+
+        return $companyDomain;
     }
 }
