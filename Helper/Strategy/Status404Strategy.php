@@ -3,14 +3,15 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy;
 
 use Mautic\LeadBundle\Entity\Lead;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 
 class Status404Strategy
 {
     public function __construct(
         private FloodlightLeadDomainsModel $leadDomainsModel,
+        private FloodlightDtoFactory $dtoFactory,
     ) {
     }
 
@@ -26,7 +27,7 @@ class Status404Strategy
      */
     public function prepareData(array $data): array
     {
-        $floodlightDTO = new FloodlightDTO($data);
+        $floodlightDTO = $this->dtoFactory->create($data);
         $status        = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
 
         return [

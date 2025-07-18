@@ -6,10 +6,65 @@ use Mautic\LeadBundle\Entity\Company;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
+use Mautic\LeadBundle\Model\FieldModel;
 
 class FloodlightDTO implements DTOInterface
 {
     public const DEFAULT_IP_HASH = 'local';
+
+    /**
+     * Mapping: DTO-Property → Datenbank-Feld-Alias
+     */
+    private const FIELD_MAPPING = [
+        // Floodlight-API-Key => DB-Feld-Alias
+        'company_technologies'              => 'f4b_companytechnologies',
+        'companylabels'                     => 'f4b_companylabels',
+        'companyindustry_linkedin'          => 'f4b_companyindustry_linkedin',
+        'companyindustry_list'              => 'f4b_companyindustry_list',
+        'companydescription'                => 'f4b_companydescription',
+        'companydescription_long'           => 'f4b_companydescription_long',
+        'companyname_legal'                 => 'f4b_companyname_legal',
+        'companyname_alternatives'          => 'f4b_companyname_alternatives',
+        'companyfloodlight_id'              => 'f4b_companyfloodlight_id',
+        'companycrunchbase_handle'          => 'f4b_companycrunchbase_handle',
+        'companyindustry_naics'             => 'f4b_companyindustry_naicscode',
+        'companyindustry_icb_industrygroup' => 'f4b_companyindustry_icb_industrygroup',
+        'companyindustry_icb_industry'      => 'f4b_companyindustry_icb_industry',
+        'companyindustry_icb_subindustry'   => 'f4b_companyindustry_icb_subIndustry',
+        'companyindustry_icb_sector'        => 'f4b_companyindustry_icb_sector',
+        'companyfounding_year'              => 'f4b_companyfounding_year',
+        'companycountry_code'               => 'f4b_companycountry_code',
+        'companyrank_tranco'                => 'f4b_companyrank_tranco',
+        'companyemployees_range'            => 'f4b_companyemployees_range',
+        'companymarketcap'                  => 'f4b_companymarketcap',
+        'companyannual_revenue_range'       => 'f4b_companyannual_revenue_range',
+        'companyfunding_raised'             => 'f4b_companyfunding_raised',
+        'companyfacebook_handle'            => 'f4b_companyfacebook_handle',
+        'companytwitter_handle'             => 'f4b_companytwitter_handle',
+        'companylinkedin_handle'            => 'f4b_companylinkedin_handle',
+        'companytwitter_followers'          => 'f4b_companytwitter_followers',
+        'companylogo'                       => 'f4b_companylogo',
+        'companytype'                       => 'f4b_companytype',
+        'companyticker'                     => 'f4b_companyticker',
+        'companytimezone'                   => 'f4b_companytimezone',
+        'bigpicture_id'                     => 'f4b_bigpicture_id',
+        'companystate_code'                 => 'f4b_companystate_code',
+        
+        // Standard-Mautic-Felder bleiben OHNE f4b_ Prefix:
+        // companyName -> setName() 
+        // companyCity -> setCity()
+        // companyState -> setState()
+        // companyCountry -> setCountry() 
+        // companyWebsite -> setWebsite()
+        // companyEmail -> setEmail()
+        // companyIndustry -> setIndustry()
+        // companyAddress1 -> setAddress1()
+        // companyAddress2 -> setAddress2()
+        // companyZipCode -> setZipcode()
+        // companyPhone -> setPhone()
+        // companyNumberOfEmployees -> companynumber_of_employees
+    ];
 
     /** @var array<string> */
     private array $companyNameAlternative;
@@ -125,8 +180,10 @@ class FloodlightDTO implements DTOInterface
      *
      * @param array<string, mixed> $pureData
      */
-    public function __construct(private array $pureData)
-    {
+    public function __construct(
+        private array $pureData, 
+        private ?FieldModel $fieldModel = null
+    ) {
         $this->load($pureData);
     }
 
@@ -671,8 +728,12 @@ class FloodlightDTO implements DTOInterface
             return '';
         }
 
+        if (is_string($value[$key])) {
+            $value[$key] = $this->truncateString($value[$key], $key);
+        }
+
         if (is_numeric($value[$key])) {
-            $value[$key] = (string) $value[$key];
+            $value[$key] = $this->truncateString((string) $value[$key], $key);
         }
 
         if (!is_string($value[$key])) {
@@ -694,11 +755,12 @@ class FloodlightDTO implements DTOInterface
         }
 
         if (is_string($value[$key]) || is_numeric($value[$key])) {
-            return [(string) $value[$key]];
+            $stringvalue = $this->truncateString((string) $value[$key], $key);
+            return [$stringvalue];
         }
 
         if (is_array($value[$key])) {
-            return $value[$key];
+            return $this->truncateArray($value[$key], $key);
         }
 
         return [];
@@ -1143,5 +1205,64 @@ class FloodlightDTO implements DTOInterface
     public function getDataByJsonKey(string $key)
     {
         return $this->pureData[$key] ?? '';
+    }
+
+    /**
+     * Kürzt einen String auf das Feldlimit
+     */
+    private function truncateString(string $value, string $dtoFieldName): string
+    {
+        $limit = $this->getFieldLimit($dtoFieldName);
+        
+        if ($limit === null || strlen($value) <= $limit) {
+            return $value;
+        }
+        
+        return substr($value, 0, $limit);
+    }
+
+    /**
+     * Kürzt ein Array für multiselect
+     */
+    private function truncateArray(array $values, string $fieldAlias): array
+    {
+        if (empty($values) || !$this->fieldModel) {
+            return $values;
+        }
+        
+        $limit = $this->getFieldLimit($fieldAlias);
+        
+        if ($limit === null) {
+            return $values;
+        }
+        
+        $result = [];
+        $pipeSeparated = '';
+
+        foreach ($values as $value) {
+            $testString = $pipeSeparated . ($pipeSeparated ? '|' : '') . $value;
+
+            if (strlen($testString) <= $limit) {
+                $pipeSeparated = $testString;
+                $result[] = $value;
+            } else {
+                break;
+            }
+        }
+        
+        return $result;
+    }
+
+    private function getFieldLimit(string $dtoFieldName): ?int
+    {
+        if (!$this->fieldModel) {
+            return null;
+        }
+        
+        $dbFieldName = self::FIELD_MAPPING[$dtoFieldName] ?? $dtoFieldName;
+    
+        $field = $this->fieldModel->getEntityByAlias($dbFieldName);
+        
+        return $field ? $field->getCharLengthLimit() : null;
     }
 }

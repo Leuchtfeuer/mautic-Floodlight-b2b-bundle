@@ -6,11 +6,13 @@ use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 
 class Status202Strategy
 {
     public function __construct(
         private readonly FloodlightLeadDomainsModel $leadDomainsModel,
+        private readonly FloodlightDtoFactory $dtoFactory,
     ) {
     }
 
@@ -26,10 +28,10 @@ class Status202Strategy
      */
     public function prepareData(array $data): array
     {
-        $floodlightDTO = new FloodlightDTO($data);
+        $floodlightDTO = $this->dtoFactory->create($data);
 
         $status           = FloodlightLeadDomains::STATUS_RETRY;
-        $newFloodlightDTO = new FloodlightDTO([]);
+        $newFloodlightDTO = $this->dtoFactory->create([]);
         $newFloodlightDTO->setIpHash($floodlightDTO->getIpHash());
         $newFloodlightDTO->setDomains([]);
         $floodlightDTO = $newFloodlightDTO;

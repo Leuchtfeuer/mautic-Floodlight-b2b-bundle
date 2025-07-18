@@ -50,6 +50,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'      => 'f4b_companyindustry_list',
                 'name'       => 'Industry List',
                 'type'       => 'multiselect',
+                'limit'           => 255,
                 'properties' => [
                     'list' => [
                         ['label' => 'Energy', 'value' => 'energy'],
@@ -61,6 +62,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'      => 'f4b_companylabels',
                 'name'       => 'Company Labels',
                 'type'       => 'multiselect',
+                'limit'           => 255,
                 'properties' => [
                     'list' => [
                         ['label' => 'B2B', 'value' => 'b2b'],
@@ -121,6 +123,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'           => 'f4b_companydescription_long',
                 'name'            => 'Company Long Description',
                 'type'            => 'textarea',
+                'limit'           => 255, //2560 später
                 'isIndex'         => true,
                 'externalKeyName' => 'companydescription_long',
             ],
@@ -186,6 +189,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
             [
                 'alias'      => 'f4b_companytechnologies',
                 'name'       => 'Technologies',
+                'limit'           => 80,
                 'type'       => 'multiselect',
                 'properties' => [
                     'list' => [
@@ -276,7 +280,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            PluginEvents::ON_PLUGIN_INSTALL => ['onPluginInstall', 0],
+            PluginEvents::ON_PLUGIN_INSTALL                    => ['onPluginInstall', 0],
         ];
     }
 
@@ -286,6 +290,11 @@ class PluginInstallSubscriber implements EventSubscriberInterface
             return;
         }
 
+        $this->executeInstallLogic();
+    }
+
+    private function executeInstallLogic(): void
+    {
         $this->installHelper->copyBlacklistFiles();
         foreach (self::FIELD_DATA as $fieldData) {
             $options = [];
