@@ -10,6 +10,9 @@ class FloodlightDtoFactory
     {
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function create(array $data): FloodlightDTO
     {
         return new FloodlightDTO($data, $this->fieldModel);

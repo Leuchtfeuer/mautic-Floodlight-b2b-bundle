@@ -47,11 +47,11 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'externalKeyName' => 'companyindustry_linkedin',
             ],
             [
-                'alias'      => 'f4b_companyindustry_list',
-                'name'       => 'Industry List',
-                'type'       => 'multiselect',
+                'alias'           => 'f4b_companyindustry_list',
+                'name'            => 'Industry List',
+                'type'            => 'multiselect',
                 'limit'           => 255,
-                'properties' => [
+                'properties'      => [
                     'list' => [
                         ['label' => 'Energy', 'value' => 'energy'],
                     ],
@@ -59,11 +59,11 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'externalKeyName' => 'companyindustry_list',
             ],
             [
-                'alias'      => 'f4b_companylabels',
-                'name'       => 'Company Labels',
-                'type'       => 'multiselect',
+                'alias'           => 'f4b_companylabels',
+                'name'            => 'Company Labels',
+                'type'            => 'multiselect',
                 'limit'           => 255,
-                'properties' => [
+                'properties'      => [
                     'list' => [
                         ['label' => 'B2B', 'value' => 'b2b'],
                     ],
@@ -123,7 +123,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'           => 'f4b_companydescription_long',
                 'name'            => 'Company Long Description',
                 'type'            => 'textarea',
-                'limit'           => 255, //2560 später
+                'limit'           => 2560,
                 'isIndex'         => true,
                 'externalKeyName' => 'companydescription_long',
             ],
@@ -187,11 +187,11 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'externalKeyName' => 'companyfunding_raised',
             ],
             [
-                'alias'      => 'f4b_companytechnologies',
-                'name'       => 'Technologies',
-                'limit'           => 80,
-                'type'       => 'multiselect',
-                'properties' => [
+                'alias'           => 'f4b_companytechnologies',
+                'name'            => 'Technologies',
+                'limit'           => 255,
+                'type'            => 'multiselect',
+                'properties'      => [
                     'list' => [
                         ['label' => 'Mautic', 'value' => 'mautic'],
                     ],

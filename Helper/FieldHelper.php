@@ -46,10 +46,10 @@ class FieldHelper
      */
     public function createField(string $alias, string $label, string $type, array $options = []): void
     {
-        //Update existing field
+        // Update existing field
         $existingField = $this->fieldModel->getRepository()->findOneBy([
-            'alias' => $alias,
-            'object' => self::DEFAULT_VALUES['object']
+            'alias'  => $alias,
+            'object' => self::DEFAULT_VALUES['object'],
         ]);
 
         if ($existingField) {
@@ -57,7 +57,7 @@ class FieldHelper
                 $currentLimit = $existingField->getCharLengthLimit();
                 if ($currentLimit !== $options['limit']) {
                     $existingField->setCharLengthLimit($options['limit']);
-                    
+
                     try {
                         $this->fieldModel->saveEntity($existingField);
                     } catch (\Exception $e) {
@@ -65,10 +65,11 @@ class FieldHelper
                     }
                 }
             }
+
             return;
         }
 
-        //Create new field
+        // Create new field
         $properties = [];
         if (!empty($options['properties'])) {
             $properties = $options['properties'];
@@ -121,20 +122,21 @@ class FieldHelper
     }
 
     /**
-     * Update character length limit for an existing field
+     * Update character length limit for an existing field.
      */
     public function updateFieldCharLengthLimit(string $alias, int $newLimit): bool
     {
         $field = $this->fieldModel->getRepository()->findOneBy(['alias' => $alias]);
-        
+
         if (!$field instanceof LeadField) {
             return false;
         }
 
         $field->setCharLengthLimit($newLimit);
-        
+
         try {
             $this->fieldModel->saveEntity($field);
+
             return true;
         } catch (\Exception $e) {
             return false;
