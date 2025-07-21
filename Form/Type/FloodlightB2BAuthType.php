@@ -6,6 +6,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Form\Type;
 
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Validator\ValidFloodlightCredentials;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -31,7 +32,7 @@ class FloodlightB2BAuthType extends AbstractType
 
         $builder->add(
             'api_secret_key',
-            TextType::class,
+            PasswordType::class,
             [
                 'label'       => 'leuchtfeuerfloodlightb2b.form.config.floodlight.api_secret_key',
                 'label_attr'  => ['class' => 'control-label'],

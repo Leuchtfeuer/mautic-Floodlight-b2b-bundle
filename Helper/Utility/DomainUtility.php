@@ -147,6 +147,11 @@ class DomainUtility
         $domainLower      = strtolower($domain);
 
         foreach ($keywordBlacklist as $keyword) {
+            $keyword = trim($keyword);
+            if (empty($keyword)) {
+                continue;
+            }
+
             if (str_contains($domainLower, strtolower($keyword))) {
                 return true;
             }
@@ -154,11 +159,17 @@ class DomainUtility
 
         $blacklist = $this->domainBlacklistHelper->get();
 
-        if (!empty($blacklist) && in_array($domain, $blacklist, true)) {
-            return true;
-        }
         foreach ($blacklist as $blacklistedDomain) {
-            if (fnmatch('*.'.$blacklistedDomain, $domain)) {
+            $blacklistedDomain = trim($blacklistedDomain);
+            if (empty($blacklistedDomain)) {
+                continue;
+            }
+
+            if (strtolower($domain) === strtolower($blacklistedDomain)) {
+                return true;
+            }
+
+            if (fnmatch('*.'.strtolower($blacklistedDomain), $domainLower)) {
                 return true;
             }
         }
