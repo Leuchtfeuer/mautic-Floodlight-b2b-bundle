@@ -141,12 +141,15 @@ class FloodlightCompanyDomainsModel extends FormModel
 
     public function createNewCompanyDomain(FloodlightDTO $floodlightDTO, Company $company): FloodlightCompanyDomains
     {
-        // Save company domain
         $companiesDomains = $floodlightDTO->fillCompaniesDomain($this, $company);
 
         if (!empty($companiesDomains)) {
             foreach ($companiesDomains as $companiesDomain) {
-                $companiesDomain->setDomain($this->domainUtility->cleanDomain($companiesDomain->getDomain()));
+                $domain = $this->domainUtility->cleanDomain($companiesDomain->getDomain());
+                if (null === $domain) {
+                    continue;
+                }
+                $companiesDomain->setDomain($domain);
             }
             $this->saveEntities($companiesDomains);
         }

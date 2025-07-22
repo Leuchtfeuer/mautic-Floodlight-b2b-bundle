@@ -3,11 +3,14 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO;
 
 use Mautic\LeadBundle\Model\FieldModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 
 class FloodlightDtoFactory
 {
-    public function __construct(private FieldModel $fieldModel)
-    {
+    public function __construct(
+        private FieldModel $fieldModel,
+        private DomainUtility $domainUtility
+    ) {
     }
 
     /**
@@ -15,6 +18,6 @@ class FloodlightDtoFactory
      */
     public function create(array $data): FloodlightDTO
     {
-        return new FloodlightDTO($data, $this->fieldModel);
+        return new FloodlightDTO($data, $this->fieldModel, $this->domainUtility);
     }
 }

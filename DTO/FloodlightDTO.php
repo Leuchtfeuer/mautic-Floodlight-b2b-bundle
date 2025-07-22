@@ -6,15 +6,13 @@ use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 
 class FloodlightDTO implements DTOInterface
 {
     public const DEFAULT_IP_HASH = 'local';
 
-    /**
-     * Mapping: DTO-Property → Datenbank-Feld-Alias.
-     */
     private const FIELD_MAPPING = [
         'company_technologies'              => 'f4b_companytechnologies',
         'companylabels'                     => 'f4b_companylabels',
@@ -173,13 +171,12 @@ class FloodlightDTO implements DTOInterface
     private ?int $statusHttpRequest = null;
 
     /**
-     * BigPictureDTO constructor.
-     *
      * @param array<string, mixed> $pureData
      */
     public function __construct(
         private array $pureData,
-        private ?FieldModel $fieldModel = null
+        private FieldModel $fieldModel,
+        private DomainUtility $domainUtility
     ) {
         $this->load($pureData);
     }
@@ -874,7 +871,6 @@ class FloodlightDTO implements DTOInterface
 
     public function fillCompany(Company $company): Company
     {
-        $newFields = [];
         if (!empty($this->getCompanyName())) {
             $company->setName($this->getCompanyName());
         }
@@ -1029,7 +1025,12 @@ class FloodlightDTO implements DTOInterface
         $result = [];
 
         foreach ($this->getDomains() as $domain) {
-            $domain        = $this->cleanDomain($domain);
+            $domain        = $this->domainUtility->cleanDomain($domain);
+
+            if (empty($domain)) {
+                continue;
+            }
+
             $companyDomain = $floodlightCompanyDomainsModel->getRepository()->findOneBy(
                 [
                     'domain'  => $domain,
@@ -1055,23 +1056,6 @@ class FloodlightDTO implements DTOInterface
         }
 
         return $result;
-    }
-
-    private function cleanDomain(?string $domain): ?string
-    {
-        if (is_null($domain)) {
-            return null;
-        }
-        $parts = explode('.', $domain);
-        reset($parts);
-        $firstPart = current($parts);
-        preg_match_all('/\d/', $firstPart, $matches);
-        reset($parts);
-        if (count($matches[0]) > 1) {
-            return implode('.', array_slice($parts, 1));
-        }
-
-        return $domain;
     }
 
     public function fillLeadDomainLookUp(): FloodlightLeadDomains
@@ -1133,7 +1117,7 @@ class FloodlightDTO implements DTOInterface
      */
     private function truncateArray(array $values, string $fieldAlias): array
     {
-        if (empty($values) || !$this->fieldModel) {
+        if (empty($values)) {
             return $values;
         }
 
@@ -1181,10 +1165,6 @@ class FloodlightDTO implements DTOInterface
 
     private function getFieldLimit(string $dtoFieldName): ?int
     {
-        if (!$this->fieldModel) {
-            return null;
-        }
-
         $dbFieldName = self::FIELD_MAPPING[$dtoFieldName];
 
         $field = $this->fieldModel->getEntityByAlias($dbFieldName);
