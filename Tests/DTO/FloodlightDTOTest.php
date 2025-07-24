@@ -39,7 +39,8 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     {
         $dataFake            = $this->fakeData();
         $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
-        $this->floodlightDTO = new FloodlightDTO($dataFake, $fieldModel);
+        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $this->floodlightDTO = new FloodlightDTO($dataFake, $fieldModel, $domainUtility);
     }
 
     /**
@@ -60,9 +61,11 @@ class FloodlightDTOTest extends MauticMysqlTestCase
 
     public function testGetCompanyEntity(): void
     {
-        $floodlightDto = new FloodlightDTO($this->fakeData());
-        $company       = new Company();
-        $newCompany    = $floodlightDto->fillCompany($company);
+        $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
+        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $floodlightDto       = new FloodlightDTO($this->fakeData(), $fieldModel, $domainUtility);
+        $company             = new Company();
+        $newCompany          = $floodlightDto->fillCompany($company);
         $this->assertInstanceOf(Company::class, $newCompany);
         $this->assertEquals('Brandenburgische Technische Universitt Cottbus-Senftenberg', $newCompany->getName());
         $this->assertEquals('Germany', $newCompany->getCountry());
@@ -86,14 +89,16 @@ class FloodlightDTOTest extends MauticMysqlTestCase
         $this->assertTrue($result[0]->getIsPrimaryDomain());
         $this->assertFalse($result[1]->getIsPrimaryDomain());
         $this->assertFalse($result[2]->getIsPrimaryDomain());
-        $this->assertSame('www.example.com', $result[1]->getDomain());
-        $this->assertSame('www.leuchtfeuer.com', $result[2]->getDomain());
+        $this->assertSame('example.com', $result[1]->getDomain());
+        $this->assertSame('leuchtfeuer.com', $result[2]->getDomain());
     }
 
     public function testFillCompanyDomain(): void
     {
-        $floodlightDto = new FloodlightDTO($this->fakeData(2));
-        $company       = new Company();
+        $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
+        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $floodlightDto       = new FloodlightDTO($this->fakeData(2), $fieldModel, $domainUtility);
+        $company             = new Company();
         $company->setName('Casa da Moeda do Brasil');
         $company->setCountry('Brazil');
         $company->setCity('Brasilia');
@@ -115,8 +120,10 @@ class FloodlightDTOTest extends MauticMysqlTestCase
 
     public function testFillLeadDomain(): void
     {
-        $floodlightDto = new FloodlightDTO($this->fakeData());
-        $leadDomain    = $floodlightDto->fillLeadDomainLookUp();
+        $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
+        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $floodlightDto       = new FloodlightDTO($this->fakeData(), $fieldModel, $domainUtility);
+        $leadDomain          = $floodlightDto->fillLeadDomainLookUp();
         $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomain);
         $this->assertNotSame('local', $leadDomain->getIpHash());
         $this->assertSame(1, $leadDomain->getCount());
@@ -124,9 +131,11 @@ class FloodlightDTOTest extends MauticMysqlTestCase
 
     public function testFillLeadDomainNoIpHash(): void
     {
-        $data =$this->fakeData();
+        $data                =$this->fakeData();
+        $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
+        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
         unset($data['ip_hash']);
-        $floodlightDto = new FloodlightDTO($data);
+        $floodlightDto = new FloodlightDTO($data, $fieldModel, $domainUtility);
         $leadDomain    = $floodlightDto->fillLeadDomainLookUp();
         $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomain);
         $this->assertSame('local', $leadDomain->getIpHash());
@@ -141,7 +150,8 @@ class FloodlightDTOTest extends MauticMysqlTestCase
         $this->em->clear();
 
         $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
-        $floodlightDto = new FloodlightDTO($this->fakeData(), $fieldModel);
+        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $floodlightDto = new FloodlightDTO($this->fakeData(), $fieldModel, $domainUtility);
         $company       = new Company();
         $newCompany    = $floodlightDto->fillCompany($company);
 

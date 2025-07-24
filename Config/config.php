@@ -47,6 +47,7 @@ return [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory::class,
                 'arguments' => [
                     'mautic.lead.model.field',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
                 ],
             ],
 
