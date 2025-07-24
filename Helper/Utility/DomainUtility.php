@@ -97,7 +97,11 @@ class DomainUtility
      */
     public function getDomainByGetHostByAddr(string $remoteAddr): array
     {
-        $domain       = gethostbyaddr($remoteAddr);
+        try {
+            $domain       = gethostbyaddr($remoteAddr);
+        } catch (\Exception) {
+            $domain = false;
+        }
         $domainString = false !== $domain ? $domain : null;
         $cleanDomain  = $this->cleanDomain($domainString);
 
