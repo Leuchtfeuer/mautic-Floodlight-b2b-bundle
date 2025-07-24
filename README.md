@@ -25,7 +25,8 @@ INSTALLATION
 2. Go to `Plugins` page
 3. Click on the `Install/Upgrade Plugins` or if you have access to the shell, execute `php bin\console mautic:plugins:reload` to install the plugins.
 4. Click button to install `LeuchtfeuerFloodlightB2BBundle`.
-5. Enable the plugin and configure the plugin with the API key. 
+5. Enable the plugin and configure the plugin with the API key.
+6. Install the patch which enables you to name the leads identified by floodlight according to the following logic: 'anonymous {timestamp} {domain}' --> https://github.com/mautic/mautic/pull/15153
 
 USAGE
 -----
