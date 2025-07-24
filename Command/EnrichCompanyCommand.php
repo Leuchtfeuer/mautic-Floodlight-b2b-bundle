@@ -54,7 +54,7 @@ class EnrichCompanyCommand extends ModeratedCommand
             return 0;
         }
 
-        $this->flCompanyDomainsModel->saveDomainsForNonFloodlightCompanies();
+        // $this->flCompanyDomainsModel->saveDomainsForNonFloodlightCompanies();
 
         $companyDomains = $this->flCompanyDomainsModel->getCompanyDomainToEnrichment();
         if (empty($companyDomains) || !is_array($companyDomains)) {
