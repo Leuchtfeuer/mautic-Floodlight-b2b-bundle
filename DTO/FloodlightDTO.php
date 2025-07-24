@@ -3,6 +3,7 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO;
 
 use Mautic\LeadBundle\Entity\Company;
+use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
@@ -10,6 +11,57 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsMo
 class FloodlightDTO implements DTOInterface
 {
     public const DEFAULT_IP_HASH = 'local';
+
+    /**
+     * Mapping: DTO-Property → Datenbank-Feld-Alias.
+     */
+    private const FIELD_MAPPING = [
+        'company_technologies'              => 'f4b_companytechnologies',
+        'companylabels'                     => 'f4b_companylabels',
+        'companyindustry_linkedin'          => 'f4b_companyindustry_linkedin',
+        'companyindustry_list'              => 'f4b_companyindustry_list',
+        'companydescription'                => 'f4b_companydescription',
+        'companydescription_long'           => 'f4b_companydescription_long',
+        'companyname_legal'                 => 'f4b_companyname_legal',
+        'companyname_alternatives'          => 'f4b_companyname_alternatives',
+        'companyfloodlight_id'              => 'f4b_companyfloodlight_id',
+        'companycrunchbase_handle'          => 'f4b_companycrunchbase_handle',
+        'companyindustry_naics'             => 'f4b_companyindustry_naicscode',
+        'companyindustry_icb_industrygroup' => 'f4b_companyindustry_icb_industrygroup',
+        'companyindustry_icb_industry'      => 'f4b_companyindustry_icb_industry',
+        'companyindustry_icb_subindustry'   => 'f4b_companyindustry_icb_subIndustry',
+        'companyindustry_icb_sector'        => 'f4b_companyindustry_icb_sector',
+        'companyfounding_year'              => 'f4b_companyfounding_year',
+        'companycountry_code'               => 'f4b_companycountry_code',
+        'companyrank_tranco'                => 'f4b_companyrank_tranco',
+        'companyemployees_range'            => 'f4b_companyemployees_range',
+        'companymarketcap'                  => 'f4b_companymarketcap',
+        'companyannual_revenue_range'       => 'f4b_companyannual_revenue_range',
+        'companyfunding_raised'             => 'f4b_companyfunding_raised',
+        'companyfacebook_handle'            => 'f4b_companyfacebook_handle',
+        'companytwitter_handle'             => 'f4b_companytwitter_handle',
+        'companylinkedin_handle'            => 'f4b_companylinkedin_handle',
+        'companytwitter_followers'          => 'f4b_companytwitter_followers',
+        'companylogo'                       => 'f4b_companylogo',
+        'companytype'                       => 'f4b_companytype',
+        'companyticker'                     => 'f4b_companyticker',
+        'companytimezone'                   => 'f4b_companytimezone',
+        'bigpicture_id'                     => 'f4b_bigpicture_id',
+        'companystate_code'                 => 'f4b_companystate_code',
+
+        'companyname'                        => 'companyname',
+        'companycity'                        => 'companycity',
+        'companystate'                       => 'companystate',
+        'companycountry'                     => 'companycountry',
+        'companywebsite'                     => 'companywebsite',
+        'companyemail'                       => 'companyemail',
+        'companyindustry'                    => 'companyindustry',
+        'companyaddress1'                    => 'companyaddress1',
+        'companyaddress2'                    => 'companyaddress2',
+        'companyzipcode'                     => 'companyzipcode',
+        'companyphone'                       => 'companyphone',
+        'companynumber_of_employees'         => 'companynumber_of_employees',
+    ];
 
     /** @var array<string> */
     private array $companyNameAlternative;
@@ -125,8 +177,10 @@ class FloodlightDTO implements DTOInterface
      *
      * @param array<string, mixed> $pureData
      */
-    public function __construct(private array $pureData)
-    {
+    public function __construct(
+        private array $pureData,
+        private ?FieldModel $fieldModel = null
+    ) {
         $this->load($pureData);
     }
 
@@ -656,7 +710,9 @@ class FloodlightDTO implements DTOInterface
         }
 
         if (is_numeric($value[$key])) {
-            return (int) $value[$key];
+            $value = (int) $value[$key];
+
+            return $this->truncateInt($value, $key);
         }
 
         return null;
@@ -671,8 +727,12 @@ class FloodlightDTO implements DTOInterface
             return '';
         }
 
+        if (is_string($value[$key])) {
+            $value[$key] = $this->truncateString($value[$key], $key);
+        }
+
         if (is_numeric($value[$key])) {
-            $value[$key] = (string) $value[$key];
+            $value[$key] = $this->truncateString((string) $value[$key], $key);
         }
 
         if (!is_string($value[$key])) {
@@ -694,11 +754,13 @@ class FloodlightDTO implements DTOInterface
         }
 
         if (is_string($value[$key]) || is_numeric($value[$key])) {
-            return [(string) $value[$key]];
+            $stringvalue = $this->truncateString((string) $value[$key], $key);
+
+            return [$stringvalue];
         }
 
         if (is_array($value[$key])) {
-            return $value[$key];
+            return $this->truncateArray($value[$key], $key);
         }
 
         return [];
@@ -714,105 +776,53 @@ class FloodlightDTO implements DTOInterface
         //            $this->setDomains([$flCompanyData['primarydomain']]);
         //        }
         $this->setStatusHttpRequest($this->getIntToLoad($flCompanyData, 'statusRequestCode'));
-
-        //        $this->setCompanyName($flCompanyData['companyname'] ?? '');
         $this->setCompanyName($this->getStringToLoad($flCompanyData, 'companyname'));
-        //        $this->setCompanyFloodlightId($flCompanyData['companyfloodlight_id'] ??  '');
         $this->setCompanyFloodlightId($this->getStringToLoad($flCompanyData, 'companyfloodlight_id'));
-        //        $this->setBigPictureId($flCompanyData['bigpicture_id'] ?? '');
         $this->setBigPictureId($this->getStringToLoad($flCompanyData, 'bigpicture_id'));
-        //        $this->setCompanyCrunchbaseHandle($flCompanyData['companycrunchbase_handle'] ?? '');
         $this->setCompanyCrunchbaseHandle($this->getStringToLoad($flCompanyData, 'companycrunchbase_handle'));
-        //        $this->setCompanyPrimaryDomain($flCompanyData['primarydomain'] ?? '');
         $this->setCompanyPrimaryDomain($this->getStringToLoad($flCompanyData, 'primarydomain'));
-        //        $this->setCompanyNameLegal($flCompanyData['companyname_legal'] ?? '');
         $this->setCompanyNameLegal($this->getStringToLoad($flCompanyData, 'companyname_legal'));
-        //        $this->setCompanyNameAlternative($flCompanyData['companyname_alternatives'] ?? []);
         $this->setCompanyNameAlternative($this->getArrayToLoad($flCompanyData, 'companyname_alternatives'));
-        //        $this->setDomainAliases($flCompanyData['domainaliases'] ?? []);
         $this->setDomainAliases($this->getArrayToLoad($flCompanyData, 'domainaliases'));
-        //        $this->setCompanyWebsite($flCompanyData['companywebsite'] ?? '');
         $this->setCompanyWebsite($this->getStringToLoad($flCompanyData, 'companywebsite'));
-        //        $this->setCompanyEmail($flCompanyData['companyemail'] ?? '');
         $this->setCompanyEmail($this->getStringToLoad($flCompanyData, 'companyemail'));
-        //        $this->setCompanyIndustry($flCompanyData['companyindustry'] ?? '');
         $this->setCompanyIndustry($this->getStringToLoad($flCompanyData, 'companyindustry'));
-        //        $this->setCompanyIndustryLinkedin($flCompanyData['companyindustry_linkedin'] ?? '');
         $this->setCompanyIndustryLinkedin($this->getStringToLoad($flCompanyData, 'companyindustry_linkedin'));
-        //        $this->setCompanyIndustryList($flCompanyData['companyindustry_list'] ?? []);
         $this->setCompanyIndustryList($this->getArrayToLoad($flCompanyData, 'companyindustry_list'));
-        //        $this->setCompanyLabels($flCompanyData['companylabels'] ?? []);
         $this->setCompanyLabels($this->getArrayToLoad($flCompanyData, 'companylabels'));
-        //        $this->setCompanyIndustryNaicsCode($flCompanyData['companyindustry_naics'] ?? '');
         $this->setCompanyIndustryNaicsCode($this->getStringToLoad($flCompanyData, 'companyindustry_naics'));
-        //        $this->setCompanyDescriptionLong($flCompanyData['companydescription_long'] ?? '');
         $this->setCompanyDescriptionLong($this->getStringToLoad($flCompanyData, 'companydescription_long'));
-        //        $this->setCompanyDescription($flCompanyData['companydescription'] ?? '');
         $this->setCompanyDescription($this->getStringToLoad($flCompanyData, 'companydescription'));
-        //        $this->setCompanyFoundingYear($flCompanyData['companyfounding_year'] ?? '');
         $this->setCompanyFoundingYear($this->getStringToLoad($flCompanyData, 'companyfounding_year'));
-        //        $this->setCompanyAddress1($flCompanyData['companyaddress1'] ?? '');
         $this->setCompanyAddress1($this->getStringToLoad($flCompanyData, 'companyaddress1'));
-        //        $this->setCompanyAddress2($flCompanyData['companyaddress2'] ?? '');
         $this->setCompanyAddress2($this->getStringToLoad($flCompanyData, 'companyaddress2'));
-        //        $this->setCompanyCity($flCompanyData['companycity'] ?? '');
         $this->setCompanyCity($this->getStringToLoad($flCompanyData, 'companycity'));
-        //        $this->setCompanyState($flCompanyData['companystate'] ?? '');
         $this->setCompanyState($this->getStringToLoad($flCompanyData, 'companystate'));
-        //        $this->setCompanyCountry($flCompanyData['companycountry'] ?? '');
         $this->setCompanyCountry($this->getStringToLoad($flCompanyData, 'companycountry'));
-        //        $this->setCompanyCountryCode($flCompanyData['companycountry_code'] ?? '');
         $this->setCompanyCountryCode($this->getStringToLoad($flCompanyData, 'companycountry_code'));
-        //        $this->setCompanyZipCode($flCompanyData['companyzipcode'] ?? '');
         $this->setCompanyZipCode($this->getStringToLoad($flCompanyData, 'companyzipcode'));
-        //        $this->setCompanyRankTranco($flCompanyData['companyrank_tranco'] ?? '');
         $this->setCompanyRankTranco($this->getStringToLoad($flCompanyData, 'companyrank_tranco'));
-        //        $this->setCompanyNumberOfEmployees(0);
-        //        if (isset($flCompanyData['companynumber_of_employees']) && is_int($flCompanyData['companynumber_of_employees'])) {
-        //            $this->setCompanyNumberOfEmployees($flCompanyData['companynumber_of_employees']);
-        //        }
         $this->setCompanyNumberOfEmployees($this->getIntToLoad($flCompanyData, 'companynumber_of_employees'));
-        //        $this->setCompanyEmployeeRange($flCompanyData['companyemployees_range'] ?? '');
         $this->setCompanyEmployeeRange($this->getStringToLoad($flCompanyData, 'companyemployees_range'));
-        //        $this->setCompanyMarketCap($flCompanyData['companymarketcap'] ?? '');
         $this->setCompanyMarketCap($this->getStringToLoad($flCompanyData, 'companymarketcap'));
-        //        $this->setCompanyAnnualRevenueRange($flCompanyData['companyannual_revenue_range'] ?? '');
         $this->setCompanyAnnualRevenueRange($this->getStringToLoad($flCompanyData, 'companyannual_revenue_range'));
-        //        $this->setCompanyFundingRaised($flCompanyData['companyfunding_raised'] ?? '');
         $this->setCompanyFundingRaised($this->getStringToLoad($flCompanyData, 'companyfunding_raised'));
-        //        $this->setCompanyTechnologies($flCompanyData['company_technologies'] ?? []);
         $this->setCompanyTechnologies($this->getArrayToLoad($flCompanyData, 'company_technologies'));
-        //        $this->setCompanyFacebookHandle($flCompanyData['companyfacebook_handle'] ?? '');
         $this->setCompanyFacebookHandle($this->getStringToLoad($flCompanyData, 'companyfacebook_handle'));
-        //        $this->setCompanyTwitterHandle($flCompanyData['companytwitter_handle'] ?? '');
         $this->setCompanyTwitterHandle($this->getStringToLoad($flCompanyData, 'companytwitter_handle'));
-        //        $this->setCompanyLinkedinHandle($flCompanyData['companylinkedin_handle'] ?? '');
         $this->setCompanyLinkedinHandle($this->getStringToLoad($flCompanyData, 'companylinkedin_handle'));
-        //        $this->setCompanyTwitterFollowers($flCompanyData['companytwitter_followers'] ?? '');
         $this->setCompanyTwitterFollowers($this->getStringToLoad($flCompanyData, 'companytwitter_followers'));
-        //        $this->setCompanyLogoUrl($flCompanyData['companylogo'] ?? '');
         $this->setCompanyLogoUrl($this->getStringToLoad($flCompanyData, 'companylogo'));
-        //        $this->setCompanyType($flCompanyData['companytype'] ?? '');
         $this->setCompanyType($this->getStringToLoad($flCompanyData, 'companytype'));
-        //        $this->setCompanyTicker($flCompanyData['companyticker'] ?? '');
         $this->setCompanyTicker($this->getStringToLoad($flCompanyData, 'companyticker'));
-        //        $this->setCompanyPhone($flCompanyData['companyphone'] ?? '');
         $this->setCompanyPhone($this->getStringToLoad($flCompanyData, 'companyphone'));
-        //        $this->setCompanyTimezone($flCompanyData['companytimezone'] ?? '');
         $this->setCompanyTimezone($this->getStringToLoad($flCompanyData, 'companytimezone'));
-        //        $this->setIp($flCompanyData['ip'] ?? '');
         $this->setIp($this->getStringToLoad($flCompanyData, 'ip'));
-        //        $this->setCompanyIndustryICBIndustryGroup($flCompanyData['companyindustry_icb_industrygroup'] ?? '');
         $this->setCompanyIndustryICBIndustryGroup($this->getStringToLoad($flCompanyData, 'companyindustry_icb_industrygroup'));
-        //        $this->setCompanyIndustryICBCIndustry($flCompanyData['companyindustry_icb_industry'] ?? '');
         $this->setCompanyIndustryICBCIndustry($this->getStringToLoad($flCompanyData, 'companyindustry_icb_industry'));
-        //        $this->setCompanyIndustryICBCSubIndustry($flCompanyData['companyindustry_icb_subindustry'] ?? '');
         $this->setCompanyIndustryICBCSubIndustry($this->getStringToLoad($flCompanyData, 'companyindustry_icb_subindustry'));
-        //        $this->setCompanyIndustryICBCSector($flCompanyData['companyindustry_icb_sector'] ?? '');
         $this->setCompanyIndustryICBCSector($this->getStringToLoad($flCompanyData, 'companyindustry_icb_sector'));
-        //        $this->setCompanyStateCode($flCompanyData['companystate_code'] ?? '');
         $this->setCompanyStateCode($this->getStringToLoad($flCompanyData, 'companystate_code'));
-        //        $this->setIpHash($flCompanyData['ip_hash'] ?? '');
         $this->setIpHash($this->getStringToLoad($flCompanyData, 'ip_hash'));
         if (!empty($this->getDomainAliases())) {
             $domains = $this->getDomains();
@@ -862,15 +872,6 @@ class FloodlightDTO implements DTOInterface
         $this->domains = $domains;
     }
 
-    public function fillCompanyDomain(FloodlightCompanyDomains $companyDomain): FloodlightCompanyDomains
-    {
-        $companyDomain->setDomain($this->getCompanyPrimaryDomain());
-        $companyDomain->setCompany($companyDomain->getCompany());
-        $companyDomain->setDateModified(new \DateTime());
-
-        return $companyDomain;
-    }
-
     public function fillCompany(Company $company): Company
     {
         $newFields = [];
@@ -900,22 +901,18 @@ class FloodlightDTO implements DTOInterface
             $company->setDescription($this->getCompanyDescription());
         }
         if (!empty($this->getCompanyNumberOfEmployees())) {
-            $newFields['companynumber_of_employees'] = $this->getCompanyNumberOfEmployees();
+            $company->addUpdatedField('companynumber_of_employees', $this->getCompanyNumberOfEmployees());
         }
         if (!empty($this->getCompanyFloodlightId())) {
-            $newFields['f4b_companyfloodlight_id'] = $this->getCompanyFloodlightId();
             $company->addUpdatedField('f4b_companyfloodlight_id', $this->getCompanyFloodlightId());
         }
         if (!empty($this->getCompanyCrunchbaseHandle())) {
-            $newFields['f4b_companycrunchbase_handle'] = $this->getCompanyCrunchbaseHandle();
             $company->addUpdatedField('f4b_companycrunchbase_handle', $this->getCompanyCrunchbaseHandle());
         }
         if (!empty($this->getCompanyNameLegal())) {
-            $newFields['f4b_companyname_legal'] = $this->getCompanyNameLegal();
             $company->addUpdatedField('f4b_companyname_legal', $this->getCompanyNameLegal());
         }
         if (!empty($this->getCompanyNameAlternative())) {
-            $newFields['f4b_companyname_alternatives'] = $this->getCompanyNameAlternative();
             $company->addUpdatedField('f4b_companyname_alternatives', $this->getCompanyNameAlternative());
         }
         if (!empty($this->getCompanyEmail())) {
@@ -925,125 +922,96 @@ class FloodlightDTO implements DTOInterface
             $company->setIndustry($this->getCompanyIndustry());
         }
         if (!empty($this->getCompanyIndustryLinkedin())) {
-            $newFields['f4b_companyindustry_linkedin'] = $this->getCompanyIndustryLinkedin();
             $company->addUpdatedField('f4b_companyindustry_linkedin', $this->getCompanyIndustryLinkedin());
         }
         if (!empty($this->getCompanyIndustryList())) {
-            $newFields['f4b_companyindustry_list'] = $this->getCompanyIndustryList();
             $company->addUpdatedField('f4b_companyindustry_list', $this->getCompanyIndustryList());
         }
         if (!empty($this->getCompanyLabels())) {
-            $newFields['f4b_companylabels'] = $this->getCompanyLabels();
             $company->addUpdatedField('f4b_companylabels', $this->getCompanyLabels());
         }
         if (!empty($this->getCompanyIndustryNaicsCode())) {
-            $newFields['f4b_companyindustry_naicscode'] = $this->getCompanyIndustryNaicsCode();
             $company->addUpdatedField('f4b_companyindustry_naicscode', $this->getCompanyIndustryNaicsCode());
         }
         if (!empty($this->getCompanyIndustryICBIndustryGroup())) {
-            $newFields['f4b_companyindustry_icb_industrygroup'] = $this->getCompanyIndustryICBIndustryGroup();
             $company->addUpdatedField('f4b_companyindustry_icb_industrygroup', $this->getCompanyIndustryICBIndustryGroup());
         }
         if (!empty($this->getCompanyIndustryICBCIndustry())) {
-            $newFields['f4b_companyindustry_icb_industry'] = $this->getCompanyIndustryICBCIndustry();
             $company->addUpdatedField('f4b_companyindustry_icb_industry', $this->getCompanyIndustryICBCIndustry());
         }
         if (!empty($this->getCompanyIndustryICBCSubIndustry())) {
-            $newFields['f4b_companyindustry_icb_subIndustry'] = $this->getCompanyIndustryICBCSubIndustry();
             $company->addUpdatedField('f4b_companyindustry_icb_subIndustry', $this->getCompanyIndustryICBCSubIndustry());
         }
         if (!empty($this->getCompanyIndustryICBCSector())) {
-            $newFields['f4b_companyindustry_icb_sector'] = $this->getCompanyIndustryICBCSector();
             $company->addUpdatedField('f4b_companyindustry_icb_sector', $this->getCompanyIndustryICBCSector());
         }
         if (!empty($this->getCompanyDescriptionLong())) {
-            $newFields['f4b_companydescription_long'] = $this->getCompanyDescriptionLong();
             $company->addUpdatedField('f4b_companydescription_long', $this->getCompanyDescriptionLong());
         }
         if (!empty($this->getCompanyDescription())) {
-            $newFields['f4b_companydescription'] = $this->getCompanyDescription();
             $company->addUpdatedField('f4b_companydescription', $this->getCompanyDescription());
         }
         if (!empty($this->getCompanyFoundingYear())) {
-            $newFields['f4b_companyfounding_year'] = $this->getCompanyFoundingYear();
             $company->addUpdatedField('f4b_companyfounding_year', $this->getCompanyFoundingYear());
         }
         if (!empty($this->getCompanyState())) {
             $company->setState($this->getCompanyState());
         }
         if (!empty($this->getCompanyCountryCode())) {
-            $newFields['f4b_companycountry_code'] = $this->getCompanyCountryCode();
             $company->addUpdatedField('f4b_companycountry_code', $this->getCompanyCountryCode());
         }
         if (!empty($this->getCompanyRankTranco())) {
-            $newFields['f4b_companyrank_tranco'] = $this->getCompanyRankTranco();
             $company->addUpdatedField('f4b_companyrank_tranco', $this->getCompanyRankTranco());
         }
         if (!empty($this->getCompanyEmployeeRange())) {
-            $newFields['f4b_companyemployees_range'] = $this->getCompanyEmployeeRange();
             $company->addUpdatedField('f4b_companyemployees_range', $this->getCompanyEmployeeRange());
         }
         if (!empty($this->getCompanyMarketCap())) {
-            $newFields['f4b_companymarketcap'] = $this->getCompanyMarketCap();
             $company->addUpdatedField('f4b_companymarketcap', $this->getCompanyMarketCap());
         }
         if (!empty($this->getCompanyAnnualRevenueRange())) {
-            $newFields['f4b_companyannual_revenue_range'] = $this->getCompanyAnnualRevenueRange();
             $company->addUpdatedField('f4b_companyannual_revenue_range', $this->getCompanyAnnualRevenueRange());
         }
         if (!empty($this->getCompanyFundingRaised())) {
-            $newFields['f4b_companyfunding_raised'] = $this->getCompanyFundingRaised();
             $company->addUpdatedField('f4b_companyfunding_raised', $this->getCompanyFundingRaised());
         }
         if (!empty($this->getCompanyTechnologies())) {
-            $newFields['f4b_companytechnologies'] = $this->getCompanyTechnologies();
             $company->addUpdatedField('f4b_companytechnologies', $this->getCompanyTechnologies());
         }
         if (!empty($this->getCompanyFacebookHandle())) {
-            $newFields['f4b_companyfacebook_handle'] = $this->getCompanyFacebookHandle();
             $company->addUpdatedField('f4b_companyfacebook_handle', $this->getCompanyFacebookHandle());
         }
         if (!empty($this->getCompanyTwitterHandle())) {
-            $newFields['f4b_companytwitter_handle'] = $this->getCompanyTwitterHandle();
             $company->addUpdatedField('f4b_companytwitter_handle', $this->getCompanyTwitterHandle());
         }
         if (!empty($this->getCompanyLinkedinHandle())) {
-            $newFields['f4b_companylinkedin_handle'] = $this->getCompanyLinkedinHandle();
             $company->addUpdatedField('f4b_companylinkedin_handle', $this->getCompanyLinkedinHandle());
         }
         if (!empty($this->getCompanyTwitterFollowers())) {
-            $newFields['f4b_companytwitter_followers'] = $this->getCompanyTwitterFollowers();
             $company->addUpdatedField('f4b_companytwitter_followers', $this->getCompanyTwitterFollowers());
         }
         if (!empty($this->getCompanyLogoUrl())) {
-            $newFields['f4b_companylogo'] = $this->getCompanyLogoUrl();
             $company->addUpdatedField('f4b_companylogo', $this->getCompanyLogoUrl());
         }
         if (!empty($this->getCompanyType())) {
-            $newFields['f4b_companytype'] = $this->getCompanyType();
             $company->addUpdatedField('f4b_companytype', $this->getCompanyType());
         }
         if (!empty($this->getCompanyTicker())) {
-            $newFields['f4b_companyticker'] = $this->getCompanyTicker();
             $company->addUpdatedField('f4b_companyticker', $this->getCompanyTicker());
         }
         if (!empty($this->getCompanyPhone())) {
             $company->setPhone($this->getCompanyPhone());
         }
         if (!empty($this->getCompanyTimezone())) {
-            $newFields['f4b_companytimezone'] = $this->getCompanyTimezone();
             $company->addUpdatedField('f4b_companytimezone', $this->getCompanyTimezone());
         }
         if (!empty($this->getBigPictureId())) {
-            $newFields['f4b_bigpicture_id'] = $this->getBigPictureId();
             $company->addUpdatedField('f4b_bigpicture_id', $this->getBigPictureId());
         }
         if (!empty($this->getCompanyStateCode())) {
-            $newFields['f4b_companystate_code'] = $this->getCompanyStateCode();
             $company->addUpdatedField('f4b_companystate_code', $this->getCompanyStateCode());
         }
         if (200 === $this->getStatusHttpRequest()) {
-            // $companyDomain->setEnrichmentDate(new \DateTime());
             $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
         }
 
@@ -1080,14 +1048,9 @@ class FloodlightDTO implements DTOInterface
                 $companyDomain->setIsPrimaryDomain(true);
             }
 
-            //            if (null !== $this->getStatusHttpRequest()) {
-            //                $companyDomain->setCodeStatusRequest($this->getStatusHttpRequest());
-            //            }
-
             $companyDomain->setDateAdded(new \DateTime());
             $companyDomain->setDateModified(new \DateTime());
 
-            //            $companyDomain->setCodeStatusRequest(null);
             $result[] = $companyDomain;
         }
 
@@ -1143,5 +1106,89 @@ class FloodlightDTO implements DTOInterface
     public function getDataByJsonKey(string $key)
     {
         return $this->pureData[$key] ?? '';
+    }
+
+    /**
+     * Kürzt einen String auf das Feldlimit.
+     */
+    private function truncateString(string $value, string $dtoFieldName): string
+    {
+        if (!array_key_exists($dtoFieldName, self::FIELD_MAPPING)) {
+            return $value;
+        }
+
+        $limit = $this->getFieldLimit($dtoFieldName);
+
+        if (null === $limit || strlen($value) <= $limit) {
+            return $value;
+        }
+
+        return substr($value, 0, $limit);
+    }
+
+    /**
+     * @param array<string> $values
+     *
+     * @return array<string>
+     */
+    private function truncateArray(array $values, string $fieldAlias): array
+    {
+        if (empty($values) || !$this->fieldModel) {
+            return $values;
+        }
+
+        if (!array_key_exists($fieldAlias, self::FIELD_MAPPING)) {
+            return $values;
+        }
+
+        $limit = $this->getFieldLimit($fieldAlias);
+
+        if (null === $limit) {
+            return $values;
+        }
+
+        $result        = [];
+        $pipeSeparated = '';
+
+        foreach ($values as $value) {
+            $testString = $pipeSeparated.($pipeSeparated ? '|' : '').$value;
+
+            if (strlen($testString) <= $limit) {
+                $pipeSeparated = $testString;
+                $result[]      = $value;
+            } else {
+                break;
+            }
+        }
+
+        return $result;
+    }
+
+    private function truncateInt(int $value, string $dtoFieldName): int
+    {
+        if (!array_key_exists($dtoFieldName, self::FIELD_MAPPING)) {
+            return $value;
+        }
+
+        $limit = $this->getFieldLimit($dtoFieldName);
+
+        if (null === $limit || strlen((string) $value) <= $limit) {
+            return $value;
+        }
+
+        return (int) substr((string) $value, 0, $limit);
+    }
+
+    private function getFieldLimit(string $dtoFieldName): ?int
+    {
+        if (!$this->fieldModel) {
+            return null;
+        }
+
+        $dbFieldName = self::FIELD_MAPPING[$dtoFieldName];
+
+        $field = $this->fieldModel->getEntityByAlias($dbFieldName);
+
+        return $field && method_exists($field, 'getCharLengthLimit') ? $field->getCharLengthLimit() : null;
     }
 }

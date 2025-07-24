@@ -38,7 +38,8 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     private function loadDTO(): void
     {
         $dataFake            = $this->fakeData();
-        $this->floodlightDTO = new FloodlightDTO($dataFake);
+        $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
+        $this->floodlightDTO = new FloodlightDTO($dataFake, $fieldModel);
     }
 
     /**
@@ -130,5 +131,75 @@ class FloodlightDTOTest extends MauticMysqlTestCase
         $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomain);
         $this->assertSame('local', $leadDomain->getIpHash());
         $this->assertSame('le-non.de', $leadDomain->getDomain());
+    }
+
+    public function testFloodlightApiValuesGetTruncatedWhenExceedingFieldLimits(): void
+    {
+        $this->createTestFields();
+
+        $this->em->flush();
+        $this->em->clear();
+
+        $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
+        $floodlightDto = new FloodlightDTO($this->fakeData(), $fieldModel);
+        $company       = new Company();
+        $newCompany    = $floodlightDto->fillCompany($company);
+
+        $this->assertInstanceOf(Company::class, $newCompany);
+
+        $technologies = $company->getFieldValue('f4b_companytechnologies');
+        $this->assertIsString($technologies, 'Technologies should be a string');
+        $this->assertLessThanOrEqual(255, strlen($technologies));
+
+        $longDescription = $company->getFieldValue('f4b_companydescription_long');
+        $this->assertIsString($longDescription, 'Long description should be a string');
+        $this->assertLessThanOrEqual(2560, strlen($longDescription));
+    }
+
+    private function createTestFields(): void
+    {
+        $fieldModel = self::getContainer()->get('mautic.lead.model.field');
+
+        $testFields = [
+            [
+                'alias'  => 'f4b_companydescription_long',
+                'name'   => 'Company Long Description',
+                'type'   => 'textarea',
+                'limit'  => 2560,
+                'object' => 'company',
+            ],
+            [
+                'alias'      => 'f4b_companytechnologies',
+                'name'       => 'Technologies',
+                'limit'      => 255,
+                'type'       => 'multiselect',
+                'object'     => 'company',
+                'properties' => [
+                    'list' => [
+                        ['label' => 'Mautic', 'value' => 'mautic'],
+                    ],
+                ],
+            ],
+        ];
+
+        foreach ($testFields as $fieldData) {
+            $field = new \Mautic\LeadBundle\Entity\LeadField();
+            $field->setLabel($fieldData['name']);
+            $field->setAlias($fieldData['alias']);
+            $field->setType($fieldData['type']);
+            $field->setObject($fieldData['object']);
+            $field->setGroup('core');
+            $field->setIsPublished(true);
+            $field->setCharLengthLimit($fieldData['limit']);
+
+            if (isset($fieldData['properties'])) {
+                $field->setProperties($fieldData['properties']);
+            }
+
+            $fieldModel->saveEntity($field);
+        }
+
+        $this->em->flush();
+        $this->em->clear();
     }
 }

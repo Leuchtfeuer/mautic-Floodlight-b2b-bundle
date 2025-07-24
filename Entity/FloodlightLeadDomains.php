@@ -14,7 +14,6 @@ class FloodlightLeadDomains
     public const STATUS_RETRY_LIMIT_EXCEEDED = 'retry limit exceeded';
     public const STATUS_IP_DOMAIN            = 'ip domain';
     public const STATUS_SUCCESS              = 'success';
-    public const STATUS_UNKNOWN_ERROR        = 'unknown error';
     public const STATUS_BLACKLISTED          = 'blacklisted';
     public const STATUS_RETRY                = 'retry';
     public const LOOKUP_TYPE_API             = 'API';

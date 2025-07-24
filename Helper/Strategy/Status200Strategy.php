@@ -8,6 +8,7 @@ use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\LeadBundle\Model\LeadModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
@@ -23,7 +24,8 @@ class Status200Strategy implements StatusCodeStrategyInterface
         private CompanyModel $companyModel,
         private LeadModel $leadModel,
         private FieldHelper $fieldHelper,
-        private DomainUtility $domainUtility
+        private DomainUtility $domainUtility,
+        private FloodlightDtoFactory $dtoFactory
     ) {
     }
 
@@ -47,7 +49,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
      */
     public function prepareData(array $data): array
     {
-        $floodlightDTO = new FloodlightDTO($data);
+        $floodlightDTO = $this->dtoFactory->create($data);
 
         $domain = $floodlightDTO->getCompanyPrimaryDomain();
         if (empty($domain) && !empty($floodlightDTO->getDomains())) {

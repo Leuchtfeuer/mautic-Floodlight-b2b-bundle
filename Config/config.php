@@ -42,6 +42,14 @@ return [
             'mautic.leuchtfeuerfloodlightb2b.helper.reporter' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter::class,
             ],
+
+            'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory::class,
+                'arguments' => [
+                    'mautic.lead.model.field',
+                ],
+            ],
+
             'mautic.leuchtfeuerfloodlightb2b.status200strategy' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy::class,
                 'arguments' => [
@@ -52,12 +60,14 @@ return [
                     'mautic.lead.model.lead',
                     'mautic.leuchtfeuerfloodlightb2b.helper.field',
                     'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
+                    'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status202strategy' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status202Strategy::class,
                 'arguments' => [
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
+                    'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status401strategy' => [
@@ -65,10 +75,12 @@ return [
                 'arguments' => [
                 ],
             ],
+
             'mautic.leuchtfeuerfloodlightb2b.status404strategy' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status404Strategy::class,
                 'arguments' => [
                     'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
+                    'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status429strategy' => [
