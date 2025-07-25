@@ -30,7 +30,7 @@ INSTALLATION
 
 CONFIGURATION
 -------------
-Enable the plugin and configure the plugin with the API key.
+Enable the plugin and configure the plugin with the `API Access Key ID` and the `API Secret Key`.
 
 USAGE
 -----
