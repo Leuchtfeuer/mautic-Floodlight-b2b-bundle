@@ -28,8 +28,13 @@ INSTALLATION
 5. Enable the plugin and configure the plugin with the API key.
 6. Install the patch which enables you to name the leads identified by floodlight according to the following logic: 'anonymous {timestamp} {domain}' --> https://github.com/mautic/mautic/pull/15153
 
+CONFIGURATION
+-------------
+Enable the plugin and configure the plugin with the API key.
+
 USAGE
 -----
+
 Once the plugin is installed and configured, it will automatically start detecting and saving the companies of your anonymous leads whenever they execute a pagehit.
 
 The plugin also allows you to run two commands:
@@ -41,42 +46,16 @@ The plugin also allows you to run two commands:
 
 The standalone command leuchtfeuer:floodlight:enrich will not work without the `--by-domain` or `--by-address` options.
 
+BLACKLISTING DOMAINS
+-----------
+When installing the plugin the files `f4b_domain_blacklist.php` and `f4b_domain_keyword_blacklist.php` will be copied in the config directory of you Mautic installation.
 
-CONFIGURATION
--------------
-Enable the plugin and configure the plugin with the API key.
+The file `f4b_domain_blacklist.php` is for blocking entire domains, the file `f4b_domain_keyword_blacklist.php` is for blocking domains which contain certain keywords.
+To add your own domains or keywords, just add a new line with your domain/keyword in these files.
 
-### API URL Configuration
-
-The plugin connects to the Floodlight B2B API. The API URL can be configured:
-
-1.  **Default:** If no other configuration is provided, it defaults to `https://api.floodlight-b2b.com`.
-2.  **Via Environment Variable (Recommended for Testing/Development):**
-    You can override the API URL by setting the `FLOODLIGHT_API_URL` environment variable. This is the highest priority. This is particularly useful for pointing the plugin to a mock server (like Mockoon) for tests.
-
-    Example for running tests against a local Mockoon server on port 3002:
-    ```bash
-    FLOODLIGHT_API_URL="http://localhost:3002" composer test plugins/LeuchtfeuerFloodlightB2BBundle/Tests/
-    ```
-
-### Running Mockoon for Local Testing
-
-To use a local Mockoon server for testing:
-
-1.  Navigate to the Mockoon configuration directory within the plugin:
-    ```bash
-    cd plugins/LeuchtfeuerFloodlightB2BBundle/Tests/Mockoon
-    ```
-2.  Install the necessary dependencies (if you haven't already):
-    ```bash
-    npm install
-    ```
-    (This typically installs `mockoon-cli` and any other local dependencies.)
-3.  Start the Mockoon server with the predefined mock data:
-    ```bash
-    npx mockoon-cli start --data ./floodlight_mockoon.json
-    ```
-    This will usually start the mock server on `http://localhost:3002`. You can then use the `FLOODLIGHT_API_URL` environment variable as shown above to direct the plugin's API calls to your local Mockoon instance.
+Note:
+* Making changes in the blacklist files in the config directory of the plugin will not work, as the blacklist files from the config directory of your Mautic installation will be used.
+* Be carefull with the `f4b_domain_keyword_blacklist.php` file. If you add a keyword like `apple`, the domains `pineapple.com`, `applepie.com`, etc. will also be blacklisted.
 
 
 AUTHOR
