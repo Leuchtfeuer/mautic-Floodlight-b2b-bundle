@@ -7,6 +7,7 @@ use Mautic\CoreBundle\Helper\PathsHelper;
 class DomainBlacklistHelper
 {
     private string $blacklistPath;
+    private bool $blacklistLoaded = false;
 
     /**
      * @param array<string> $blacklist
@@ -24,7 +25,12 @@ class DomainBlacklistHelper
      */
     private function readFile(): array
     {
-        $fileContent = file_get_contents($this->blacklistPath);
+        if (!file_exists($this->blacklistPath)) {
+            return [];
+        }
+
+        $fileContent           = file_get_contents($this->blacklistPath);
+        $this->blacklistLoaded = true;
         if (false === $fileContent) {
             return [];
         }
@@ -63,5 +69,10 @@ class DomainBlacklistHelper
         }
         unset($this->blacklist[$key]);
         $this->saveFile();
+    }
+
+    public function checkIfBlacklistLoaded(): bool
+    {
+        return $this->blacklistLoaded;
     }
 }
