@@ -10,6 +10,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
 use Pdp\Domain;
 use Pdp\Rules;
+use Psr\Log\LoggerInterface;
 
 class DomainUtility
 {
@@ -21,6 +22,7 @@ class DomainUtility
         private DomainBlacklistHelper $domainBlacklistHelper,
         private PathsHelper $pathsHelper,
         private PdpLoader $pdpLoader,
+        protected LoggerInterface $logger
     ) {
     }
 
@@ -147,33 +149,58 @@ class DomainUtility
 
     public function isBlackListed(string $domain): bool
     {
-        $keywordBlacklist = $this->keywordBlacklistHelper->get();
-        $domainLower      = strtolower($domain);
+        $domain             = strtolower($domain);
+        $inKeywordBlacklist = $this->checkIfInKeywordBlacklist($domain);
+        $inDomainBlacklist  = $this->checkIfInDomainBlacklist($domain);
+        if (true === $inKeywordBlacklist || true === $inDomainBlacklist) {
+            return true;
+        }
 
+        return false;
+    }
+
+    private function checkIfInKeywordBlacklist(string $domain): bool
+    {
+        if (false === $this->keywordBlacklistHelper->checkIfBlacklistLoaded()) {
+            $this->logger->warning('Keyword blacklist file not found.');
+
+            return false;
+        }
+
+        $keywordBlacklist = $this->keywordBlacklistHelper->get();
         foreach ($keywordBlacklist as $keyword) {
             $keyword = trim($keyword);
             if (empty($keyword)) {
                 continue;
             }
-
-            if (str_contains($domainLower, strtolower($keyword))) {
+            if (str_contains($domain, strtolower($keyword))) {
                 return true;
             }
         }
 
-        $blacklist = $this->domainBlacklistHelper->get();
+        return false;
+    }
 
+    private function checkIfInDomainBlacklist(string $domain): bool
+    {
+        if (false === $this->domainBlacklistHelper->checkIfBlacklistLoaded()) {
+            $this->logger->warning('Domain blacklist file not found.');
+
+            return false;
+        }
+
+        $blacklist = $this->domainBlacklistHelper->get();
         foreach ($blacklist as $blacklistedDomain) {
             $blacklistedDomain = trim($blacklistedDomain);
             if (empty($blacklistedDomain)) {
                 continue;
             }
 
-            if (strtolower($domain) === strtolower($blacklistedDomain)) {
+            if ($domain === strtolower($blacklistedDomain)) {
                 return true;
             }
 
-            if (fnmatch('*.'.strtolower($blacklistedDomain), $domainLower)) {
+            if (fnmatch('*.'.strtolower($blacklistedDomain), $domain)) {
                 return true;
             }
         }

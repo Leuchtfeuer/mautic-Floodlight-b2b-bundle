@@ -9,6 +9,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 class DomainUtilityTest extends TestCase
 {
@@ -19,8 +20,9 @@ class DomainUtilityTest extends TestCase
         $domainBlacklistHelper  = $this->createMock(DomainBlacklistHelper::class);
         $pathsHelper            = $this->createMock(PathsHelper::class);
         $pdpLoader              = $this->createMock(PdpLoader::class);
+        $logger                 = $this->createMock(LoggerInterface::class);
 
-        $domainUtility = new DomainUtility($whoisPyService, $keywordBlacklistHelper, $domainBlacklistHelper, $pathsHelper, $pdpLoader);
+        $domainUtility = new DomainUtility($whoisPyService, $keywordBlacklistHelper, $domainBlacklistHelper, $pathsHelper, $pdpLoader, $logger);
         $this->assertTrue($domainUtility->hasMoreThanFourNumbers('123.23'));
         $this->assertFalse($domainUtility->hasMoreThanFourNumbers('google.com'));
         $this->assertTrue($domainUtility->hasMoreThanFourNumbers('127.0.0.1'));
