@@ -16,7 +16,7 @@ class KeywordBlacklistHelper
         private PathsHelper $pathsHelper,
         private array $blacklist = []
     ) {
-        $this->blacklistPath = $this->pathsHelper->getRootPath().'/config/f4b_domain_keyword_blacklist.php';
+        $this->blacklistPath = $this->pathsHelper->getVendorRootPath().'/config/f4b_domain_keyword_blacklist.php';
         $this->blacklist     = $this->readFile();
     }
 
