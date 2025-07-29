@@ -176,9 +176,6 @@ return [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class,
                 'arguments' => [
                     'mautic.integrations.helper',
-                    'mautic.plugin.integrations.repository.integration',
-                    'mautic.integrations.service.encryption',
-                    'doctrine.orm.entity_manager',
                 ],
             ],
         ],

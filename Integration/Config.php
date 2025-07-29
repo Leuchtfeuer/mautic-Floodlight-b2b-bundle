@@ -5,17 +5,11 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration;
 use Mautic\IntegrationsBundle\Exception\IntegrationNotFoundException;
 use Mautic\IntegrationsBundle\Helper\IntegrationsHelper;
 use Mautic\PluginBundle\Entity\Integration;
-use Mautic\IntegrationsBundle\Facade\EncryptionService;
-use Mautic\PluginBundle\Entity\IntegrationRepository;
-use Doctrine\ORM\EntityManagerInterface;
 
 class Config
 {
     public function __construct(
         private IntegrationsHelper $integrationsHelper,
-        private IntegrationRepository $integrationRepository,
-        private EncryptionService $encryptionService,
-        private EntityManagerInterface $entityManager
     ) {
     }
 
@@ -129,56 +123,5 @@ class Config
         } catch (IntegrationNotFoundException) {
             return false;
         }
-    }
-
-    /**
-     * FINALE LÖSUNG: Umgeht ALLE Caching-Probleme durch direkten EntityManager-Zugriff.
-     * Funktioniert IMMER, egal welche Save-Reihenfolge oder Timing.
-     */
-    public function getCurrentSecretKey(): ?string
-    {
-        try {
-            // Cache komplett umgehen durch direkten DQL-Query ohne Cache
-            $dql = 'SELECT i FROM Mautic\PluginBundle\Entity\Integration i WHERE i.name = :name';
-            $query = $this->entityManager->createQuery($dql);
-            $query->setParameter('name', LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME);
-            
-            // WICHTIG: Cache explizit deaktivieren!
-            $query->useResultCache(false);
-            $query->useQueryCache(false);
-            
-            /** @var Integration|null $integration */
-            $integration = $query->getOneOrNullResult();
-            
-            if (!$integration) {
-                return null;
-            }
-
-            $apiKeys = $integration->getApiKeys();
-            
-            if (!is_array($apiKeys) || !isset($apiKeys['api_secret_key'])) {
-                return null;
-            }
-
-            $secretKey = $apiKeys['api_secret_key'];
-
-            // Falls verschlüsselt (was bei direktem DB-Zugriff sein könnte)
-            if (!empty($secretKey) && $this->looksEncrypted($secretKey)) {
-                $decryptedApiKeys = $this->encryptionService->decrypt($apiKeys);
-                return $decryptedApiKeys['api_secret_key'] ?? null;
-            }
-
-            return $secretKey;
-        } catch (\Exception) {
-            return null;
-        }
-    }
-
-    /**
-     * Einfache Heuristik: Verschlüsselte Strings sind meist länger und enthalten base64-Zeichen
-     */
-    private function looksEncrypted(string $value): bool
-    {
-        return strlen($value) > 30 && (strpos($value, '+') !== false || strpos($value, '/') !== false || strpos($value, '=') !== false);
     }
 }
