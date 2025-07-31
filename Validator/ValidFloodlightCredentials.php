@@ -10,7 +10,16 @@ use Symfony\Component\Validator\Constraint;
  */
 class ValidFloodlightCredentials extends Constraint
 {
-    public string $message = 'leuchtfeuer.floodlight.validator.invalid_credentials';
+    public string $message              = 'leuchtfeuer.floodlight.validator.invalid_credentials';
+    public ?string $currentApiSecretKey = null;
+
+    /**
+     * @param array<string, string|null> $options
+     */
+    public function __construct(?array $options = null)
+    {
+        parent::__construct($options ?? []);
+    }
 
     public function getTargets()
     {

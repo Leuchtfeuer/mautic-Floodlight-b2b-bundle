@@ -8,8 +8,9 @@ use Mautic\PluginBundle\Entity\Integration;
 
 class Config
 {
-    public function __construct(private IntegrationsHelper $integrationsHelper)
-    {
+    public function __construct(
+        private IntegrationsHelper $integrationsHelper,
+    ) {
     }
 
     public function isPublished(): bool
