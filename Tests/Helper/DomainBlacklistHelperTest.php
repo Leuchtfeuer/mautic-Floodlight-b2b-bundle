@@ -24,6 +24,7 @@ class DomainBlacklistHelperTest extends MauticMysqlTestCase
         $pathsHelper = self::getContainer()->get('mautic.helper.paths');
         \assert($pathsHelper instanceof \Mautic\CoreBundle\Helper\PathsHelper);
         $this->domainBlackList = new DomainBlacklistHelper($pathsHelper);
+        $this->domainBlackList->setBlacklist();
 
         $this->domain = 'foobaa';
         $this->domainBlackList->remove('foobaa');

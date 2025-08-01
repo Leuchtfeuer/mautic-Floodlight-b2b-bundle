@@ -9,13 +9,16 @@ class DomainBlacklistHelper
     private string $blacklistPath;
     private bool $blacklistLoaded = false;
 
-    /**
-     * @param array<string> $blacklist
-     */
+    /** @var array<string> */
+    private array $blacklist = [];
+
     public function __construct(
         private PathsHelper $pathsHelper,
-        private array $blacklist = []
     ) {
+    }
+
+    public function setBlacklist(): void
+    {
         $this->blacklistPath = $this->pathsHelper->getVendorRootPath().'/config/f4b_domain_blacklist.php';
         $this->blacklist     = $this->readFile();
     }

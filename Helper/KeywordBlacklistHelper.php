@@ -8,14 +8,16 @@ class KeywordBlacklistHelper
 {
     private string $blacklistPath;
     private bool $blacklistLoaded = false;
+    /** @var array<string> */
+    private array $blacklist = [];
 
-    /**
-     * @param array<string> $blacklist
-     */
     public function __construct(
         private PathsHelper $pathsHelper,
-        private array $blacklist = []
     ) {
+    }
+
+    public function setBlacklist(): void
+    {
         $this->blacklistPath = $this->pathsHelper->getVendorRootPath().'/config/f4b_domain_keyword_blacklist.php';
         $this->blacklist     = $this->readFile();
     }
