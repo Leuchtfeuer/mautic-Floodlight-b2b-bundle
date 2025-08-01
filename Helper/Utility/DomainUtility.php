@@ -161,6 +161,7 @@ class DomainUtility
 
     private function checkIfInKeywordBlacklist(string $domain): bool
     {
+        $this->keywordBlacklistHelper->setBlacklist();
         if (false === $this->keywordBlacklistHelper->checkIfBlacklistLoaded()) {
             $this->logger->warning('Keyword blacklist file not found.');
 
@@ -183,6 +184,7 @@ class DomainUtility
 
     private function checkIfInDomainBlacklist(string $domain): bool
     {
+        $this->domainBlacklistHelper->setBlacklist();
         if (false === $this->domainBlacklistHelper->checkIfBlacklistLoaded()) {
             $this->logger->warning('Domain blacklist file not found.');
 
