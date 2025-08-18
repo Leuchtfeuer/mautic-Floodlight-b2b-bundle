@@ -114,8 +114,7 @@ class Status429Strategy
         }
 
         $this->companyModel->saveEntity($company);
-        $this->leadModel->addToCompany($lead, $company);
-        $this->leadModel->saveEntity($lead);
+        $this->companyModel->addLeadToCompany($company, $lead);
 
         return $company;
     }
@@ -124,7 +123,7 @@ class Status429Strategy
     {
         $company = $floodlightDTO->fillCompany($company);
         $this->companyModel->saveEntity($company);
-        $this->leadModel->addToCompany($lead, $company);
+        $this->companyModel->addLeadToCompany($company, $lead);
     }
 
     /**

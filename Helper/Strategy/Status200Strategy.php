@@ -2,6 +2,7 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy;
 
+use Doctrine\ORM\ORMException;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyRepository;
 use Mautic\LeadBundle\Entity\Lead;
@@ -106,13 +107,16 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
     }
 
+    /**
+     * @throws ORMException
+     */
     private function createNewCompany(FloodlightDTO $floodlightDTO, Lead $lead): Company
     {
         $company       = $this->companyModel->getEntity();
         \assert($company instanceof Company);
         $company       = $floodlightDTO->fillCompany($company);
         $this->companyModel->saveEntity($company);
-        $this->leadModel->addToCompany($lead, $company);
+        $this->companyModel->addLeadToCompany($company,$lead);
 
         return $company;
     }
@@ -121,6 +125,6 @@ class Status200Strategy implements StatusCodeStrategyInterface
     {
         $company = $floodlightDTO->fillCompany($company);
         $this->companyModel->saveEntity($company);
-        $this->leadModel->addToCompany($lead, $company);
+        $this->companyModel->addLeadToCompany($company,$lead);
     }
 }

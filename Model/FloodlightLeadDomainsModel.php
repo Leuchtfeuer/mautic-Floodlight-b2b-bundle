@@ -242,6 +242,7 @@ class FloodlightLeadDomainsModel extends FormModel
         assert($companyDomain instanceof FloodlightCompanyDomains);
         $this->logger->info('Update set primary domain company to '.$companyDomain->getCompany()->getName().' for lead '.$lead->getId());
         $company = $companyDomain->getCompany();
+        $this->leadModel->setPrimaryCompany($company->getId(), $lead->getId());
         $lead->setPrimaryCompany($company);
         $this->leadModel->saveEntity($lead);
     }
