@@ -35,9 +35,9 @@ class IpLookupRulesHelper
         $this->parameterLoader = new ParameterLoader();
     }
 
-    public function check(Hit $hit): bool
+    public function check(Hit $hit, bool $ignoreSingleClicks): bool
     {
-        if (!$this->checkLeadHasMoreThanOnePagehit($hit->getLead()->getId())) {
+        if (true === $ignoreSingleClicks && !$this->checkLeadHasMoreThanOnePagehit($hit->getLead()->getId())) {
             return false;
         }
 

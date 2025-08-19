@@ -67,25 +67,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $this->markTestSkipped('getAndProcessFloodlightApiData returns void, not array');
     }
 
-    // Disabled: getDomainByGetHostByAddr method was removed
-    public function disabledtestGetDomainByGetHostByAddr(): void
-    {
-        $this->markTestSkipped('getDomainByGetHostByAddr method was removed');
-    }
-
-    // Disabled: getDomainByGetHostByAddr method was removed
-    public function disabledtestGetGoogleDomainByGetHostByAddr(): void
-    {
-        $this->markTestSkipped('getDomainByGetHostByAddr method was removed');
-    }
-
-    // Disabled: getDomainByGetHostByAddr method was removed
-    public function disabledtestGetDetailsDomainByGetHostByAddr(): void
-    {
-        $this->markTestSkipped('getDomainByGetHostByAddr method was removed');
-    }
-
-    public function testCheckReturnFalseLessThanTwoTimes(): void
+    public function testCheckReturnsFalseWhenLessThanTwoPagehits(): void
     {
         $helper = new IpLookupRulesHelper(
             self::getContainer()->get('mautic.page.model.page'),
@@ -101,41 +83,28 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $lead = $this->createLead();
         $hit  = $this->createHit($lead);
 
-        $result = $helper->check($hit);
+        $result = $helper->check($hit, true);
         $this->assertFalse($result);
     }
 
-    // Disabled: Multiple interface changes and removed methods
-    public function disabledtestEvaluateWithGetHostByAddress(): void
+    public function testCheckReturnsTrueWhenLessThanTwoPagehitsButIgnoreSingleClickVisitsIsDisabled(): void
     {
-        $this->markTestSkipped('getAndProcessFloodlightApiData returns void and evaluate method removed');
-    }
+        $helper = new IpLookupRulesHelper(
+            self::getContainer()->get('mautic.page.model.page'),
+            $this->createMock(FloodlightLeadDomainsModel::class),
+            $this->createMock(FloodlightService::class),
+            $this->createMock(Reporter::class),
+            $this->createMock(Status200Strategy::class),
+            $this->createMock(Status202Strategy::class),
+            $this->createMock(Status404Strategy::class),
+            $this->createMock(Status429Strategy::class),
+            $this->createMock(Config::class)
+        );
+        $lead = $this->createLead();
+        $hit  = $this->createHit($lead);
 
-    // Disabled: Multiple interface changes and removed methods
-    public function disabledtestEvaluateWithFloodlightWithNoGetPrimaryDomain(): void
-    {
-        $this->markTestSkipped('getAndProcessFloodlightApiData returns void and evaluate method removed');
-    }
-
-    // Disabled: Multiple interface changes and removed methods
-    public function disabledtestEvaluateWithFloodlight(): void
-    {
-        $this->markTestSkipped('getAndProcessFloodlightApiData returns void and evaluate method removed');
-    }
-
-    public function disabledtestGetDomainWithFloodLightNoGetPrimaryCompany(): void
-    {
-        $this->markTestSkipped('getAndProcessFloodlightApiData returns void and removed method');
-    }
-
-    public function disabledtestGetDomainWithFloodLightWith404(): void
-    {
-        $this->markTestSkipped('getAndProcessFloodlightApiData returns void, not array');
-    }
-
-    public function disabledtestGetDomainWithFloodLightWith202(): void
-    {
-        $this->markTestSkipped('getAndProcessFloodlightApiData returns void, not array');
+        $result = $helper->check($hit, false);
+        $this->assertTrue($result);
     }
 
     public function testCheckIpLookUpCanBeProcessed(): void
@@ -154,7 +123,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         // Test with just one hit
         $lead    = $this->createLead();
         $hit1    = $this->createHit($lead);
-        $result1 = $helper->check($hit1);
+        $result1 = $helper->check($hit1, true);
         // check more than 2 with just one hit, false
         $this->assertFalse($result1);
 
@@ -162,12 +131,12 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $hit2 = $this->createHit($lead);
         // check more than 2 with two hits, false
         // check lookup has more than one hour, but no lead domain, so is true
-        $result2 = $helper->check($hit2);
+        $result2 = $helper->check($hit2, true);
         $this->assertTrue($result2);
 
         // Test with two hits and one lead domain in the last hour
         $leadDomain = $this->createFloodLightLeadDomain($lead);
-        $result     = $helper->check($hit2);
+        $result     = $helper->check($hit2, true);
         $this->assertFalse($result);
 
         // Test with two hits and one lead domain in the plus one hour
@@ -175,7 +144,7 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $leadDomain->setDateAdded(new \DateTime('-2 hours'));
         $this->em->persist($leadDomain);
         $this->em->flush();
-        $result = $helper->check($hit2);
+        $result = $helper->check($hit2, true);
         $this->assertTrue($result);
     }
 
