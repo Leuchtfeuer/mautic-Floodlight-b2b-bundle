@@ -125,7 +125,7 @@ class Config
         }
     }
 
-    public function getIgnoreSingleClickSettings(): int
+    public function getIgnoreSingleClickSettings(): bool
     {
         try {
             $integration     = $this->getIntegrationEntity();
@@ -135,12 +135,12 @@ class Config
                 || !isset($featureSettings['integration'])
                 || !is_array($featureSettings['integration'])
                 || !isset($featureSettings['integration']['ignore_single_click_visits'])) {
-                return 1;
+                return true;
             }
 
-            return (int) $featureSettings['integration']['ignore_single_click_visits'];
+            return (bool) $featureSettings['integration']['ignore_single_click_visits'];
         } catch (IntegrationNotFoundException) {
-            return 1;
+            return true;
         }
     }
 }
