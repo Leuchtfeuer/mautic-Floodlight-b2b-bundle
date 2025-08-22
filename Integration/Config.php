@@ -124,4 +124,23 @@ class Config
             return false;
         }
     }
+
+    public function getIgnoreSingleClickSettings(): bool
+    {
+        try {
+            $integration     = $this->getIntegrationEntity();
+            $featureSettings = $integration->getFeatureSettings();
+
+            if (!is_array($featureSettings)
+                || !isset($featureSettings['integration'])
+                || !is_array($featureSettings['integration'])
+                || !isset($featureSettings['integration']['ignore_single_click_visits'])) {
+                return true;
+            }
+
+            return (bool) $featureSettings['integration']['ignore_single_click_visits'];
+        } catch (IntegrationNotFoundException) {
+            return true;
+        }
+    }
 }

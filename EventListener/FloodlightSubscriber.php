@@ -36,7 +36,8 @@ class FloodlightSubscriber implements EventSubscriberInterface
 
     private function execute(PageHitEvent $event): void
     {
-        $isValid = $this->ipLookupRulesHelper->check($event->getHit());
+        $ignoreSingleClickSettings = $this->config->getIgnoreSingleClickSettings();
+        $isValid                   = $this->ipLookupRulesHelper->check($event->getHit(), $ignoreSingleClickSettings);
 
         if (false === $isValid) {
             return;

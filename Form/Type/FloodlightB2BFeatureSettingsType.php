@@ -12,12 +12,12 @@ class FloodlightB2BFeatureSettingsType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder->add('strict_gdpr', YesNoButtonGroupType::class, [
-            'label' => 'leuchtfeuerfloodlightb2b.form.config.floodlight.strict_gdpr_mode',
+        $builder->add('ignore_single_click_visits', YesNoButtonGroupType::class, [
+            'label' => 'leuchtfeuerfloodlightb2b.form.config.floodlight.ignore_single_click_visits',
             'attr'  => [
-                'tooltip' => 'leuchtfeuerfloodlightb2b.form.config.floodlight.strict_gdpr_mode.tooltip',
+                'tooltip' => 'leuchtfeuerfloodlightb2b.form.config.floodlight.ignore_single_click_visits.tooltip',
             ],
-            'data' => false,
+            'data' => true,
         ]);
     }
 }
