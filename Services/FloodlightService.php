@@ -78,9 +78,6 @@ class FloodlightService implements FloodlightServiceInterface
             return $this->client->getClient()->request('GET', $url);
         } catch (ClientException $e) {
             if ($e->hasResponse()) {
-                $this->logger->error('Url client get : '.$url);
-                $this->logger->error('FloodlightService getCompanyByIp fail: '.$e->getMessage());
-
                 return $e->getResponse();
             }
         }
