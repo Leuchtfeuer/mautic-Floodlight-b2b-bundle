@@ -43,11 +43,19 @@ return [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter::class,
             ],
 
+            'mautic.leuchtfeuerfloodlightb2b.helper.auditlog' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\AuditLogHelper::class,
+                'arguments' => [
+                    'mautic.core.model.auditlog',
+                ],
+            ],
+
             'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory::class,
                 'arguments' => [
                     'mautic.lead.model.field',
                     'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.auditlog',
                 ],
             ],
 

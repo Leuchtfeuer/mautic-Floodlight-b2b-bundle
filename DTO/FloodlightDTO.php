@@ -6,6 +6,7 @@ use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\AuditLogHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 
@@ -176,7 +177,8 @@ class FloodlightDTO implements DTOInterface
     public function __construct(
         private array $pureData,
         private FieldModel $fieldModel,
-        private DomainUtility $domainUtility
+        private DomainUtility $domainUtility,
+        private AuditLogHelper $auditLogHelper
     ) {
         $this->load($pureData);
     }
@@ -871,6 +873,7 @@ class FloodlightDTO implements DTOInterface
 
     public function fillCompany(Company $company): Company
     {
+        $this->auditLogHelper->getNonFloodlightUpdatableFields($company->getId());
         if (!empty($this->getCompanyName())) {
             $company->setName($this->getCompanyName());
         }
@@ -1010,6 +1013,8 @@ class FloodlightDTO implements DTOInterface
         if (200 === $this->getStatusHttpRequest()) {
             $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
         }
+
+        $company->setEventData('floodlightAuditLogMarker', true);
 
         return $company;
     }
