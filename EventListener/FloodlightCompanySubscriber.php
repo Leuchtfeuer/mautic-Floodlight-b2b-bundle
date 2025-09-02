@@ -50,6 +50,7 @@ class FloodlightCompanySubscriber implements EventSubscriberInterface
             ];
 
             $this->createSecureFloodlightAuditLog($log);
+            $company->setEventData('floodlightAuditLogMarker', null);
             $event->stopPropagation();
         }
     }
