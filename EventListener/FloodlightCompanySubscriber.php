@@ -39,7 +39,7 @@ class FloodlightCompanySubscriber implements EventSubscriberInterface
 
         $isFloodlightAuditLog = $company->getEventData('floodlightAuditLogMarker');
 
-        if ($isFloodlightAuditLog === true) {
+        if (true === $isFloodlightAuditLog) {
             $log = [
                 'bundle'    => 'lead',
                 'object'    => 'company',
@@ -54,6 +54,9 @@ class FloodlightCompanySubscriber implements EventSubscriberInterface
         }
     }
 
+    /**
+     * @param array<mixed> $logData
+     */
     private function createSecureFloodlightAuditLog(array $logData): void
     {
         $ipAddress = $logData['ipAddress'] ?? '';
@@ -61,22 +64,25 @@ class FloodlightCompanySubscriber implements EventSubscriberInterface
             $ipAddress = '*.*.*.*';
         }
 
-        // 3. Sichere AuditLog-Erstellung
         $auditLog = new AuditLog();
+        assert(is_string($logData['bundle']));
         $auditLog->setBundle($logData['bundle']);
+        assert(is_string($logData['object']));
         $auditLog->setObject($logData['object']);
+        assert(is_int($logData['objectId']));
         $auditLog->setObjectId($logData['objectId']);
+        assert(is_string($logData['action']));
         $auditLog->setAction($logData['action']);
+        assert(is_array($logData['details']));
         $auditLog->setDetails($logData['details']);
-        $auditLog->setIpAddress($ipAddress);
+        assert(is_string($ipAddress));
+        $auditLog->setIpAddress((string) $ipAddress);
         $auditLog->setDateAdded(new \DateTime());
         $auditLog->setUserId(0);
         $auditLog->setUserName('Floodlight B2B');
 
-        // 4. Speichern
         $this->auditLogModel->getRepository()->saveEntity($auditLog);
 
-        // 5. Memory-Leak verhindern
         $this->em->detach($auditLog);
     }
 }

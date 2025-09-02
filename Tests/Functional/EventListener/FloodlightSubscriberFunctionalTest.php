@@ -6,6 +6,7 @@ use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\PageBundle\Entity\Hit;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
@@ -336,6 +337,37 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $primaryCompany = $lead->getPrimaryCompany();
         $this->assertInstanceOf(Company::class, $primaryCompany);
         $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $primaryCompany->getName());
+    }
+
+    /**
+     * Description: Company data from manual edits, etc. shouldn't be overridden by Floodlight.
+     */
+    public function testProtectNonF4bCompanyData(): void
+    {
+        $lead = $this->createLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('217.91.35.16', $lead);
+
+        $companies           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($companies);
+        $this->assertCount(1, $companies);
+        $this->assertInstanceOf(Company::class, $companies[0]);
+        $company = $companies[0];
+        $company->setCity('testcity');
+        $companyModel = self::getContainer()->get(CompanyModel::class);
+        $companyModel->saveEntity($company);
+
+        $lead2 = $this->createLead();
+        $this->processHit('217.91.35.16', $lead2);
+        $this->processHit('217.91.35.16', $lead2);
+
+        $company           = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        $this->assertEquals('testcity', $company[0]->getCity());
     }
 
     public function test429PagehitWithFailingDnsLookupAndSuccessfulWhoisLookup(): void

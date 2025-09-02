@@ -6,7 +6,6 @@ use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\AuditLogHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 
@@ -178,7 +177,6 @@ class FloodlightDTO implements DTOInterface
         private array $pureData,
         private FieldModel $fieldModel,
         private DomainUtility $domainUtility,
-        private AuditLogHelper $auditLogHelper
     ) {
         $this->load($pureData);
     }
@@ -873,7 +871,6 @@ class FloodlightDTO implements DTOInterface
 
     public function fillCompany(Company $company): Company
     {
-        $this->auditLogHelper->getNonFloodlightUpdatableFields($company->getId());
         if (!empty($this->getCompanyName())) {
             $company->setName($this->getCompanyName());
         }
@@ -1097,9 +1094,6 @@ class FloodlightDTO implements DTOInterface
         return $this->pureData[$key] ?? '';
     }
 
-    /**
-     * Kürzt einen String auf das Feldlimit.
-     */
     private function truncateString(string $value, string $dtoFieldName): string
     {
         if (!array_key_exists($dtoFieldName, self::FIELD_MAPPING)) {

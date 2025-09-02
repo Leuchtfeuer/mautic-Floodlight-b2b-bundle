@@ -55,7 +55,6 @@ return [
                 'arguments' => [
                     'mautic.lead.model.field',
                     'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
-                    'mautic.leuchtfeuerfloodlightb2b.helper.auditlog',
                 ],
             ],
 
@@ -70,6 +69,7 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.helper.field',
                     'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
                     'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.auditlog',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status202strategy' => [
