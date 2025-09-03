@@ -9,6 +9,7 @@ use Mautic\CoreBundle\Model\FormModel;
 use Mautic\CoreBundle\Security\Permissions\CorePermissions;
 use Mautic\CoreBundle\Translation\Translator;
 use Mautic\LeadBundle\Entity\Company;
+use Mautic\LeadBundle\Model\CompanyModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
@@ -27,7 +28,8 @@ class FloodlightCompanyDomainsModel extends FormModel
         UserHelper $userHelper,
         LoggerInterface $logger,
         CoreParametersHelper $coreParametersHelper,
-        private DomainUtility $domainUtility
+        private DomainUtility $domainUtility,
+        private CompanyModel $companyModel,
     ) {
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $logger, $coreParametersHelper);
     }
@@ -83,12 +85,10 @@ class FloodlightCompanyDomainsModel extends FormModel
                 ->getQuery()
                 ->getResult();
         } catch (\Exception $e) {
-            dump(['Error' => $e->getMessage()]);
             throw $e;
         }
     }
 
-    /*
     public function saveDomainsForNonFloodlightCompanies(): void
     {
         $connection = $this->em->getConnection();
@@ -106,7 +106,7 @@ class FloodlightCompanyDomainsModel extends FormModel
             return;
         }
 
-        $companies = $this->companiesModel->getEntities(['ids' => $companyIds]);
+        $companies = $this->companyModel->getEntities(['ids' => $companyIds]);
 
         foreach ($companies as $company) {
             $domain = $this->domainUtility->cleanDomain($company->getCompanywebsite());
@@ -125,7 +125,6 @@ class FloodlightCompanyDomainsModel extends FormModel
             $this->saveEntity($companyDomain);
         }
     }
-    */
 
     /**
      * @return mixed[]

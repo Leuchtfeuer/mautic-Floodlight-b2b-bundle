@@ -25,8 +25,8 @@ class AuditLogHelper
         $fieldsNotUpdatableByFloodlight = [];
 
         foreach ($nonFloodlightAuditLogEntries as $entry) {
-            $nonUpdatableFields          = array_key_exists('fields', $entry->getDetails()) ? array_keys($entry->getDetails()['fields']) : [];
-            $nonUpdatableFields2         = array_keys($entry->getDetails());
+            $nonUpdatableFields             = array_key_exists('fields', $entry->getDetails()) ? array_keys($entry->getDetails()['fields']) : [];
+            $nonUpdatableFields2            = array_keys($entry->getDetails());
             $fieldsNotUpdatableByFloodlight = array_merge($fieldsNotUpdatableByFloodlight, $nonUpdatableFields, $nonUpdatableFields2);
         }
 
