@@ -9,7 +9,7 @@ class FloodlightDtoFactory
 {
     public function __construct(
         private FieldModel $fieldModel,
-        private DomainUtility $domainUtility
+        private DomainUtility $domainUtility,
     ) {
     }
 

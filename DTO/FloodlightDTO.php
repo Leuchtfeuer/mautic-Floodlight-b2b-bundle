@@ -176,7 +176,7 @@ class FloodlightDTO implements DTOInterface
     public function __construct(
         private array $pureData,
         private FieldModel $fieldModel,
-        private DomainUtility $domainUtility
+        private DomainUtility $domainUtility,
     ) {
         $this->load($pureData);
     }
@@ -1011,6 +1011,8 @@ class FloodlightDTO implements DTOInterface
             $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
         }
 
+        $company->setEventData('floodlightAuditLogMarker', true);
+
         return $company;
     }
 
@@ -1092,9 +1094,6 @@ class FloodlightDTO implements DTOInterface
         return $this->pureData[$key] ?? '';
     }
 
-    /**
-     * Kürzt einen String auf das Feldlimit.
-     */
     private function truncateString(string $value, string $dtoFieldName): string
     {
         if (!array_key_exists($dtoFieldName, self::FIELD_MAPPING)) {
