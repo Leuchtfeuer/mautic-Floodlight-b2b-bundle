@@ -104,7 +104,9 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $companies);
+        // Leuchtfeuer doesn't get overridden by Leuchtfeuer Digital Marketing GmbH
         $this->assertSame('Leuchtfeuer', $companies[0]->getName());
+        // The other data gets enriched properly
         $this->assertSame('Hanover', $companies[0]->getCity());
     }
 
