@@ -15,6 +15,8 @@ class FloodlightCompanyDomains
 
     private bool $isPrimaryDomain;
 
+    private bool $isTelco;
+
     private ?string $domain = null;
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
@@ -37,6 +39,7 @@ class FloodlightCompanyDomains
         $builder->createField('domain', 'string')
             ->columnName('domain')
             ->nullable()
+            ->unique()
             ->makePrimaryKey()
             ->build();
         //        $builder->createField('codeStatusRequest', 'integer')
@@ -44,6 +47,7 @@ class FloodlightCompanyDomains
         //            ->nullable()
         //            ->build();
         $builder->createField('isPrimaryDomain', 'boolean')->columnName('is_primary_domain')->build();
+        $builder->createField('isTelco', 'boolean')->columnName('is_telco')->nullable()->build();
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')->columnName('date_modified')->build();
     }
@@ -135,6 +139,16 @@ class FloodlightCompanyDomains
     public function getIsPrimaryDomain(): bool
     {
         return $this->isPrimaryDomain;
+    }
+
+    public function setIsTelco(bool $isTelco): void
+    {
+        $this->isTelco = $isTelco;
+    }
+
+    public function getIsTelco(): bool
+    {
+        return $this->isTelco;
     }
 
     //    public function getCodeStatusRequest(): ?int
