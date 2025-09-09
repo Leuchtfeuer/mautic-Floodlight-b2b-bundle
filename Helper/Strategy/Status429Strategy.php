@@ -84,7 +84,7 @@ class Status429Strategy
         }
 
         $companyDomain = $this->companyDomainsModel->getExistingCompanyDomain($processedData['domain']);
-        if (empty($companyDomain)) {
+        if (null === $companyDomain) {
             $this->createNewCompanyDomain($processedData['domain'], $company);
         }
 

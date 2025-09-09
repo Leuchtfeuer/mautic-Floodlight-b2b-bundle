@@ -15,7 +15,7 @@ class FloodlightCompanyDomains
 
     private bool $isPrimaryDomain;
 
-    private bool $isTelco;
+    private ?bool $isTelco = null;
 
     private ?string $domain = null;
     private \DateTime $dateAdded;
@@ -146,7 +146,7 @@ class FloodlightCompanyDomains
         $this->isTelco = $isTelco;
     }
 
-    public function getIsTelco(): bool
+    public function getIsTelco(): ?bool
     {
         return $this->isTelco;
     }

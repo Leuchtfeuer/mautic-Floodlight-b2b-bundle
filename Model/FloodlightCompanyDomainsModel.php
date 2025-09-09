@@ -111,7 +111,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         foreach ($companies as $company) {
             $domain = $this->domainUtility->cleanDomain($company->getCompanywebsite());
 
-            if (!$domain || !empty($this->getExistingCompanyDomain($domain))) {
+            if (!$domain || ($this->getExistingCompanyDomain($domain) instanceof FloodlightCompanyDomains)) {
                 continue;
             }
 
@@ -126,16 +126,17 @@ class FloodlightCompanyDomainsModel extends FormModel
         }
     }
 
-    /**
-     * @return mixed[]
-     */
-    public function getExistingCompanyDomain(string $domain): array
+    public function getExistingCompanyDomain(string $domain): ?FloodlightCompanyDomains
     {
-        return $this->getRepository()->findBy(
+        $domain = $this->getRepository()->findOneBy(
             [
                 'domain' => $domain,
             ]
         );
+        if ($domain instanceof FloodlightCompanyDomains) {
+            return $domain;
+        }
+        return null;
     }
 
     public function createNewCompanyDomain(FloodlightDTO $floodlightDTO, Company $company): FloodlightCompanyDomains

@@ -42,6 +42,21 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
     }
 
+    private function updateIgnoreTelcoSettings(bool $ignoreTelcoSetting): void
+{
+    $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
+    $form    = $crawler->selectButton('Save')->form();
+
+    $toggleId = $ignoreTelcoSetting
+        ? 'integration_config_featureSettings_integration_ignore_telcos_1'
+        : 'integration_config_featureSettings_integration_ignore_telcos_0';
+
+   $form[$toggleId]->setValue(true);
+    $crawler = $this->client->submit($form);
+
+    $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
+}
+
     private function activePlugin(bool $isPublished = true): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
@@ -347,6 +362,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createLead();
         $this->activePlugin();
         $this->updateApikey();
+        $this->updateIgnoreTelcoSettings(false);
         $this->processHit('217.91.35.16', $lead);
         $this->processHit('217.91.35.16', $lead);
 
@@ -625,8 +641,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     private function createLead(): Lead
     {
         $lead = new Lead();
-        $lead->setFirstname('Contact');
-        $lead->setEmail('test@test.com');
+        //$lead->setFirstname('Contact');
+        //$lead->setEmail('test@test.com');
         $this->em->persist($lead);
         $this->em->flush();
 
