@@ -139,10 +139,13 @@ class EnrichCompanyCommand extends ModeratedCommand
                 continue;
             }
 
+
             $floodlightDTO = $this->floodlightDtoFactory->create($result);
             $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
             $this->fieldHelper->updateProperties($floodlightDTO);
             $company = $floodlightDTO->fillCompany($company);
+            // check if company has known contacts -->regular lookup
+            // check if dto sector = telecommunications
             $this->companyModel->saveEntity($company);
 
             $this->flCompanyDomainsModel->saveEntity($companyDomain);

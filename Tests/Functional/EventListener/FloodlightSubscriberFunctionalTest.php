@@ -5,8 +5,10 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventList
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
+use Mautic\LeadBundle\Entity\CompanyLead;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
+use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\PageBundle\Entity\Hit;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
@@ -16,6 +18,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
+use function PHPUnit\Framework\assertInstanceOf;
 
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
@@ -43,19 +46,21 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     }
 
     private function updateIgnoreTelcoSettings(bool $ignoreTelcoSetting): void
-{
-    $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
-    $form    = $crawler->selectButton('Save')->form();
+    {
+        $integration = $this->em->getRepository(\Mautic\PluginBundle\Entity\Integration::class)
+            ->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
 
-    $toggleId = $ignoreTelcoSetting
-        ? 'integration_config_featureSettings_integration_ignore_telcos_1'
-        : 'integration_config_featureSettings_integration_ignore_telcos_0';
+        $featureSettings = $integration->getFeatureSettings() ?? [];
 
-   $form[$toggleId]->setValue(true);
-    $crawler = $this->client->submit($form);
+        if (!isset($featureSettings['integration'])) {
+            $featureSettings['integration'] = [];
+        }
+        $featureSettings['integration']['ignore_telcos'] = $ignoreTelcoSetting ? '1' : '0';
 
-    $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
-}
+        $integration->setFeatureSettings($featureSettings);
+        $this->em->persist($integration);
+        $this->em->flush();
+    }
 
     private function activePlugin(bool $isPublished = true): void
     {
@@ -362,7 +367,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createLead();
         $this->activePlugin();
         $this->updateApikey();
-        $this->updateIgnoreTelcoSettings(false);
         $this->processHit('217.91.35.16', $lead);
         $this->processHit('217.91.35.16', $lead);
 
@@ -387,6 +391,120 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals('testcity', $company[0]->getCity());
         $this->assertEquals('Leuchtfeuer', $company[0]->getName());
     }
+
+    public function testIfIgnoreTelcoLogicWorks(): void
+    {
+        $this->activePlugin();
+        $this->updateApikey();
+
+        //'45.117.246.240' is ip that will return a floodlight company with icb_sector = 'Telecommunications'
+
+        //Pagehit when ignore_telco = false
+        $this->updateIgnoreTelcoSettings(false);
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->checkIfOneCompany();
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(null);
+
+        $this->updateIgnoreTelcoSettings(true);
+
+        //Pagehit when ignore_telco = true,companydomain already exists with is_telco = null, and ip will return icb_sector which is NOT 'Telecommunications'
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.241', $lead);
+        $this->processHit('45.117.246.241', $lead);
+        $this->checkIfOneCompany();
+        $this->checkNumberOfLeadsAssignedToCompany(2);
+        $this->checkIfCompanyDomainHasIsTelcoValue(null);
+
+        //Pagehit when ignore_telco = true,companydomain already exists with is_telco = null, and ip will return icb_sector = 'Telecommunications'
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->checkIfOneCompany();
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+
+        //Pagehit when ignore_telco = true and companydomain already exists with is_telco = true
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $company = $this->checkIfOneCompany();
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+
+        //Pagehit when ignore_telco = true and companydomain already exists and has known contact
+        $this->createKnownLeadAndAddToCompany($company);
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->checkIfOneCompany();
+        $this->checkNumberOfLeadsAssignedToCompany(2);
+        //Sollte hier nicht eigentlich auch auf is_telco === false zurückgesetzt werden?
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+
+        $prefix = MAUTIC_TABLE_PREFIX;
+        $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS = 0");
+        $this->connection->executeStatement("DELETE FROM {$prefix}companies");
+        $this->connection->executeStatement("DELETE FROM {$prefix}f4b_company_domains");
+        $this->connection->executeStatement("DELETE FROM {$prefix}leads");
+        $this->connection->executeStatement("DELETE FROM {$prefix}f4b_lead_ip_lookups");
+        $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS = 1");
+        $this->em->clear();
+
+        //Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector = 'Telecommunications'
+
+
+
+        //Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector which is NOT 'Telecommunications'
+        $lead = $this->createLead();
+        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('217.91.35.16', $lead);
+        $this->checkIfOneCompany();
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(false);
+
+
+        //Telco company doesn't get unpublished if it already existed before floodlight lookup
+
+
+
+
+        //Company is unpublished test mit einbauen
+
+    }
+
+    private function checkIfOneCompany(){
+        $company = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        return $company[0];
+    }
+
+    private function checkNumberOfLeadsAssignedToCompany(int $count){
+        $companyLeads          = $this->em->getRepository(CompanyLead::class)->findAll();
+        //$this->assertNotEmpty($companyLeads );
+        $this->assertCount($count, $companyLeads);
+    }
+    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue)
+    {
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertNotEmpty($companyDomainsHit);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertEquals($telcoValue, $companyDomainsHit[0]->getIsTelco());
+
+    }
+
+    private function createKnownLeadAndAddToCompany(Company $company): void{
+        $lead = $this->createKnownLead();
+        $companyModel = self::getContainer()->get(CompanyModel::class);
+        $companyModel->addLeadToCompany($company, $lead);
+        $companyModel->saveEntity($company);
+    }
+
 
     public function test429PagehitWithFailingDnsLookupAndSuccessfulWhoisLookup(): void
     {
@@ -643,6 +761,16 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = new Lead();
         //$lead->setFirstname('Contact');
         //$lead->setEmail('test@test.com');
+        $this->em->persist($lead);
+        $this->em->flush();
+
+        return $lead;
+    }
+
+    private function createKnownLead(): Lead
+    {
+        $lead = new Lead();
+        $lead->setEmail('test@test.com');
         $this->em->persist($lead);
         $this->em->flush();
 
