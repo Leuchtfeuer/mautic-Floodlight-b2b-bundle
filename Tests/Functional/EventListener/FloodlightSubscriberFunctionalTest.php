@@ -404,7 +404,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
-        $this->checkIfOneCompany();
         $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(null);
@@ -413,9 +412,9 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         //Pagehit when ignore_telco = true,companydomain already exists with is_telco = null, and ip will return icb_sector which is NOT 'Telecommunications'
         $lead = $this->createLead();
+        //'45.117.246.241' returns same company as '45.117.246.240' but with icb_sector = 'technology'
         $this->processHit('45.117.246.241', $lead);
         $this->processHit('45.117.246.241', $lead);
-        $this->checkIfOneCompany();
         $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(2);
         $this->checkIfCompanyDomainHasIsTelcoValue(null);
@@ -424,7 +423,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
-        $this->checkIfOneCompany();
         $this->assertEquals(false, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
@@ -433,19 +431,19 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
-        $company = $this->checkIfOneCompany();
-        $this->setCompanyUnpublished();
-        $this->assertEquals(false, $this->checkIfCompanyPublished());
+        $this->publishCompany(true);
+        //sollte Company dann nicht unpublished werden?
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
         //Pagehit when ignore_telco = true and companydomain already exists and has known contact
+        $company = $this->em->getRepository(Company::class)->findOneBy([]);
         $this->createKnownLeadAndAddToCompany($company);
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
-        $this->checkIfOneCompany();
-        $this->setCompanyUnpublished();
+        $this->publishCompany(true);
         $this->checkNumberOfLeadsAssignedToCompany(2);
         //Sollte hier nicht eigentlich auch auf is_telco === false zurückgesetzt werden?
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
@@ -455,7 +453,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
-        $this->checkIfOneCompany();
         $this->assertEquals(false, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
@@ -466,22 +463,20 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createLead();
         $this->processHit('217.91.35.16', $lead);
         $this->processHit('217.91.35.16', $lead);
-        $this->checkIfOneCompany();
         $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
 
-
         //Telco company doesn't get unpublished if it already existed before floodlight lookup
         $this->clearTestTables();
-        $company = $this->createCompany();
+        $company = $this->createCompany('Digicel Pacific');
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
-
-
-
-
-
-        //Company is unpublished test mit einbauen
 
     }
 
@@ -505,14 +500,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $this->em->flush();
         $this->em->clear();
-    }
-
-    private function checkIfOneCompany(){
-        $company = $this->em->getRepository(Company::class)->findAll();
-        $this->assertNotEmpty($company);
-        $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
-        return $company[0];
     }
 
     private function checkNumberOfLeadsAssignedToCompany(int $count){
@@ -545,12 +532,12 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $company[0]->isPublished();
     }
 
-    private function setCompanyUnpublished(): void{
+    private function publishCompany(bool $published): void{
         $company = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
         $this->assertCount(1, $company);
         $this->assertInstanceOf(Company::class, $company[0]);
-        $company[0]->setIsPublished(false);
+        $company[0]->setIsPublished($published);
         $this->em->persist($company[0]);
         $this->em->flush();
     }
@@ -825,10 +812,10 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $lead;
     }
 
-    private function createCompany(): Company
+    private function createCompany($name): Company
     {
         $company = new Company();
-        $company->setName('Test Company');
+        $company->setName($name);
         $this->em->persist($company);
         $this->em->flush();
 

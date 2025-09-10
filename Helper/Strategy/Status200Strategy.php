@@ -234,13 +234,15 @@ class Status200Strategy implements StatusCodeStrategyInterface
         return !($lead->getFirstname() || $lead->getLastname() || $lead->getEmail());
     }
 
-    private function updateTelcoCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company): void
+    private function updateTelcoCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company, bool $shouldUnpublish = true): void
     {
         $this->fieldHelper->updateProperties($floodlightDTO);
         $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
         $this->updateCompany($floodlightDTO, $lead, $company);
         $this->detachAllUnknowContactsFromCompany($company);
-        $company->setIsPublished(false);
+        if($shouldUnpublish === true){
+            $company->setIsPublished(false);
+        }
         $this->companyModel->saveEntity($company);
 
         $this->updateTelcoCompanyDomains($floodlightDTO, $company);
@@ -258,7 +260,8 @@ class Status200Strategy implements StatusCodeStrategyInterface
             $company->setIsPublished(false);
             $this->companyModel->saveEntity($company);
         } else {
-            $this->updateTelcoCompany($processedData['details']['floodlight'], $lead, $company);
+            //hier sollte company nicht auf unpublished gesetzt werden in update company
+            $this->updateTelcoCompany($processedData['details']['floodlight'], $lead, $company, false);
         }
         $this->updateTelcoCompanyDomains($processedData['details']['floodlight'], $company);
 
@@ -272,9 +275,5 @@ class Status200Strategy implements StatusCodeStrategyInterface
             $companyDomain->setIsTelco(true);
         }
         $this->companyDomainsModel->saveEntities($companyDomains);
-    }
-
-    private function unpublishTelcoCompany($company){
-
     }
 }
