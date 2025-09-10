@@ -242,15 +242,8 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $this->detachAllUnknowContactsFromCompany($company);
         $company->setIsPublished(false);
         $this->companyModel->saveEntity($company);
-        //Add new telco domains
-        $companyDomains = $this->companyDomainsModel->createNewCompanyDomain($floodlightDTO, $company);
 
-        //Company domains von unternehmen ziehen und alle auf Telco setzen
-        $companyDomains = $this->companyDomainsModel->getCompanyDomainsEntriesOfCompany($company->getId());
-        foreach ($companyDomains as $companyDomain) {
-            $companyDomain->setIsTelco(true);
-        }
-        $this->companyDomainsModel->saveEntities($companyDomains);
+        $this->updateTelcoCompanyDomains($floodlightDTO, $company);
 
 
     }
@@ -262,12 +255,26 @@ class Status200Strategy implements StatusCodeStrategyInterface
             $company       = $this->companyModel->getEntity();
             \assert($company instanceof Company);
             $company       = $processedData['details']['floodlight']->fillCompany($company);
-            $company->setPublished(false);
+            $company->setIsPublished(false);
             $this->companyModel->saveEntity($company);
         } else {
             $this->updateTelcoCompany($processedData['details']['floodlight'], $lead, $company);
         }
+        $this->updateTelcoCompanyDomains($processedData['details']['floodlight'], $company);
 
         return $company;
+    }
+
+    private function updateTelcoCompanyDomains($floodlightDto, $company): void{
+        $companyDomains = $this->companyDomainsModel->createNewCompanyDomain($floodlightDto, $company);
+        $companyDomains = $this->companyDomainsModel->getCompanyDomainsEntriesOfCompany($company->getId());
+        foreach ($companyDomains as $companyDomain) {
+            $companyDomain->setIsTelco(true);
+        }
+        $this->companyDomainsModel->saveEntities($companyDomains);
+    }
+
+    private function unpublishTelcoCompany($company){
+
     }
 }

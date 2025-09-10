@@ -405,6 +405,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->checkIfOneCompany();
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(null);
 
@@ -415,6 +416,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('45.117.246.241', $lead);
         $this->processHit('45.117.246.241', $lead);
         $this->checkIfOneCompany();
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(2);
         $this->checkIfCompanyDomainHasIsTelcoValue(null);
 
@@ -423,6 +425,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->checkIfOneCompany();
+        $this->assertEquals(false, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
@@ -431,6 +434,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $company = $this->checkIfOneCompany();
+        $this->setCompanyUnpublished();
+        $this->assertEquals(false, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
@@ -440,39 +445,66 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->checkIfOneCompany();
+        $this->setCompanyUnpublished();
         $this->checkNumberOfLeadsAssignedToCompany(2);
         //Sollte hier nicht eigentlich auch auf is_telco === false zurückgesetzt werden?
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
-        $prefix = MAUTIC_TABLE_PREFIX;
-        $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS = 0");
-        $this->connection->executeStatement("DELETE FROM {$prefix}companies");
-        $this->connection->executeStatement("DELETE FROM {$prefix}f4b_company_domains");
-        $this->connection->executeStatement("DELETE FROM {$prefix}leads");
-        $this->connection->executeStatement("DELETE FROM {$prefix}f4b_lead_ip_lookups");
-        $this->connection->executeStatement("SET FOREIGN_KEY_CHECKS = 1");
-        $this->em->clear();
-
         //Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector = 'Telecommunications'
-
+        $this->clearTestTables();
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->checkIfOneCompany();
+        $this->assertEquals(false, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
 
         //Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector which is NOT 'Telecommunications'
+        $this->clearTestTables();
         $lead = $this->createLead();
         $this->processHit('217.91.35.16', $lead);
         $this->processHit('217.91.35.16', $lead);
         $this->checkIfOneCompany();
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
 
 
         //Telco company doesn't get unpublished if it already existed before floodlight lookup
+        $this->clearTestTables();
+        $company = $this->createCompany();
+
+
 
 
 
 
         //Company is unpublished test mit einbauen
 
+    }
+
+    private function clearTestTables(): void
+    {
+        // Alle Entitäten direkt über Doctrine löschen
+        $this->em->createQueryBuilder()
+            ->delete(CompanyLead::class)
+            ->getQuery()
+            ->execute();
+
+        $this->em->createQueryBuilder()
+            ->delete(Company::class)
+            ->getQuery()
+            ->execute();
+
+        $this->em->createQueryBuilder()
+            ->delete(Lead::class)
+            ->getQuery()
+            ->execute();
+
+        $this->em->flush();
+        $this->em->clear();
     }
 
     private function checkIfOneCompany(){
@@ -503,6 +535,24 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $companyModel = self::getContainer()->get(CompanyModel::class);
         $companyModel->addLeadToCompany($company, $lead);
         $companyModel->saveEntity($company);
+    }
+
+    private function checkIfCompanyPublished(): bool{;
+        $company = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        return $company[0]->isPublished();
+    }
+
+    private function setCompanyUnpublished(): void{
+        $company = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        $company[0]->setIsPublished(false);
+        $this->em->persist($company[0]);
+        $this->em->flush();
     }
 
 
@@ -759,8 +809,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     private function createLead(): Lead
     {
         $lead = new Lead();
-        //$lead->setFirstname('Contact');
-        //$lead->setEmail('test@test.com');
         $this->em->persist($lead);
         $this->em->flush();
 
@@ -775,6 +823,16 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $lead;
+    }
+
+    private function createCompany(): Company
+    {
+        $company = new Company();
+        $company->setName('Test Company');
+        $this->em->persist($company);
+        $this->em->flush();
+
+        return $company;
     }
 
     private function setBackDateModifiedByTwoHours(FloodlightLeadDomains $leadDomain): void
