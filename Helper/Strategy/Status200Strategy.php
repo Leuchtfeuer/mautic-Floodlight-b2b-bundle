@@ -142,7 +142,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         }
     }
 
-    private function processRegularCompany($floodlightDto, string $domain, Lead $lead): void
+    private function processRegularCompany(FloodlightDTO $floodlightDto, string $domain, Lead $lead): void
     {
         $companyDomain = $this->companyDomainsModel->getExistingCompanyDomain($domain);
         $company       = $this->companyRepository->findOneBy(['name' => $floodlightDto->getCompanyName()]);
@@ -157,6 +157,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         }
 
         if (null === $companyDomain) {
+            \assert($company instanceof Company);
             $this->companyDomainsModel->createNewCompanyDomain($floodlightDto, $company);
         }
 
@@ -227,7 +228,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $this->updateTelcoCompanyDomains($floodlightDTO, $company);
     }
 
-    public function updateTelcoCompanyDomains($floodlightDto, $company): void
+    public function updateTelcoCompanyDomains(FloodlightDTO $floodlightDto, Company $company): void
     {
         $this->companyDomainsModel->createNewCompanyDomain($floodlightDto, $company);
         $companyDomains = $this->companyDomainsModel->getCompanyDomainsEntriesOfCompany($company->getId());
@@ -237,7 +238,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $this->companyDomainsModel->saveEntities($companyDomains);
     }
 
-    private function createTelcoCompanyOrReturnExistingCompany($floodlightDto): ?Company
+    private function createTelcoCompanyOrReturnExistingCompany(FloodlightDTO $floodlightDto): Company
     {
         $company       = $this->companyRepository->findOneBy(['name' => $floodlightDto->getCompanyName()]);
         if (empty($company)) {

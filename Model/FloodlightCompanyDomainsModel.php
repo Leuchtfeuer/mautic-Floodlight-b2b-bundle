@@ -140,8 +140,12 @@ class FloodlightCompanyDomainsModel extends FormModel
         return null;
     }
 
+    /**
+     * @return array<FloodlightCompanyDomains>
+     */
     public function getCompanyDomainsEntriesOfCompany(int $companyId): array
     {
+        /** @var array<FloodlightCompanyDomains> $companyDomains */
         $companyDomains = $this->getRepository()->findBy(
             [
                 'company' => $companyId,
@@ -151,6 +155,9 @@ class FloodlightCompanyDomainsModel extends FormModel
         return $companyDomains;
     }
 
+    /**
+     * @return array<FloodlightCompanyDomains>
+     */
     public function createNewCompanyDomain(FloodlightDTO $floodlightDTO, Company $company): array
     {
         $companiesDomains = $floodlightDTO->fillCompaniesDomain($this, $company);
@@ -165,6 +172,7 @@ class FloodlightCompanyDomainsModel extends FormModel
             }
             $this->saveEntities($companiesDomains);
 
+            /** @var array<FloodlightCompanyDomains> */
             return $companiesDomains;
         }
 

@@ -48,7 +48,12 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $integration = $this->em->getRepository(Integration::class)
             ->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
 
-        $featureSettings = $integration->getFeatureSettings() ?? [];
+        $this->assertInstanceOf(Integration::class, $integration);
+
+        $featureSettings = $integration->getFeatureSettings();
+        if (!is_array($featureSettings)) {
+            $featureSettings = [];
+        }
 
         if (!isset($featureSettings['integration'])) {
             $featureSettings['integration'] = [];
@@ -435,6 +440,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         // Pagehit when ignore_telco = true and companydomain already exists and has known contact
         $company = $this->em->getRepository(Company::class)->findOneBy([]);
+        $this->assertInstanceOf(Company::class, $company);
         $this->createKnownLeadAndAddToCompany($company);
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
@@ -495,14 +501,13 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->clear();
     }
 
-    private function checkNumberOfLeadsAssignedToCompany(int $count)
+    private function checkNumberOfLeadsAssignedToCompany(int $count): void
     {
         $companyLeads          = $this->em->getRepository(CompanyLead::class)->findAll();
-        // $this->assertNotEmpty($companyLeads );
         $this->assertCount($count, $companyLeads);
     }
 
-    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue)
+    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue): void
     {
         $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
         $this->assertNotEmpty($companyDomainsHit);
@@ -809,7 +814,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $lead;
     }
 
-    private function createCompany($name): Company
+    private function createCompany(string $name): Company
     {
         $company = new Company();
         $company->setName($name);

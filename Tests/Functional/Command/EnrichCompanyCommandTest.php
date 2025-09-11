@@ -218,7 +218,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         return $companyDomain;
     }
 
-    public function testEnrichTelcoCompanyWhenIgnoreTelcoSetSettingsSetToFalse()
+    public function testEnrichTelcoCompanyWhenIgnoreTelcoSetSettingsSetToFalse(): void
     {
         $this->activatePlugin(true);
         $this->updateIgnoreTelcoSettings(false);
@@ -231,7 +231,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
 
-    public function testEnrichTelcoCompanyWithKnownLead()
+    public function testEnrichTelcoCompanyWithKnownLead(): void
     {
         $this->activatePlugin();
         $this->updateIgnoreTelcoSettings(true);
@@ -245,7 +245,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
 
-    public function testEnrichNonTelcoCompany()
+    public function testEnrichNonTelcoCompany(): void
     {
         $this->activatePlugin();
         $this->updateIgnoreTelcoSettings(true);
@@ -258,7 +258,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
 
-    public function testEnrichTelcoCompany()
+    public function testEnrichTelcoCompany(): void
     {
         $this->activatePlugin();
         $this->updateIgnoreTelcoSettings(true);
@@ -271,7 +271,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
     }
 
-    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue)
+    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue): void
     {
         $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
         $this->assertNotEmpty($companyDomainsHit);
@@ -290,7 +290,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         return $company[0]->isPublished();
     }
 
-    private function checkNumberOfLeadsAssignedToCompany(int $count)
+    private function checkNumberOfLeadsAssignedToCompany(int $count): void
     {
         $companyLeads          = $this->em->getRepository(CompanyLead::class)->findAll();
         $this->assertCount($count, $companyLeads);
@@ -301,7 +301,12 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $integration = $this->em->getRepository(Integration::class)
             ->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
 
-        $featureSettings = $integration->getFeatureSettings() ?? [];
+        $this->assertInstanceOf(Integration::class, $integration);
+
+        $featureSettings = $integration->getFeatureSettings();
+        if (!is_array($featureSettings)) {
+            $featureSettings = [];
+        }
 
         if (!isset($featureSettings['integration'])) {
             $featureSettings['integration'] = [];
