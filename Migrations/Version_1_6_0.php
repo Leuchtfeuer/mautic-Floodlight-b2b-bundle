@@ -10,26 +10,34 @@ use Mautic\IntegrationsBundle\Migration\AbstractMigration;
 
 class Version_1_6_0 extends AbstractMigration
 {
-    private string $table                                  = 'f4b_company_domains';
-    private bool $isTelcoColumnExistsInCompanyDomainTable  = false;
-    private bool $domainIsUniqueColumnInCompanyDomainTable = false;
+    private string $table                                   = 'f4b_company_domains';
+    private bool $needsTelcoColumn                          = false;
+    private bool $domainIsNullableInCompanyDomainTable      = false;
+    private bool $companyIsInPrimaryKeyInCompanyDomainTable = false;
 
     protected function isApplicable(Schema $schema): bool
     {
         try {
             $table = $schema->getTable($this->concatPrefix($this->table));
 
-            $this->isTelcoColumnExistsInCompanyDomainTable = !$table->hasColumn('is_telco');
+            // Check if telco column is missing
+            $this->needsTelcoColumn = !$table->hasColumn('is_telco');
+
             if ($table->hasColumn('domain')) {
-                foreach ($table->getIndexes() as $index) {
-                    if ($index->isUnique() && $index->getColumns() === ['domain']) {
-                        $this->domainIsUniqueColumnInCompanyDomainTable = true;
-                        break;
-                    }
-                }
+                // Check if domain is nullable
+                $domainColumn                               = $table->getColumn('domain');
+                $this->domainIsNullableInCompanyDomainTable = !$domainColumn->getNotnull();
             }
 
-            return $this->isTelcoColumnExistsInCompanyDomainTable || $this->domainIsUniqueColumnInCompanyDomainTable;
+            // Check if company_id is part of the primary key
+            $primaryKey = $table->getPrimaryKey();
+            if ($primaryKey) {
+                $this->companyIsInPrimaryKeyInCompanyDomainTable = in_array('company_id', $primaryKey->getColumns());
+            }
+
+            return $this->needsTelcoColumn
+                || $this->domainIsNullableInCompanyDomainTable
+                || $this->companyIsInPrimaryKeyInCompanyDomainTable;
         } catch (SchemaException $e) {
             return false;
         }
@@ -37,28 +45,41 @@ class Version_1_6_0 extends AbstractMigration
 
     protected function up(): void
     {
+        $tableName = $this->concatPrefix($this->table);
+
         // Telco column only if not exists
-        try {
-            if (!$this->isTelcoColumnExistsInCompanyDomainTable) {
+        if ($this->needsTelcoColumn) {
+            try {
                 $this->addSql(
-                    "ALTER TABLE `{$this->concatPrefix($this->table)}` 
-               ADD COLUMN `is_telco` TINYINT(1) NULL DEFAULT NULL "
+                    "ALTER TABLE `{$tableName}` 
+                   ADD COLUMN `is_telco` TINYINT(1) NULL DEFAULT NULL "
                 );
+            } catch (\Exception $e) {
             }
-        } catch (\Exception $e) {
-            // Column already exists - ignore
         }
 
-        // Unique constraint only if not exists
-        try {
-            if (!$this->domainIsUniqueColumnInCompanyDomainTable) {
-                $this->addSql(
-                    "ALTER TABLE `{$this->concatPrefix($this->table)}` 
-               ADD UNIQUE (`domain`)"
-                );
+        // Domain NOT NULL and Primary Key changes
+        if ($this->domainIsNullableInCompanyDomainTable || $this->companyIsInPrimaryKeyInCompanyDomainTable) {
+            // 1. Delete NULL values first
+            $this->addSql("DELETE FROM `{$tableName}` WHERE domain IS NULL OR domain = ''");
+
+            // 2. Set domain to NOT NULL before changing primary key
+            if ($this->domainIsNullableInCompanyDomainTable) {
+                $this->addSql("ALTER TABLE `{$tableName}` MODIFY COLUMN `domain` VARCHAR(255) NOT NULL");
             }
-        } catch (\Exception $e) {
-            // Constraint already exists - ignore
+
+            // 3. Drop old primary key if company is in it
+            if ($this->companyIsInPrimaryKeyInCompanyDomainTable) {
+                try {
+                    $this->addSql("ALTER TABLE `{$tableName}` DROP PRIMARY KEY");
+                } catch (\Exception $e) {
+                }
+            }
+
+            // 4. Add new primary key on domain only (automatically UNIQUE)
+            if ($this->companyIsInPrimaryKeyInCompanyDomainTable) {
+                $this->addSql("ALTER TABLE `{$tableName}` ADD PRIMARY KEY (`domain`)");
+            }
         }
     }
 }

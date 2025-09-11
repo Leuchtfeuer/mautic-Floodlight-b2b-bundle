@@ -21,8 +21,6 @@ class FloodlightCompanyDomains
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
 
-    //    private ?int $codeStatusRequest = null;
-
     public static function loadMetadata(ClassMetadata $metadata): void
     {
         $builder = new ClassMetadataBuilder($metadata);
@@ -32,20 +30,14 @@ class FloodlightCompanyDomains
             ->addIndex(['domain'], 'company_domains_domain');
 
         $builder->createManyToOne('company', Company::class)
-            ->makePrimaryKey()
             ->addJoinColumn('company_id', 'id', false, false, 'CASCADE')
             ->build();
 
         $builder->createField('domain', 'string')
             ->columnName('domain')
-            ->nullable()
-            ->unique()
             ->makePrimaryKey()
             ->build();
-        //        $builder->createField('codeStatusRequest', 'integer')
-        //            ->columnName('code_status_request')
-        //            ->nullable()
-        //            ->build();
+
         $builder->createField('isPrimaryDomain', 'boolean')->columnName('is_primary_domain')->build();
         $builder->createField('isTelco', 'boolean')->columnName('is_telco')->nullable()->build();
         $builder->addDateAdded();
@@ -150,14 +142,4 @@ class FloodlightCompanyDomains
     {
         return $this->isTelco;
     }
-
-    //    public function getCodeStatusRequest(): ?int
-    //    {
-    //        return $this->codeStatusRequest;
-    //    }
-    //
-    //    public function setCodeStatusRequest(?int $codeStatusRequest): void
-    //    {
-    //        $this->codeStatusRequest = $codeStatusRequest;
-    //    }
 }
