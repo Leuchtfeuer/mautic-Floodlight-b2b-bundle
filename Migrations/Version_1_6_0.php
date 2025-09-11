@@ -67,7 +67,7 @@ class Version_1_6_0 extends AbstractMigration
 
             // 2. Set domain to NOT NULL before changing primary key
             if ($this->domainColumnExists) {
-                $this->addSql("ALTER TABLE `{$tableName}` MODIFY COLUMN `domain` VARCHAR(255) NOT NULL");
+                $this->addSql("ALTER TABLE `{$tableName}` CHANGE COLUMN `domain` `domain` VARCHAR(255) NOT NULL");
             }
 
             // 3. Drop old primary key if company is in it

@@ -89,12 +89,12 @@ class FloodlightCompanyDomains
         $this->company = $company;
     }
 
-    public function getDomain(): ?string
+    public function getDomain(): string
     {
         return $this->domain;
     }
 
-    public function setDomain(?string $domain): void
+    public function setDomain(string $domain): void
     {
         $this->domain = $domain;
     }
