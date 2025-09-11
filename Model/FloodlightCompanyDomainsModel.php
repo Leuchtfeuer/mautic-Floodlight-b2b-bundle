@@ -136,6 +136,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         if ($domain instanceof FloodlightCompanyDomains) {
             return $domain;
         }
+
         return null;
     }
 
@@ -146,6 +147,7 @@ class FloodlightCompanyDomainsModel extends FormModel
                 'company' => $companyId,
             ]
         );
+
         return $companyDomains;
     }
 
@@ -162,6 +164,7 @@ class FloodlightCompanyDomainsModel extends FormModel
                 $companiesDomain->setDomain($domain);
             }
             $this->saveEntities($companiesDomains);
+
             return $companiesDomains;
         }
 

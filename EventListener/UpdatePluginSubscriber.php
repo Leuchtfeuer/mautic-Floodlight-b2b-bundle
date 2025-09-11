@@ -27,7 +27,7 @@ class UpdatePluginSubscriber
     {
         $pluginMetadata          = $this->pluginModel->getPluginsMetadata();
 
-        $metadata = $pluginMetadata['MauticPlugin\LeuchtfeuerFloodlightB2BBundle'];
+        $metadata                = $pluginMetadata['MauticPlugin\LeuchtfeuerFloodlightB2BBundle'];
         $tableInstalled          =$this->pluginModel->getInstalledPluginTables($pluginMetadata);
         if ([] === $tableInstalled) {
             // No tables installed, so we can install the schema

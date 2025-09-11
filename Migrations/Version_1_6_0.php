@@ -10,8 +10,8 @@ use Mautic\IntegrationsBundle\Migration\AbstractMigration;
 
 class Version_1_6_0 extends AbstractMigration
 {
-    private string $table = 'f4b_company_domains';
-    private bool $isTelcoColumnExistsInCompanyDomainTable = false;
+    private string $table                                  = 'f4b_company_domains';
+    private bool $isTelcoColumnExistsInCompanyDomainTable  = false;
     private bool $domainIsUniqueColumnInCompanyDomainTable = false;
 
     protected function isApplicable(Schema $schema): bool
@@ -29,9 +29,7 @@ class Version_1_6_0 extends AbstractMigration
                 }
             }
 
-
             return $this->isTelcoColumnExistsInCompanyDomainTable || $this->domainIsUniqueColumnInCompanyDomainTable;
-
         } catch (SchemaException $e) {
             return false;
         }
@@ -41,7 +39,7 @@ class Version_1_6_0 extends AbstractMigration
     {
         // Telco column only if not exists
         try {
-            if(!$this->isTelcoColumnExistsInCompanyDomainTable) {
+            if (!$this->isTelcoColumnExistsInCompanyDomainTable) {
                 $this->addSql(
                     "ALTER TABLE `{$this->concatPrefix($this->table)}` 
                ADD COLUMN `is_telco` TINYINT(1) NULL DEFAULT NULL "
@@ -53,7 +51,7 @@ class Version_1_6_0 extends AbstractMigration
 
         // Unique constraint only if not exists
         try {
-            if(!$this->domainIsUniqueColumnInCompanyDomainTable) {
+            if (!$this->domainIsUniqueColumnInCompanyDomainTable) {
                 $this->addSql(
                     "ALTER TABLE `{$this->concatPrefix($this->table)}` 
                ADD UNIQUE (`domain`)"
@@ -63,5 +61,4 @@ class Version_1_6_0 extends AbstractMigration
             // Constraint already exists - ignore
         }
     }
-
 }

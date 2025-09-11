@@ -218,7 +218,8 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         return $companyDomain;
     }
 
-    public function testEnrichTelcoCompanyWhenIgnoreTelcoSetSettingsSetToFalse(){
+    public function testEnrichTelcoCompanyWhenIgnoreTelcoSetSettingsSetToFalse()
+    {
         $this->activatePlugin(true);
         $this->updateIgnoreTelcoSettings(false);
         $company       = $this->addCompany('Telco', 'telcodomain.com');
@@ -230,7 +231,8 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
 
-    public function testEnrichTelcoCompanyWithKnownLead(){
+    public function testEnrichTelcoCompanyWithKnownLead()
+    {
         $this->activatePlugin();
         $this->updateIgnoreTelcoSettings(true);
         $company       = $this->addCompany('Telco', 'telcodomain.com');
@@ -243,7 +245,8 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
 
-    public function testEnrichNonTelcoCompany(){
+    public function testEnrichNonTelcoCompany()
+    {
         $this->activatePlugin();
         $this->updateIgnoreTelcoSettings(true);
         $company       = $this->addCompany('Leuchtfeuer');
@@ -255,7 +258,8 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
 
-    public function testEnrichTelcoCompany(){
+    public function testEnrichTelcoCompany()
+    {
         $this->activatePlugin();
         $this->updateIgnoreTelcoSettings(true);
         $company       = $this->addCompany('Telco', 'telcodomain.com');
@@ -274,25 +278,27 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $companyDomainsHit);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
         $this->assertEquals($telcoValue, $companyDomainsHit[0]->getIsTelco());
-
     }
 
-    private function checkIfCompanyPublished(): bool{;
+    private function checkIfCompanyPublished(): bool
+    {
         $company = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
         $this->assertCount(1, $company);
         $this->assertInstanceOf(Company::class, $company[0]);
+
         return $company[0]->isPublished();
     }
 
-    private function checkNumberOfLeadsAssignedToCompany(int $count){
+    private function checkNumberOfLeadsAssignedToCompany(int $count)
+    {
         $companyLeads          = $this->em->getRepository(CompanyLead::class)->findAll();
         $this->assertCount($count, $companyLeads);
     }
 
     private function updateIgnoreTelcoSettings(bool $ignoreTelcoSetting): void
     {
-        $integration = $this->em->getRepository(\Mautic\PluginBundle\Entity\Integration::class)
+        $integration = $this->em->getRepository(Integration::class)
             ->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
 
         $featureSettings = $integration->getFeatureSettings() ?? [];
@@ -307,15 +313,17 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->em->flush();
     }
 
-    private function createKnownLeadAndAddToCompany(Company $company): void{
-        $lead= $this->createKnownLead();
+    private function createKnownLeadAndAddToCompany(Company $company): void
+    {
+        $lead         = $this->createKnownLead();
         $companyModel = self::getContainer()->get(CompanyModel::class);
         $companyModel->addLeadToCompany($company, $lead);
         $companyModel->saveEntity($company);
     }
 
-    private function createUnknownLeadAndAddToCompany(Company $company): void{
-        $lead = $this->createAnonymousLead();
+    private function createUnknownLeadAndAddToCompany(Company $company): void
+    {
+        $lead         = $this->createAnonymousLead();
         $companyModel = self::getContainer()->get(CompanyModel::class);
         $companyModel->addLeadToCompany($company, $lead);
         $companyModel->saveEntity($company);
@@ -327,6 +335,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $lead->setEmail('test@test.com');
         $this->em->persist($lead);
         $this->em->flush();
+
         return $lead;
     }
 
@@ -335,6 +344,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $lead = new Lead();
         $this->em->persist($lead);
         $this->em->flush();
+
         return $lead;
     }
 }

@@ -141,7 +141,6 @@ class EnrichCompanyCommand extends ModeratedCommand
                 continue;
             }
 
-
             $floodlightDTO = $this->floodlightDtoFactory->create($result);
             $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
             $this->fieldHelper->updateProperties($floodlightDTO);
@@ -149,11 +148,10 @@ class EnrichCompanyCommand extends ModeratedCommand
             $company = $floodlightDTO->fillCompany($company);
             $this->companyModel->saveEntity($company);
             if (
-                $this->config->getIgnoreTelcosSettings() === false
+                false === $this->config->getIgnoreTelcosSettings()
                 || $this->status200Strategy->companyHasKnownContacts($company)
-                || $floodlightDTO->getCompanyIndustryICBCSector() !== 'Telecommunications'
-            )
-            {
+                || 'Telecommunications' !== $floodlightDTO->getCompanyIndustryICBCSector()
+            ) {
                 $this->flCompanyDomainsModel->saveEntity($companyDomain);
             } else {
                 $this->status200Strategy->detachAllUnknowContactsFromCompany($company);

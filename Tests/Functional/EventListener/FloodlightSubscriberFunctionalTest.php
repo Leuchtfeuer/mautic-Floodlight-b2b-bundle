@@ -8,7 +8,6 @@ use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyLead;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
-use Mautic\LeadBundle\Model\LeadModel;
 use Mautic\PageBundle\Entity\Hit;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
@@ -18,7 +17,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
-use function PHPUnit\Framework\assertInstanceOf;
 
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
@@ -47,7 +45,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     private function updateIgnoreTelcoSettings(bool $ignoreTelcoSetting): void
     {
-        $integration = $this->em->getRepository(\Mautic\PluginBundle\Entity\Integration::class)
+        $integration = $this->em->getRepository(Integration::class)
             ->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
 
         $featureSettings = $integration->getFeatureSettings() ?? [];
@@ -397,9 +395,9 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->activePlugin();
         $this->updateApikey();
 
-        //'45.117.246.240' is ip that will return a floodlight company with icb_sector = 'Telecommunications'
+        // '45.117.246.240' is ip that will return a floodlight company with icb_sector = 'Telecommunications'
 
-        //Pagehit when ignore_telco = false
+        // Pagehit when ignore_telco = false
         $this->updateIgnoreTelcoSettings(false);
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
@@ -410,16 +408,16 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $this->updateIgnoreTelcoSettings(true);
 
-        //Pagehit when ignore_telco = true,companydomain already exists with is_telco = null, and ip will return icb_sector which is NOT 'Telecommunications'
+        // Pagehit when ignore_telco = true,companydomain already exists with is_telco = null, and ip will return icb_sector which is NOT 'Telecommunications'
         $lead = $this->createLead();
-        //'45.117.246.241' returns same company as '45.117.246.240' but with icb_sector = 'technology'
+        // '45.117.246.241' returns same company as '45.117.246.240' but with icb_sector = 'technology'
         $this->processHit('45.117.246.241', $lead);
         $this->processHit('45.117.246.241', $lead);
         $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(2);
         $this->checkIfCompanyDomainHasIsTelcoValue(null);
 
-        //Pagehit when ignore_telco = true,companydomain already exists with is_telco = null, and ip will return icb_sector = 'Telecommunications'
+        // Pagehit when ignore_telco = true,companydomain already exists with is_telco = null, and ip will return icb_sector = 'Telecommunications'
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
@@ -427,15 +425,15 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
-        //Pagehit when ignore_telco = true and companydomain already exists with is_telco = true
+        // Pagehit when ignore_telco = true and companydomain already exists with is_telco = true
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
-        $this->assertEquals(false, $this->checkIfCompanyPublished()); //doesn't get changed at all
+        $this->assertEquals(false, $this->checkIfCompanyPublished()); // doesn't get changed at all
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
-        //Pagehit when ignore_telco = true and companydomain already exists and has known contact
+        // Pagehit when ignore_telco = true and companydomain already exists and has known contact
         $company = $this->em->getRepository(Company::class)->findOneBy([]);
         $this->createKnownLeadAndAddToCompany($company);
         $lead = $this->createLead();
@@ -443,10 +441,10 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('45.117.246.240', $lead);
         $this->publishCompany(true);
         $this->checkNumberOfLeadsAssignedToCompany(2);
-        //Sollte hier nicht eigentlich auch auf is_telco === false zurückgesetzt werden?
+        // Sollte hier nicht eigentlich auch auf is_telco === false zurückgesetzt werden?
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
-        //Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector = 'Telecommunications'
+        // Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector = 'Telecommunications'
         $this->clearTestTables();
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
@@ -455,8 +453,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
 
-
-        //Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector which is NOT 'Telecommunications'
+        // Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector which is NOT 'Telecommunications'
         $this->clearTestTables();
         $lead = $this->createLead();
         $this->processHit('217.91.35.16', $lead);
@@ -465,17 +462,15 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
 
-        //Telco company doesn't get unpublished if it already existed before floodlight lookup
+        // Telco company doesn't get unpublished if it already existed before floodlight lookup
         $this->clearTestTables();
         $company = $this->createCompany('Digicel Pacific');
-        $lead = $this->createLead();
+        $lead    = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
-
-
     }
 
     private function clearTestTables(): void
@@ -500,11 +495,13 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->clear();
     }
 
-    private function checkNumberOfLeadsAssignedToCompany(int $count){
+    private function checkNumberOfLeadsAssignedToCompany(int $count)
+    {
         $companyLeads          = $this->em->getRepository(CompanyLead::class)->findAll();
-        //$this->assertNotEmpty($companyLeads );
+        // $this->assertNotEmpty($companyLeads );
         $this->assertCount($count, $companyLeads);
     }
+
     private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue)
     {
         $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
@@ -512,25 +509,28 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $companyDomainsHit);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
         $this->assertEquals($telcoValue, $companyDomainsHit[0]->getIsTelco());
-
     }
 
-    private function createKnownLeadAndAddToCompany(Company $company): void{
-        $lead = $this->createKnownLead();
+    private function createKnownLeadAndAddToCompany(Company $company): void
+    {
+        $lead         = $this->createKnownLead();
         $companyModel = self::getContainer()->get(CompanyModel::class);
         $companyModel->addLeadToCompany($company, $lead);
         $companyModel->saveEntity($company);
     }
 
-    private function checkIfCompanyPublished(): bool{;
+    private function checkIfCompanyPublished(): bool
+    {
         $company = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
         $this->assertCount(1, $company);
         $this->assertInstanceOf(Company::class, $company[0]);
+
         return $company[0]->isPublished();
     }
 
-    private function publishCompany(bool $published): void{
+    private function publishCompany(bool $published): void
+    {
         $company = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
         $this->assertCount(1, $company);
@@ -539,7 +539,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->persist($company[0]);
         $this->em->flush();
     }
-
 
     public function test429PagehitWithFailingDnsLookupAndSuccessfulWhoisLookup(): void
     {

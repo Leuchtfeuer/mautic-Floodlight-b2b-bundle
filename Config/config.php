@@ -79,7 +79,6 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.helper.dto',
                     'mautic.integration.leuchtfeuerfloodlightb2b.config',
                     'mautic.lead.repository.company_lead',
-
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status202strategy' => [
