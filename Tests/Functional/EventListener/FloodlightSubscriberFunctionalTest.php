@@ -825,6 +825,15 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $lead;
     }
 
+    private function createLead(): Lead
+    {
+        $lead = new Lead();
+        $this->em->persist($lead);
+        $this->em->flush();
+
+        return $lead;
+    }
+
     private function createCompany(string $name): Company
     {
         $company = new Company();
