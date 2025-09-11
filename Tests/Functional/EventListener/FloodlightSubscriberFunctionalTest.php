@@ -818,15 +818,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     private function createKnownLead(): Lead
     {
         $lead = new Lead();
-        $this->em->persist($lead);
-        $this->em->flush();
-
-        return $lead;
-    }
-
-    private function createKnownLead(): Lead
-    {
-        $lead = new Lead();
         $lead->setEmail('test@test.com');
         $this->em->persist($lead);
         $this->em->flush();
