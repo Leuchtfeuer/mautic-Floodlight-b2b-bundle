@@ -5,6 +5,8 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Command;
 use Doctrine\ORM\Exception\NotSupported;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
+use Mautic\LeadBundle\Entity\CompanyLead;
+use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
@@ -214,5 +216,125 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $companyDomain;
+    }
+
+    public function testEnrichTelcoCompanyWhenIgnoreTelcoSetSettingsSetToFalse(){
+        $this->activatePlugin(true);
+        $this->updateIgnoreTelcoSettings(false);
+        $company       = $this->addCompany('Telco', 'telcodomain.com');
+        $this->addCompanyDomain('telcodomain.com', $company);
+        $this->createUnknownLeadAndAddToCompany($company);
+        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(false);
+    }
+
+    public function testEnrichTelcoCompanyWithKnownLead(){
+        $this->activatePlugin();
+        $this->updateIgnoreTelcoSettings(true);
+        $company       = $this->addCompany('Telco', 'telcodomain.com');
+        $this->addCompanyDomain('telcodomain.com', $company);
+        $this->createKnownLeadAndAddToCompany($company);
+        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(false);
+    }
+
+    public function testEnrichNonTelcoCompany(){
+        $this->activatePlugin();
+        $this->updateIgnoreTelcoSettings(true);
+        $company       = $this->addCompany('Leuchtfeuer');
+        $this->addCompanyDomain('leuchtfeuer.com', $company);
+        $this->createUnknownLeadAndAddToCompany($company);
+        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(false);
+    }
+
+    public function testEnrichTelcoCompany(){
+        $this->activatePlugin();
+        $this->updateIgnoreTelcoSettings(true);
+        $company       = $this->addCompany('Telco', 'telcodomain.com');
+        $this->addCompanyDomain('telcodomain.com', $company);
+        $this->createUnknownLeadAndAddToCompany($company);
+        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->assertEquals(false, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+    }
+
+    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue)
+    {
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertNotEmpty($companyDomainsHit);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertEquals($telcoValue, $companyDomainsHit[0]->getIsTelco());
+
+    }
+
+    private function checkIfCompanyPublished(): bool{;
+        $company = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        return $company[0]->isPublished();
+    }
+
+    private function checkNumberOfLeadsAssignedToCompany(int $count){
+        $companyLeads          = $this->em->getRepository(CompanyLead::class)->findAll();
+        $this->assertCount($count, $companyLeads);
+    }
+
+    private function updateIgnoreTelcoSettings(bool $ignoreTelcoSetting): void
+    {
+        $integration = $this->em->getRepository(\Mautic\PluginBundle\Entity\Integration::class)
+            ->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
+
+        $featureSettings = $integration->getFeatureSettings() ?? [];
+
+        if (!isset($featureSettings['integration'])) {
+            $featureSettings['integration'] = [];
+        }
+        $featureSettings['integration']['ignore_telcos'] = $ignoreTelcoSetting ? '1' : '0';
+
+        $integration->setFeatureSettings($featureSettings);
+        $this->em->persist($integration);
+        $this->em->flush();
+    }
+
+    private function createKnownLeadAndAddToCompany(Company $company): void{
+        $lead= $this->createKnownLead();
+        $companyModel = self::getContainer()->get(CompanyModel::class);
+        $companyModel->addLeadToCompany($company, $lead);
+        $companyModel->saveEntity($company);
+    }
+
+    private function createUnknownLeadAndAddToCompany(Company $company): void{
+        $lead = $this->createAnonymousLead();
+        $companyModel = self::getContainer()->get(CompanyModel::class);
+        $companyModel->addLeadToCompany($company, $lead);
+        $companyModel->saveEntity($company);
+    }
+
+    private function createKnownLead(): Lead
+    {
+        $lead = new Lead();
+        $lead->setEmail('test@test.com');
+        $this->em->persist($lead);
+        $this->em->flush();
+        return $lead;
+    }
+
+    private function createAnonymousLead(): Lead
+    {
+        $lead = new Lead();
+        $this->em->persist($lead);
+        $this->em->flush();
+        return $lead;
     }
 }

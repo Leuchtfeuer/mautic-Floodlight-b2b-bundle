@@ -431,9 +431,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
-        $this->publishCompany(true);
-        //sollte Company dann nicht unpublished werden?
-        $this->assertEquals(true, $this->checkIfCompanyPublished());
+        $this->assertEquals(false, $this->checkIfCompanyPublished()); //doesn't get changed at all
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
 

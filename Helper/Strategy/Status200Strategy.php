@@ -91,84 +91,77 @@ class Status200Strategy implements StatusCodeStrategyInterface
     {
         $leadDomain = $this->leadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($lead, $processedData);
         $this->leadDomainsModel->deleteOldRetryEntries($leadDomain, $lead);
+        $domain = $processedData['domain'];
+        $floodlightDto = $processedData['details']['floodlight'];
 
-        if (FloodlightLeadDomains::STATUS_SUCCESS !== $processedData['status'] || '' === $processedData['domain']) {
+        if (FloodlightLeadDomains::STATUS_SUCCESS !== $processedData['status'] || '' === $domain) {
             return;
         }
 
         if($this->config->getIgnoreTelcosSettings() === false ) {
-            $this->processRegularCompany($processedData, $lead);
+            $this->processRegularCompany($floodlightDto, $domain, $lead);
             return;
-        } //done
+        }
 
         $companyDomain = $this->companyDomainsModel->getExistingCompanyDomain($processedData['domain']);
         $existingCompanyDomain = ($companyDomain instanceof FloodlightCompanyDomains);
-        $existingCompany = $this->companyRepository->findOneBy(['name' => $processedData['details']['floodlight']->getCompanyName()]);
 
         if($existingCompanyDomain && $this->companyHasKnownContacts($companyDomain->getCompany())){
-            $this->processRegularCompany($processedData, $lead);
+            $this->processRegularCompany($floodlightDto, $domain, $lead);
             return;
         }
 
         if($existingCompanyDomain && $companyDomain->getIsTelco() === true){
             return;
-        } //done
+        }
 
         if($existingCompanyDomain && $companyDomain->getIsTelco() !== true){
-            $icbSector = $processedData['details']['floodlight']->getCompanyIndustryICBCSector();
+            $icbSector = $floodlightDto->getCompanyIndustryICBCSector();
             if($icbSector === 'Telecommunications'){
-                $this->updateTelcoCompany($processedData['details']['floodlight'], $lead, $companyDomain->getCompany());
-                return; //done
+                $this->updateTelcoCompany($floodlightDto, $lead, $companyDomain->getCompany());
+                return;
             } else {
-                $this->processRegularCompany($processedData, $lead);
-                return;  //done
+                $this->processRegularCompany($floodlightDto, $domain, $lead);
+                return;
             }
         }
 
         if(!$existingCompanyDomain){
-            $icbSector = $processedData['details']['floodlight']->getCompanyIndustryICBCSector();
+            $icbSector = $floodlightDto->getCompanyIndustryICBCSector();
             if ($icbSector === 'Telecommunications'){
-                $this->createOrUpdateTelcoCompany($processedData, $lead);
+                $shouldBeUnpublished     = empty($this->companyRepository->findOneBy(['name' => $floodlightDto->getCompanyName()]));
+                $company = $this->createTelcoCompanyOrReturnExistingCompany($floodlightDto);
+                $this->updateTelcoCompany($floodlightDto, $lead, $company, $shouldBeUnpublished);
             } else {
-                $this->processRegularCompany($processedData, $lead);
+                $this->processRegularCompany($floodlightDto, $domain, $lead);
             }
         }
     }
 
-    /**
-     * @param array{
-     *      status: string,
-     *      domain: string,
-     *      lookupType: string,
-     *      details: array{
-     *          floodlight: FloodlightDTO,
-     *          statusRequest: mixed
-     *      }
-     *  } $processedData
-     */
-    private function processRegularCompany(array $processedData, Lead $lead): void
+
+    private function processRegularCompany($floodlightDto, string $domain, Lead $lead): void
     {
-        $companyDomain = $this->companyDomainsModel->getExistingCompanyDomain($processedData['domain']);
-        $company       = $this->companyRepository->findOneBy(['name' => $processedData['details']['floodlight']->getCompanyName()]);
-        $this->fieldHelper->updateProperties($processedData['details']['floodlight']);
+        $companyDomain = $this->companyDomainsModel->getExistingCompanyDomain($domain);
+        $company       = $this->companyRepository->findOneBy(['name' => $floodlightDto->getCompanyName()]);
+        $this->fieldHelper->updateProperties($floodlightDto);
 
         if ($companyDomain instanceof FloodlightCompanyDomains) {
-            $this->updateCompany($processedData['details']['floodlight'], $lead, $companyDomain->getCompany());
+            $this->updateCompany($floodlightDto, $lead, $companyDomain->getCompany());
         }
         elseif (empty($company)) {
-            $company = $this->createNewCompany($processedData['details']['floodlight'], $lead);
+            $company = $this->createNewCompany($floodlightDto, $lead);
         } else {
-            $this->updateCompany($processedData['details']['floodlight'], $lead, $company);
+            $this->updateCompany($floodlightDto, $lead, $company);
         }
 
         if (null === $companyDomain) {
-            $this->companyDomainsModel->createNewCompanyDomain($processedData['details']['floodlight'], $company);
+            $this->companyDomainsModel->createNewCompanyDomain($floodlightDto, $company);
         }
 
         $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
     }
 
-    private function companyHasKnownContacts(Company $company): bool
+    public function companyHasKnownContacts(Company $company): bool
     {
         $leadIds = $this->companyLeadRepository->getCompanyLeads($company->getId());
         $leads = $this->leadModel->getRepository()->findBy(['id' => array_column($leadIds, 'lead_id')]);
@@ -178,23 +171,6 @@ class Status200Strategy implements StatusCodeStrategyInterface
             }
         }
         return false;
-    }
-
-    /**
-     * @param array{
-     *      status: string,
-     *      domain: string,
-     *      lookupType: string,
-     *      details: array{
-     *          floodlight: FloodlightDTO,
-     *          statusRequest: mixed
-     *      }
-     *  } $processedData
-     */
-    public function oldProcess(array $processedData, Lead $lead): void
-    {
-
-        $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
     }
 
     private function createNewCompany(FloodlightDTO $floodlightDTO, Lead $lead): Company
@@ -229,12 +205,12 @@ class Status200Strategy implements StatusCodeStrategyInterface
         }
     }
 
-    public function leadIsAnonymous(Lead $lead): bool
+    private function leadIsAnonymous(Lead $lead): bool
     {
         return !($lead->getFirstname() || $lead->getLastname() || $lead->getEmail());
     }
 
-    private function updateTelcoCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company, bool $shouldUnpublish = true): void
+    public function updateTelcoCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company, bool $shouldUnpublish = true): void
     {
         $this->fieldHelper->updateProperties($floodlightDTO);
         $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
@@ -246,34 +222,28 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $this->companyModel->saveEntity($company);
 
         $this->updateTelcoCompanyDomains($floodlightDTO, $company);
-
-
     }
 
-    private function createOrUpdateTelcoCompany(array $processedData, Lead $lead): Company
-    {
-        $company       = $this->companyRepository->findOneBy(['name' => $processedData['details']['floodlight']->getCompanyName()]);
-        if (empty($company)) {
-            $company       = $this->companyModel->getEntity();
-            \assert($company instanceof Company);
-            $company       = $processedData['details']['floodlight']->fillCompany($company);
-            $company->setIsPublished(false);
-            $this->companyModel->saveEntity($company);
-        } else {
-            //hier sollte company nicht auf unpublished gesetzt werden in update company
-            $this->updateTelcoCompany($processedData['details']['floodlight'], $lead, $company, false);
-        }
-        $this->updateTelcoCompanyDomains($processedData['details']['floodlight'], $company);
-
-        return $company;
-    }
-
-    private function updateTelcoCompanyDomains($floodlightDto, $company): void{
-        $companyDomains = $this->companyDomainsModel->createNewCompanyDomain($floodlightDto, $company);
+    public function updateTelcoCompanyDomains($floodlightDto, $company): void{
+        $this->companyDomainsModel->createNewCompanyDomain($floodlightDto, $company);
         $companyDomains = $this->companyDomainsModel->getCompanyDomainsEntriesOfCompany($company->getId());
         foreach ($companyDomains as $companyDomain) {
             $companyDomain->setIsTelco(true);
         }
         $this->companyDomainsModel->saveEntities($companyDomains);
+    }
+
+    private function createTelcoCompanyOrReturnExistingCompany($floodlightDto): ?Company
+    {
+        $company       = $this->companyRepository->findOneBy(['name' => $floodlightDto->getCompanyName()]);
+        if (empty($company)) {
+            $company       = $this->companyModel->getEntity();
+            \assert($company instanceof Company);
+            $company       = $floodlightDto->fillCompany($company);
+            $company->setIsPublished(false);
+            $this->companyModel->saveEntity($company);
+            return $company;
+        }
+        return $company;
     }
 }
