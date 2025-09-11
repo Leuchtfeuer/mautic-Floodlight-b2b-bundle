@@ -58,8 +58,11 @@ class Version_1_6_0 extends AbstractMigration
             }
         }
 
-        // Domain NOT NULL and Primary Key changes
+// Domain NOT NULL and Primary Key changes
         if ($this->domainIsNullableInCompanyDomainTable || $this->companyIsInPrimaryKeyInCompanyDomainTable) {
+            // 0. Disable foreign key checks temporarily
+            $this->addSql("SET FOREIGN_KEY_CHECKS = 0");
+
             // 1. Delete NULL values first
             $this->addSql("DELETE FROM `{$tableName}` WHERE domain IS NULL OR domain = ''");
 
@@ -70,16 +73,16 @@ class Version_1_6_0 extends AbstractMigration
 
             // 3. Drop old primary key if company is in it
             if ($this->companyIsInPrimaryKeyInCompanyDomainTable) {
-                try {
-                    $this->addSql("ALTER TABLE `{$tableName}` DROP PRIMARY KEY");
-                } catch (\Exception $e) {
-                }
+                $this->addSql("ALTER TABLE `{$tableName}` DROP PRIMARY KEY");
             }
 
-            // 4. Add new primary key on domain only (automatically UNIQUE)
+            // 4. Add new primary key on domain only
             if ($this->companyIsInPrimaryKeyInCompanyDomainTable) {
                 $this->addSql("ALTER TABLE `{$tableName}` ADD PRIMARY KEY (`domain`)");
             }
+
+            // 5. Re-enable foreign key checks
+            $this->addSql("SET FOREIGN_KEY_CHECKS = 1");
         }
     }
 }
