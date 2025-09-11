@@ -36,6 +36,7 @@ class FloodlightCompanyDomains
         $builder->createField('domain', 'string')
             ->columnName('domain')
             ->makePrimaryKey()
+            ->nullable(false)
             ->build();
 
         $builder->createField('isPrimaryDomain', 'boolean')->columnName('is_primary_domain')->build();
