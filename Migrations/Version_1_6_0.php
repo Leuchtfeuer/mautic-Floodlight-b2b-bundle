@@ -12,7 +12,7 @@ class Version_1_6_0 extends AbstractMigration
 {
     private string $table                                   = 'f4b_company_domains';
     private bool $needsTelcoColumn                          = false;
-    private bool $domainIsNullableInCompanyDomainTable      = false;
+    private bool $domainColumnExists      = false;
     private bool $companyIsInPrimaryKeyInCompanyDomainTable = false;
 
     protected function isApplicable(Schema $schema): bool
@@ -25,8 +25,7 @@ class Version_1_6_0 extends AbstractMigration
 
             if ($table->hasColumn('domain')) {
                 // Check if domain is nullable
-                $domainColumn                               = $table->getColumn('domain');
-                $this->domainIsNullableInCompanyDomainTable = !$domainColumn->getNotnull();
+                $this->domainColumnExists = true;
             }
 
             // Check if company_id is part of the primary key
@@ -36,7 +35,7 @@ class Version_1_6_0 extends AbstractMigration
             }
 
             return $this->needsTelcoColumn
-                || $this->domainIsNullableInCompanyDomainTable
+                || $this->domainColumnExists
                 || $this->companyIsInPrimaryKeyInCompanyDomainTable;
         } catch (SchemaException $e) {
             return false;
@@ -59,7 +58,7 @@ class Version_1_6_0 extends AbstractMigration
         }
 
 // Domain NOT NULL and Primary Key changes
-        if ($this->domainIsNullableInCompanyDomainTable || $this->companyIsInPrimaryKeyInCompanyDomainTable) {
+        if ($this->domainColumnExists || $this->companyIsInPrimaryKeyInCompanyDomainTable) {
             // 0. Disable foreign key checks temporarily
             $this->addSql("SET FOREIGN_KEY_CHECKS = 0");
 
@@ -67,7 +66,7 @@ class Version_1_6_0 extends AbstractMigration
             $this->addSql("DELETE FROM `{$tableName}` WHERE domain IS NULL OR domain = ''");
 
             // 2. Set domain to NOT NULL before changing primary key
-            if ($this->domainIsNullableInCompanyDomainTable) {
+            if ($this->domainColumnExists) {
                 $this->addSql("ALTER TABLE `{$tableName}` MODIFY COLUMN `domain` VARCHAR(255) NOT NULL");
             }
 
