@@ -17,7 +17,7 @@ class FloodlightCompanyDomains
 
     private ?bool $isTelco = null;
 
-    private ?string $domain = null;
+    private string $domain;
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
 
