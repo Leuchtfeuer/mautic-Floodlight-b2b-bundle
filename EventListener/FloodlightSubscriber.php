@@ -2,6 +2,7 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener;
 
+use Mautic\LeadBundle\Entity\Lead;
 use Mautic\PageBundle\Event\PageHitEvent;
 use Mautic\PageBundle\PageEvents;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
@@ -36,6 +37,11 @@ class FloodlightSubscriber implements EventSubscriberInterface
 
     private function execute(PageHitEvent $event): void
     {
+        $lead = $event->getHit()->getLead();
+        if (true === $this->isKnowLead($lead)) {
+            return;
+        }
+
         $ignoreSingleClickSettings = $this->config->getIgnoreSingleClickSettings();
         $isValid                   = $this->ipLookupRulesHelper->check($event->getHit(), $ignoreSingleClickSettings);
 
@@ -65,5 +71,12 @@ class FloodlightSubscriber implements EventSubscriberInterface
         }
 
         $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($remoteAddr, $event->getHit()->getLead());
+    }
+
+    private function isKnowLead(Lead $lead): bool
+    {
+        return $lead->getFirstname()
+            || $lead->getLastname()
+            || $lead->getEmail();
     }
 }

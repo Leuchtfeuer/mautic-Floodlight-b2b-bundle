@@ -133,9 +133,20 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals(0, count($totalItemsAfterRequest));
     }
 
+    public function testNoLookupForKnownLeads(): void
+    {
+        $lead = $this->createKnownLead();
+        $this->activePlugin();
+        $this->updateApikey();
+        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('217.91.35.16', $lead);
+        $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
+        $this->assertEquals(0, count($totalItemsAfterRequest));
+    }
+
     public function testSuccessPagehit(): void
     {
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit('217.91.35.16', $lead);
@@ -163,7 +174,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     public function test404Pagehit(): void
     {
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit('127.0.0.1', $lead);
@@ -188,7 +199,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     public function test202PagehitThenAnotherOneThatExceedsRetryLimitAfterTwoHours(): void
     {
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit('retryip', $lead);
@@ -225,7 +236,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     public function testThirdSuccessPagehitAddsCountPlusOne(): void
     {
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit('217.91.35.16', $lead);
@@ -249,7 +260,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         $this->activePlugin();
         $this->updateApikey();
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->createHit($lead);
         $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
         $this->setBackDateModifiedByTwoHours($retryLeadDomain);
@@ -279,7 +290,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         $this->activePlugin();
         $this->updateApikey();
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->createHit($lead);
         $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
         $this->setBackDateModifiedByTwoHours($retryLeadDomain);
@@ -300,7 +311,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
      */
     public function testNoLookupIfAlreadyRecentLookup(): void
     {
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit('217.91.35.16', $lead);
@@ -323,7 +334,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         $this->activePlugin();
         $this->updateApikey();
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->processHit('217.91.35.16', $lead);
         $this->processHit('217.91.35.16', $lead);
         $leadDomainsHit    = $this->em->getRepository(FloodlightLeadDomains::class)->findBy(['contact' => $lead]);
@@ -553,7 +564,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->mockDnsLookupResultDependingOnIp();
         $this->mockWhoisResultDependingOnIp();
 
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit($ip, $lead);
@@ -585,7 +596,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->mockDnsLookupResultDependingOnIp();
         $this->mockWhoisResultDependingOnIp();
 
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit($ip, $lead);
@@ -617,7 +628,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->mockDnsLookupResultDependingOnIp();
         $this->mockWhoisResultDependingOnIp();
 
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit($ip, $lead);
@@ -640,7 +651,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->mockDnsLookupResultDependingOnIp();
         $this->mockWhoisResultDependingOnIp();
 
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit($ip, $lead);
@@ -663,7 +674,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->mockDnsLookupResultDependingOnIp();
         $this->mockWhoisResultDependingOnIp();
 
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit($ip, $lead);
@@ -686,7 +697,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->mockDnsLookupResultDependingOnIp();
         $this->mockWhoisResultDependingOnIp();
 
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
 
@@ -705,7 +716,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->mockDnsLookupResultDependingOnIp();
         $this->mockWhoisResultDependingOnIp();
 
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
 
@@ -734,7 +745,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->mockDnsLookupResultDependingOnIp();
         $this->mockWhoisResultDependingOnIp();
 
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
 
         $this->activePlugin();
         $this->updateApikey();
@@ -795,7 +806,16 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $hit;
     }
 
-    private function createLead(): Lead
+    private function createAnonymousLead(): Lead
+    {
+        $lead = new Lead();
+        $this->em->persist($lead);
+        $this->em->flush();
+
+        return $lead;
+    }
+
+    private function createKnownLead(): Lead
     {
         $lead = new Lead();
         $this->em->persist($lead);
