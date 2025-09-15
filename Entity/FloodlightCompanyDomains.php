@@ -97,7 +97,7 @@ class FloodlightCompanyDomains
 
     public function setDomain(string $domain): void
     {
-        if (trim($domain) === '') {
+        if ('' === trim($domain)) {
             throw new \InvalidArgumentException('Domain cannot be empty');
         }
         $this->domain = $domain;
