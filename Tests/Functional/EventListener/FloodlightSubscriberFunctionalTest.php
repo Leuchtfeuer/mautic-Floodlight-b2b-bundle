@@ -367,6 +367,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertInstanceOf(Company::class, $companies[0]);
         $company = $companies[0];
         $company->setCity('testcity');
+        $company->setName('Leuchtfeuer');
         $companyModel = self::getContainer()->get(CompanyModel::class);
         $companyModel->saveEntity($company);
 
@@ -379,6 +380,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertCount(1, $company);
         $this->assertInstanceOf(Company::class, $company[0]);
         $this->assertEquals('testcity', $company[0]->getCity());
+        $this->assertEquals('Leuchtfeuer', $company[0]->getName());
     }
 
     public function test429PagehitWithFailingDnsLookupAndSuccessfulWhoisLookup(): void

@@ -50,6 +50,13 @@ return [
                 ],
             ],
 
+            'mautic.leuchtfeuerfloodlightb2b.helper.dto' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DtoHelper::class,
+                'arguments' => [
+                    'mautic.leuchtfeuerfloodlightb2b.helper.auditlog',
+                ],
+            ],
+
             'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory::class,
                 'arguments' => [
@@ -69,7 +76,7 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.helper.field',
                     'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
                     'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto',
-                    'mautic.leuchtfeuerfloodlightb2b.helper.auditlog',
+                    'mautic.leuchtfeuerfloodlightb2b.helper.dto',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status202strategy' => [

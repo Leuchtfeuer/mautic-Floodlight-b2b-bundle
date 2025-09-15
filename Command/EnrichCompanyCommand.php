@@ -8,6 +8,7 @@ use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\LeadBundle\Model\CompanyModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DtoHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
@@ -31,6 +32,7 @@ class EnrichCompanyCommand extends ModeratedCommand
         protected FieldHelper $fieldHelper,
         protected FloodlightLeadDomainsModel $floodlightLeadDomainsModel,
         protected FloodlightDtoFactory $floodlightDtoFactory,
+        protected DtoHelper $dtoHelper,
     ) {
         parent::__construct($pathsHelper, $coreParametersHelper);
     }
@@ -138,6 +140,7 @@ class EnrichCompanyCommand extends ModeratedCommand
             }
 
             $floodlightDTO = $this->floodlightDtoFactory->create($result);
+            $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
             $this->fieldHelper->updateProperties($floodlightDTO);
             $company = $floodlightDTO->fillCompany($company);
             $this->companyModel->saveEntity($company);

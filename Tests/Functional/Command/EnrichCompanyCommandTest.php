@@ -5,6 +5,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Command;
 use Doctrine\ORM\Exception\NotSupported;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
+use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
@@ -58,7 +59,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
     public function testEnrichByDomainStatus200(): void
     {
         $this->activatePlugin();
-        $company       = $this->addCompany('Test Company');
+        $company       = $this->addCompany('Leuchtfeuer');
         $companyDomain = $this->addCompanyDomain('leuchtfeuer.com', $company);
 
         // First 200 command --> company should be updated
@@ -71,8 +72,8 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->assertNotNull($company->getFieldValue('f4b_enrichment_date'));
         $this->assertNotSame(LookupRetryCommand::DATE_DEFAULT, $company->getFieldValue('f4b_enrichment_date'));
         $newCompany = $newCompanyDomains[0]->getCompany();
-        $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $newCompany->getName());
-        $this->assertStringContainsString('Company data updated Leuchtfeuer Digital Marketing GmbH', $commandTester->getDisplay());
+        $this->assertSame('Hanover', $newCompany->getCity());
+        $this->assertStringContainsString('Company data updated Leuchtfeuer', $commandTester->getDisplay());
         $this->assertStringContainsString('CompanyDomain leuchtfeuer.com data updated', $commandTester->getDisplay());
         $this->assertStringContainsString('Enriching company data DONE!', $commandTester->getDisplay());
 
@@ -94,6 +95,19 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->assertCount(1, $newCompanyDomains);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
         $this->assertEquals('202domain.com', $newCompanyDomains[0]->getDomain());
+    }
+
+    public function testPreviousValuesDontGetOverriddenViaEnrichment(): void
+    {
+        $this->activatePlugin();
+        $company           = $this->addCompany('Leuchtfeuer', 'leuchtfeuer.com');
+        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $companies         = $this->em->getRepository(Company::class)->findAll();
+        $this->assertCount(1, $companies);
+        // Leuchtfeuer doesn't get overridden by Leuchtfeuer Digital Marketing GmbH
+        $this->assertSame('Leuchtfeuer', $companies[0]->getName());
+        // The other data gets enriched properly
+        $this->assertSame('Hanover', $companies[0]->getCity());
     }
 
     /**
@@ -182,8 +196,8 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $company->setDateAdded(new \DateTime());
         $company->setDateModified(new \DateTime());
         $company->setWebsite($website);
-        $this->em->persist($company);
-        $this->em->flush();
+        $companyModel = self::getContainer()->get(CompanyModel::class);
+        $companyModel->saveEntity($company);
 
         return $company;
     }
