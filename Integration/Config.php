@@ -143,4 +143,23 @@ class Config
             return true;
         }
     }
+
+    public function getIgnoreTelcosSettings(): bool
+    {
+        try {
+            $integration     = $this->getIntegrationEntity();
+            $featureSettings = $integration->getFeatureSettings();
+
+            if (!is_array($featureSettings)
+                || !isset($featureSettings['integration'])
+                || !is_array($featureSettings['integration'])
+                || !isset($featureSettings['integration']['ignore_telcos'])) {
+                return true;
+            }
+
+            return (bool) $featureSettings['integration']['ignore_telcos'];
+        } catch (IntegrationNotFoundException) {
+            return true;
+        }
+    }
 }

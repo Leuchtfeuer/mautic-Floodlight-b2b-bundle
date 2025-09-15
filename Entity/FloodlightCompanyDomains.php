@@ -15,11 +15,11 @@ class FloodlightCompanyDomains
 
     private bool $isPrimaryDomain;
 
-    private ?string $domain = null;
+    private ?bool $isTelco = null;
+
+    private string $domain;
     private \DateTime $dateAdded;
     private \DateTime $dateModified;
-
-    //    private ?int $codeStatusRequest = null;
 
     public static function loadMetadata(ClassMetadata $metadata): void
     {
@@ -30,20 +30,18 @@ class FloodlightCompanyDomains
             ->addIndex(['domain'], 'company_domains_domain');
 
         $builder->createManyToOne('company', Company::class)
-            ->makePrimaryKey()
             ->addJoinColumn('company_id', 'id', false, false, 'CASCADE')
             ->build();
 
         $builder->createField('domain', 'string')
             ->columnName('domain')
-            ->nullable()
             ->makePrimaryKey()
+            ->nullable(false)
+            ->generatedValue('NONE')
             ->build();
-        //        $builder->createField('codeStatusRequest', 'integer')
-        //            ->columnName('code_status_request')
-        //            ->nullable()
-        //            ->build();
+
         $builder->createField('isPrimaryDomain', 'boolean')->columnName('is_primary_domain')->build();
+        $builder->createField('isTelco', 'boolean')->columnName('is_telco')->nullable()->build();
         $builder->addDateAdded();
         $builder->createField('dateModified', 'datetime')->columnName('date_modified')->build();
     }
@@ -92,12 +90,12 @@ class FloodlightCompanyDomains
         $this->company = $company;
     }
 
-    public function getDomain(): ?string
+    public function getDomain(): string
     {
         return $this->domain;
     }
 
-    public function setDomain(?string $domain): void
+    public function setDomain(string $domain): void
     {
         $this->domain = $domain;
     }
@@ -137,13 +135,13 @@ class FloodlightCompanyDomains
         return $this->isPrimaryDomain;
     }
 
-    //    public function getCodeStatusRequest(): ?int
-    //    {
-    //        return $this->codeStatusRequest;
-    //    }
-    //
-    //    public function setCodeStatusRequest(?int $codeStatusRequest): void
-    //    {
-    //        $this->codeStatusRequest = $codeStatusRequest;
-    //    }
+    public function setIsTelco(bool $isTelco): void
+    {
+        $this->isTelco = $isTelco;
+    }
+
+    public function getIsTelco(): ?bool
+    {
+        return $this->isTelco;
+    }
 }

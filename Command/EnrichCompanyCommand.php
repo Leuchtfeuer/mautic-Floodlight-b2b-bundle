@@ -10,6 +10,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DtoHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
@@ -33,6 +34,7 @@ class EnrichCompanyCommand extends ModeratedCommand
         protected FloodlightLeadDomainsModel $floodlightLeadDomainsModel,
         protected FloodlightDtoFactory $floodlightDtoFactory,
         protected DtoHelper $dtoHelper,
+        protected Status200Strategy $status200Strategy,
     ) {
         parent::__construct($pathsHelper, $coreParametersHelper);
     }
@@ -142,10 +144,21 @@ class EnrichCompanyCommand extends ModeratedCommand
             $floodlightDTO = $this->floodlightDtoFactory->create($result);
             $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
             $this->fieldHelper->updateProperties($floodlightDTO);
+
             $company = $floodlightDTO->fillCompany($company);
             $this->companyModel->saveEntity($company);
-
-            $this->flCompanyDomainsModel->saveEntity($companyDomain);
+            if (
+                false === $this->config->getIgnoreTelcosSettings()
+                || $this->status200Strategy->companyHasKnownContacts($company)
+                || 'Telecommunications' !== $floodlightDTO->getCompanyIndustryICBCSector()
+            ) {
+                $this->flCompanyDomainsModel->saveEntity($companyDomain);
+            } else {
+                $this->status200Strategy->detachAllUnknowContactsFromCompany($company);
+                $company->setIsPublished(false);
+                $this->companyModel->saveEntity($company);
+                $this->status200Strategy->updateTelcoCompanyDomains($floodlightDTO, $company);
+            }
 
             $output->writeln('<info>Company data updated '.$company->getName().'</info>');
             $output->writeln('<info>CompanyDomain '.$companyDomain->getDomain().' data updated</info>');

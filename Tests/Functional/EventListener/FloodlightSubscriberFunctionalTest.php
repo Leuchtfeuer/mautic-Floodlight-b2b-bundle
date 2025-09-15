@@ -5,6 +5,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventList
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
+use Mautic\LeadBundle\Entity\CompanyLead;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\PageBundle\Entity\Hit;
@@ -40,6 +41,28 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
         $crawler = $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
+    }
+
+    private function updateIgnoreTelcoSettings(bool $ignoreTelcoSetting): void
+    {
+        $integration = $this->em->getRepository(Integration::class)
+            ->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
+
+        $this->assertInstanceOf(Integration::class, $integration);
+
+        $featureSettings = $integration->getFeatureSettings();
+        if (!is_array($featureSettings)) {
+            $featureSettings = [];
+        }
+
+        if (!isset($featureSettings['integration'])) {
+            $featureSettings['integration'] = [];
+        }
+        $featureSettings['integration']['ignore_telcos'] = $ignoreTelcoSetting ? '1' : '0';
+
+        $integration->setFeatureSettings($featureSettings);
+        $this->em->persist($integration);
+        $this->em->flush();
     }
 
     private function activePlugin(bool $isPublished = true): void
@@ -383,6 +406,156 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals('Leuchtfeuer', $company[0]->getName());
     }
 
+    public function testIfIgnoreTelcoLogicWorks(): void
+    {
+        $this->activePlugin();
+        $this->updateApikey();
+
+        // '45.117.246.240' is ip that will return a floodlight company with icb_sector = 'Telecommunications'
+
+        // Pagehit when ignore_telco = false
+        $this->updateIgnoreTelcoSettings(false);
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(null);
+
+        $this->updateIgnoreTelcoSettings(true);
+
+        // Pagehit when ignore_telco = true,companydomain already exists with is_telco = null, and ip will return icb_sector which is NOT 'Telecommunications'
+        $lead = $this->createLead();
+        // '45.117.246.241' returns same company as '45.117.246.240' but with icb_sector = 'technology'
+        $this->processHit('45.117.246.241', $lead);
+        $this->processHit('45.117.246.241', $lead);
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(2);
+        $this->checkIfCompanyDomainHasIsTelcoValue(null);
+
+        // Pagehit when ignore_telco = true,companydomain already exists with is_telco = null, and ip will return icb_sector = 'Telecommunications'
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->assertEquals(false, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+
+        // Pagehit when ignore_telco = true and companydomain already exists with is_telco = true
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->assertEquals(false, $this->checkIfCompanyPublished()); // doesn't get changed at all
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+
+        // Pagehit when ignore_telco = true and companydomain already exists and has known contact
+        $company = $this->em->getRepository(Company::class)->findOneBy([]);
+        $this->assertInstanceOf(Company::class, $company);
+        $this->createKnownLeadAndAddToCompany($company);
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->publishCompany(true);
+        $this->checkNumberOfLeadsAssignedToCompany(2);
+        // Sollte hier nicht eigentlich auch auf is_telco === false zurückgesetzt werden?
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+
+        // Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector = 'Telecommunications'
+        $this->clearTestTables();
+        $lead = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->assertEquals(false, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+
+        // Pagehit when ignore_telco = true, no existing company domain and ip will return icb_sector which is NOT 'Telecommunications'
+        $this->clearTestTables();
+        $lead = $this->createLead();
+        $this->processHit('217.91.35.16', $lead);
+        $this->processHit('217.91.35.16', $lead);
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(false);
+
+        // Telco company doesn't get unpublished if it already existed before floodlight lookup
+        $this->clearTestTables();
+        $company = $this->createCompany('Digicel Pacific');
+        $lead    = $this->createLead();
+        $this->processHit('45.117.246.240', $lead);
+        $this->processHit('45.117.246.240', $lead);
+        $this->assertEquals(true, $this->checkIfCompanyPublished());
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+    }
+
+    private function clearTestTables(): void
+    {
+        // Alle Entitäten direkt über Doctrine löschen
+        $this->em->createQueryBuilder()
+            ->delete(CompanyLead::class)
+            ->getQuery()
+            ->execute();
+
+        $this->em->createQueryBuilder()
+            ->delete(Company::class)
+            ->getQuery()
+            ->execute();
+
+        $this->em->createQueryBuilder()
+            ->delete(Lead::class)
+            ->getQuery()
+            ->execute();
+
+        $this->em->flush();
+        $this->em->clear();
+    }
+
+    private function checkNumberOfLeadsAssignedToCompany(int $count): void
+    {
+        $companyLeads          = $this->em->getRepository(CompanyLead::class)->findAll();
+        $this->assertCount($count, $companyLeads);
+    }
+
+    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue): void
+    {
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertNotEmpty($companyDomainsHit);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertEquals($telcoValue, $companyDomainsHit[0]->getIsTelco());
+    }
+
+    private function createKnownLeadAndAddToCompany(Company $company): void
+    {
+        $lead         = $this->createKnownLead();
+        $companyModel = self::getContainer()->get(CompanyModel::class);
+        $companyModel->addLeadToCompany($company, $lead);
+        $companyModel->saveEntity($company);
+    }
+
+    private function checkIfCompanyPublished(): bool
+    {
+        $company = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+
+        return $company[0]->isPublished();
+    }
+
+    private function publishCompany(bool $published): void
+    {
+        $company = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($company);
+        $this->assertCount(1, $company);
+        $this->assertInstanceOf(Company::class, $company[0]);
+        $company[0]->setIsPublished($published);
+        $this->em->persist($company[0]);
+        $this->em->flush();
+    }
+
     public function test429PagehitWithFailingDnsLookupAndSuccessfulWhoisLookup(): void
     {
         // Use ip 86.101.230.57 because Mockoon will return 429 floodlight response for this IP, mock dns lookup will fail for this IP and Whois will be success for this ip
@@ -645,11 +818,30 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     private function createKnownLead(): Lead
     {
         $lead = new Lead();
-        $lead->setFirstName('Known');
+        $lead->setEmail('test@test.com');
         $this->em->persist($lead);
         $this->em->flush();
 
         return $lead;
+    }
+
+    private function createLead(): Lead
+    {
+        $lead = new Lead();
+        $this->em->persist($lead);
+        $this->em->flush();
+
+        return $lead;
+    }
+
+    private function createCompany(string $name): Company
+    {
+        $company = new Company();
+        $company->setName($name);
+        $this->em->persist($company);
+        $this->em->flush();
+
+        return $company;
     }
 
     private function setBackDateModifiedByTwoHours(FloodlightLeadDomains $leadDomain): void

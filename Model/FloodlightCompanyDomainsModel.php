@@ -111,7 +111,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         foreach ($companies as $company) {
             $domain = $this->domainUtility->cleanDomain($company->getCompanywebsite());
 
-            if (!$domain || !empty($this->getExistingCompanyDomain($domain))) {
+            if (!$domain || ($this->getExistingCompanyDomain($domain) instanceof FloodlightCompanyDomains)) {
                 continue;
             }
 
@@ -126,19 +126,39 @@ class FloodlightCompanyDomainsModel extends FormModel
         }
     }
 
-    /**
-     * @return mixed[]
-     */
-    public function getExistingCompanyDomain(string $domain): array
+    public function getExistingCompanyDomain(string $domain): ?FloodlightCompanyDomains
     {
-        return $this->getRepository()->findBy(
+        $domain = $this->getRepository()->findOneBy(
             [
                 'domain' => $domain,
             ]
         );
+        if ($domain instanceof FloodlightCompanyDomains) {
+            return $domain;
+        }
+
+        return null;
     }
 
-    public function createNewCompanyDomain(FloodlightDTO $floodlightDTO, Company $company): FloodlightCompanyDomains
+    /**
+     * @return array<FloodlightCompanyDomains>
+     */
+    public function getCompanyDomainsEntriesOfCompany(int $companyId): array
+    {
+        /** @var array<FloodlightCompanyDomains> $companyDomains */
+        $companyDomains = $this->getRepository()->findBy(
+            [
+                'company' => $companyId,
+            ]
+        );
+
+        return $companyDomains;
+    }
+
+    /**
+     * @return array<FloodlightCompanyDomains>
+     */
+    public function createNewCompanyDomain(FloodlightDTO $floodlightDTO, Company $company): array
     {
         $companiesDomains = $floodlightDTO->fillCompaniesDomain($this, $company);
 
@@ -151,8 +171,11 @@ class FloodlightCompanyDomainsModel extends FormModel
                 $companiesDomain->setDomain($domain);
             }
             $this->saveEntities($companiesDomains);
+
+            /** @var array<FloodlightCompanyDomains> */
+            return $companiesDomains;
         }
 
-        return $companiesDomains[0];
+        return [];
     }
 }
