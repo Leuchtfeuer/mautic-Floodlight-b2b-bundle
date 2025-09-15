@@ -68,6 +68,7 @@ class Version_1_6_0 extends AbstractMigration
             // 2. Set domain to NOT NULL before changing primary key
             if ($this->domainColumnExists) {
                 $this->addSql("ALTER TABLE `{$tableName}` CHANGE COLUMN `domain` `domain` VARCHAR(255) NOT NULL");
+                $this->addSql("ALTER TABLE `{$tableName}` ADD CONSTRAINT `chk_domain_not_empty` CHECK (domain != '' AND TRIM(domain) != '' AND domain IS NOT NULL)");
             }
 
             // 3. Drop old primary key if company is in it
@@ -80,7 +81,11 @@ class Version_1_6_0 extends AbstractMigration
                 $this->addSql("ALTER TABLE `{$tableName}` ADD PRIMARY KEY (`domain`)");
             }
 
-            // 5. Re-enable foreign key checks
+            // 5. Re-add the foreign key constraint that was lost
+            $companiesTable = $this->concatPrefix('companies');
+            $this->addSql("ALTER TABLE `{$tableName}` ADD CONSTRAINT `FK_{$this->table}_company_id` FOREIGN KEY (`company_id`) REFERENCES `{$companiesTable}` (`id`) ON DELETE CASCADE");
+
+            // 6. Re-enable foreign key checks
             $this->addSql("SET FOREIGN_KEY_CHECKS = 1");
         }
     }
