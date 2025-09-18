@@ -155,7 +155,6 @@ class EnrichCompanyCommand extends ModeratedCommand
                 $this->flCompanyDomainsModel->saveEntity($companyDomain);
             } else {
                 $this->status200Strategy->detachAllUnknowContactsFromCompany($company);
-                $company->setIsPublished(false);
                 $this->companyModel->saveEntity($company);
                 $this->status200Strategy->updateTelcoCompanyDomains($floodlightDTO, $company);
             }

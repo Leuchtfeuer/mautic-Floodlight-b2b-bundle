@@ -226,7 +226,6 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->addCompanyDomain('telcodomain.com', $company);
         $this->createUnknownLeadAndAddToCompany($company);
         $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
-        $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
@@ -239,8 +238,6 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->addCompanyDomain('telcodomain.com', $company);
         $this->createKnownLeadAndAddToCompany($company);
         $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
-
-        $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
@@ -253,7 +250,6 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->addCompanyDomain('leuchtfeuer.com', $company);
         $this->createUnknownLeadAndAddToCompany($company);
         $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
-        $this->assertEquals(true, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
@@ -266,7 +262,6 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->addCompanyDomain('telcodomain.com', $company);
         $this->createUnknownLeadAndAddToCompany($company);
         $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
-        $this->assertEquals(false, $this->checkIfCompanyPublished());
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
     }
