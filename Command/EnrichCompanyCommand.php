@@ -79,7 +79,7 @@ class EnrichCompanyCommand extends ModeratedCommand
             $domain                = $companyDomain->getDomain();
             $company               = $companyDomain->getCompany();
             $companyEnrichmentDate = $company->getFieldValue('f4b_enrichment_date');
-            if (null === $domain) {
+            if ('' === trim($domain)) {
                 continue;
             }
 
@@ -153,6 +153,7 @@ class EnrichCompanyCommand extends ModeratedCommand
                 || 'Telecommunications' !== $floodlightDTO->getCompanyIndustryICBCSector()
             ) {
                 $this->flCompanyDomainsModel->saveEntity($companyDomain);
+                $this->status200Strategy->updateRegularCompanyDomains($floodlightDTO, $company);
             } else {
                 $this->status200Strategy->detachAllUnknowContactsFromCompany($company);
                 $this->companyModel->saveEntity($company);

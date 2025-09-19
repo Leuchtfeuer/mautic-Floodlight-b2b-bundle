@@ -9,13 +9,13 @@ use Mautic\IntegrationsBundle\Migration\AbstractMigration;
 
 class Version_1_6_0 extends AbstractMigration
 {
-    private string $table = 'f4b_company_domains';
-    private bool $needsTelcoColumn = false;
+    private string $table                                   = 'f4b_company_domains';
+    private bool $needsTelcoColumn                          = false;
     private bool $companyIsInPrimaryKeyInCompanyDomainTable = false;
 
     protected function isApplicable(Schema $schema): bool
     {
-        $table = $schema->getTable($this->concatPrefix($this->table));
+        $table                  = $schema->getTable($this->concatPrefix($this->table));
         $this->needsTelcoColumn = !$table->hasColumn('is_telco');
 
         $primaryKey = $table->getPrimaryKey();

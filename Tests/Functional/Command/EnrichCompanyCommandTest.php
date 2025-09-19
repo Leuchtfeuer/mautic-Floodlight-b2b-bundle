@@ -163,61 +163,6 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->assertStringContainsString('No companies to enrich', $commandTester->getDisplay());
     }
 
-    private function activatePlugin(bool $isPublished = true, string $accessKeyId = 'validAccessKeyId', string $secretKey = 'validSecretKey'): void
-    {
-        $reloadFacade = self::getContainer()->get(ReloadFacade::class);
-        assert($reloadFacade instanceof ReloadFacade);
-        $reloadFacade->reloadPlugins();
-        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME]);
-        if (empty($integration)) {
-            $plugin      = $this->em->getRepository(Plugin::class)->findOneBy(['bundle' => 'LeuchtfeuerFloodlightB2BBundle']);
-            $integration = new Integration();
-            $integration->setName(LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME);
-            $integration->setPlugin($plugin);
-        }
-        $integration->setIsPublished($isPublished);
-        $integration->setApiKeys([]);
-        $this->em->persist($integration);
-        $this->em->flush();
-        $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
-        $form    = $crawler->selectButton('Save')->form();
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
-        $form['integration_config[apiKeys][api_access_key_id]']->setValue($accessKeyId);
-        $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
-        $crawler = $this->client->submit($form);
-        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
-        $this->useCleanupRollback = false;
-        $this->setUpSymfony($this->configParams);
-    }
-
-    private function addCompany(string $name='Test Company', string $website = 'https://leuchtfeuer.com/marketing-technologie/'): Company
-    {
-        $company = new Company();
-        $company->setName($name);
-        $company->setDateAdded(new \DateTime());
-        $company->setDateModified(new \DateTime());
-        $company->setWebsite($website);
-        $companyModel = self::getContainer()->get(CompanyModel::class);
-        $companyModel->saveEntity($company);
-
-        return $company;
-    }
-
-    private function addCompanyDomain(string $domain, Company $company): FloodlightCompanyDomains
-    {
-        $companyDomain = new FloodlightCompanyDomains();
-        $companyDomain->setDomain($domain);
-        $companyDomain->setCompany($company);
-        $companyDomain->setIsPrimaryDomain(true);
-        $companyDomain->setDateAdded(new \DateTime());
-        $companyDomain->setDateModified(new \DateTime());
-        $this->em->persist($companyDomain);
-        $this->em->flush();
-
-        return $companyDomain;
-    }
-
     public function testEnrichTelcoCompanyWhenIgnoreTelcoSetSettingsSetToFalse(): void
     {
         $this->activatePlugin(true);
@@ -272,17 +217,62 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->assertNotEmpty($companyDomainsHit);
         $this->assertCount(1, $companyDomainsHit);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
-        $this->assertEquals($telcoValue, $companyDomainsHit[0]->getIsTelco());
+        $this->assertSame($telcoValue, $companyDomainsHit[0]->getIsTelco());
     }
 
-    private function checkIfCompanyPublished(): bool
+    private function activatePlugin(bool $isPublished = true, string $accessKeyId = 'validAccessKeyId', string $secretKey = 'validSecretKey'): void
     {
-        $company = $this->em->getRepository(Company::class)->findAll();
-        $this->assertNotEmpty($company);
-        $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
+        $reloadFacade = self::getContainer()->get(ReloadFacade::class);
+        assert($reloadFacade instanceof ReloadFacade);
+        $reloadFacade->reloadPlugins();
+        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME]);
+        if (empty($integration)) {
+            $plugin      = $this->em->getRepository(Plugin::class)->findOneBy(['bundle' => 'LeuchtfeuerFloodlightB2BBundle']);
+            $integration = new Integration();
+            $integration->setName(LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME);
+            $integration->setPlugin($plugin);
+        }
+        $integration->setIsPublished($isPublished);
+        $integration->setApiKeys([]);
+        $this->em->persist($integration);
+        $this->em->flush();
+        $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
+        $form    = $crawler->selectButton('Save')->form();
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
+        $form['integration_config[apiKeys][api_access_key_id]']->setValue($accessKeyId);
+        $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
+        $crawler = $this->client->submit($form);
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
+        $this->useCleanupRollback = false;
+        $this->setUpSymfony($this->configParams);
+    }
 
-        return $company[0]->isPublished();
+    private function addCompany(string $name='Test Company', string $website = 'https://leuchtfeuer.com/marketing-technologie/'): Company
+    {
+        $company = new Company();
+        $company->setName($name);
+        $company->setDateAdded(new \DateTime());
+        $company->setDateModified(new \DateTime());
+        $company->setWebsite($website);
+        $companyModel = self::getContainer()->get(CompanyModel::class);
+        $companyModel->saveEntity($company);
+
+        return $company;
+    }
+
+    private function addCompanyDomain(string $domain, Company $company): FloodlightCompanyDomains
+    {
+        $companyDomain = new FloodlightCompanyDomains();
+        $companyDomain->setDomain($domain);
+        $companyDomain->setCompany($company);
+        $companyDomain->setIsPrimaryDomain(true);
+        $companyDomain->setDateAdded(new \DateTime());
+        $companyDomain->setDateModified(new \DateTime());
+        $this->em->persist($companyDomain);
+        $this->em->flush();
+
+        return $companyDomain;
     }
 
     private function checkNumberOfLeadsAssignedToCompany(int $count): void

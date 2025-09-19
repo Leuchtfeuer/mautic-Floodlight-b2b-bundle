@@ -31,70 +31,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->setUpSymfony($this->configParams);
     }
 
-    private function updateApikey(string $accessKeyId='validAccessKeyId', string $secretKey='validSecretKey'): void
-    {
-        $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
-        $form    = $crawler->selectButton('Save')->form();
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
-        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
-        $form['integration_config[apiKeys][api_access_key_id]']->setValue($accessKeyId);
-        $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
-        $crawler = $this->client->submit($form);
-        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
-    }
-
-    private function updateIgnoreTelcoSettings(bool $ignoreTelcoSetting): void
-    {
-        $integration = $this->em->getRepository(Integration::class)
-            ->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
-
-        $this->assertInstanceOf(Integration::class, $integration);
-
-        $featureSettings = $integration->getFeatureSettings();
-        if (!is_array($featureSettings)) {
-            $featureSettings = [];
-        }
-
-        if (!isset($featureSettings['integration'])) {
-            $featureSettings['integration'] = [];
-        }
-        $featureSettings['integration']['ignore_telcos'] = $ignoreTelcoSetting ? '1' : '0';
-
-        $integration->setFeatureSettings($featureSettings);
-        $this->em->persist($integration);
-        $this->em->flush();
-    }
-
-    private function activePlugin(bool $isPublished = true): void
-    {
-        $reloadFacade = self::getContainer()->get(ReloadFacade::class);
-        $reloadFacade->reloadPlugins();
-        $this->client->request('GET', '/s/plugins/reload');
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
-        if (!file_exists($configPathTo)) {
-            copy($pluginPathFrom, $configPathTo);
-        }
-        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME]);
-
-        if (empty($integration)) {
-            $plugin      = $this->em->getRepository(Plugin::class)->findOneBy(['bundle' => 'LeuchtfeuerFloodlightB2BIntegration']);
-            $integration = new Integration();
-            $integration->setName('LeuchtfeuerFloodlightB2B');
-            $integration->setPlugin($plugin);
-        }
-        $integration->setIsPublished($isPublished);
-        $this->em->persist($integration);
-        $this->em->flush();
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
-        if (!file_exists($configPathTo)) {
-            copy($pluginPathFrom, $configPathTo);
-        }
-        //        $this->useCleanupRollback = false;
-        //        $this->setUpSymfony($this->configParams);
-    }
-
     public function testPagehitWhenPluginNotActivated(): void
     {
         $this->activePlugin(false);
@@ -378,7 +314,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
      */
     public function testProtectNonF4bCompanyData(): void
     {
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
         $this->processHit('217.91.35.16', $lead);
@@ -394,7 +330,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $companyModel = self::getContainer()->get(CompanyModel::class);
         $companyModel->saveEntity($company);
 
-        $lead2 = $this->createLead();
+        $lead2 = $this->createAnonymousLead();
         $this->processHit('217.91.35.16', $lead2);
         $this->processHit('217.91.35.16', $lead2);
 
@@ -406,107 +342,91 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertEquals('Leuchtfeuer', $company[0]->getName());
     }
 
-    public function testRegularLookupWhenIgnoreTelcoSetToFalse(){
+    public function testRegularLookupWhenIgnoreTelcoSetToFalse(): void
+    {
         $this->activePlugin();
         $this->updateApikey();
         // '45.117.246.240' is ip that will return a floodlight company with icb_sector = 'Telecommunications'
         $this->updateIgnoreTelcoSettings(false);
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->checkNumberOfLeadsAssignedToCompany(1);
-        $this->checkIfCompanyDomainHasIsTelcoValue(null);
+        $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
 
-    public function testRegularLookupWhenCompanyHasKnownContact(){
+    public function testRegularLookupWhenCompanyHasKnownContact(): void
+    {
         $this->activePlugin();
         $this->updateApikey();
         $company = $this->createCompany('Test', 'telcodomain.com');
         $this->createKnownLeadAndAddToCompany($company);
         $this->addNewCompanyDomain('telcodomain.com', $company);
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->checkNumberOfLeadsAssignedToCompany(2);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
 
-    public function testRegularLookupWhenIcbSectorIsNotTelecommunication(){
+    public function testRegularLookupWhenIcbSectorIsNotTelecommunication(): void
+    {
         $this->activePlugin();
         $this->updateApikey();
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->processHit('217.91.35.16', $lead);
         $this->processHit('217.91.35.16', $lead);
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
 
-    public function testNoLookupWhenCompanyExistsAndIsTelcoEqualsTrue(){
+    public function testNoLookupWhenCompanyExistsAndIsTelcoEqualsTrue(): void
+    {
         $this->activePlugin();
         $this->updateApikey();
         $company = $this->createCompany('Test', 'telcodomain.com');
         $this->addNewCompanyDomain('telcodomain.com', $company, true);
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
     }
 
-    public function testTelcoLookupWhenCompanyExistsAndIsTelcoEqualsFalse(){
+    public function testTelcoLookupWhenCompanyExistsAndIsTelcoEqualsFalse(): void
+    {
         $this->activePlugin();
         $this->updateApikey();
         $company = $this->createCompany('Test', 'telcodomain.com');
         $this->addNewCompanyDomain('telcodomain.com', $company, false);
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
     }
 
-    public function testNoLookupWhenNoExistingDomainAndNoExistingCompanyWithSameName(){
+    public function testNoLookupWhenNoExistingDomainAndNoExistingCompanyWithSameName(): void
+    {
         $this->activePlugin();
         $this->updateApikey();
-        $lead = $this->createLead();
+        $lead = $this->createAnonymousLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->assertEmpty($this->em->getRepository(Company::class)->findAll());
         $this->assertEmpty($this->em->getRepository(FloodlightCompanyDomains::class)->findAll());
     }
 
-    public function testTelcoLookupWhenNoExistingDomainButExistingCompanyWithSameName(){
+    public function testTelcoLookupWhenNoExistingDomainButExistingCompanyWithSameName(): void
+    {
         $this->activePlugin();
         $this->updateApikey();
         $company = $this->createCompany('Digicel Pacific');
-        $lead = $this->createLead();
+        $lead    = $this->createAnonymousLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
-    }
-
-    private function checkNumberOfLeadsAssignedToCompany(int $count): void
-    {
-        $companyLeads          = $this->em->getRepository(CompanyLead::class)->findAll();
-        $this->assertCount($count, $companyLeads);
-    }
-
-    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue): void
-    {
-        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertNotEmpty($companyDomainsHit);
-        $this->assertCount(1, $companyDomainsHit);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
-        $this->assertEquals($telcoValue, $companyDomainsHit[0]->getIsTelco());
-    }
-
-    private function createKnownLeadAndAddToCompany(Company $company): void
-    {
-        $lead         = $this->createKnownLead();
-        $companyModel = self::getContainer()->get(CompanyModel::class);
-        $companyModel->addLeadToCompany($company, $lead);
-        $companyModel->saveEntity($company);
     }
 
     public function test429PagehitWithFailingDnsLookupAndSuccessfulWhoisLookup(): void
@@ -713,25 +633,80 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $leadDomainsHit[0]->getLookupType());
     }
 
-    private function setOutdated429Timestamp(): void
+    private function activePlugin(bool $isPublished = true): void
     {
-        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
+        $reloadFacade = self::getContainer()->get(ReloadFacade::class);
+        $reloadFacade->reloadPlugins();
+        $this->client->request('GET', '/s/plugins/reload');
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
+        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
+        if (!file_exists($configPathTo)) {
+            copy($pluginPathFrom, $configPathTo);
+        }
+        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME]);
+
+        if (empty($integration)) {
+            $plugin      = $this->em->getRepository(Plugin::class)->findOneBy(['bundle' => 'LeuchtfeuerFloodlightB2BIntegration']);
+            $integration = new Integration();
+            $integration->setName('LeuchtfeuerFloodlightB2B');
+            $integration->setPlugin($plugin);
+        }
+        $integration->setIsPublished($isPublished);
+        $this->em->persist($integration);
+        $this->em->flush();
+        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
+        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
+        if (!file_exists($configPathTo)) {
+            copy($pluginPathFrom, $configPathTo);
+        }
+        //        $this->useCleanupRollback = false;
+        //        $this->setUpSymfony($this->configParams);
+    }
+
+    private function updateApikey(string $accessKeyId='validAccessKeyId', string $secretKey='validSecretKey'): void
+    {
+        $crawler = $this->client->request('GET', '/s/plugins/config/LeuchtfeuerFloodlightB2B');
+        $form    = $crawler->selectButton('Save')->form();
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_access_key_id]']);
+        $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
+        $form['integration_config[apiKeys][api_access_key_id]']->setValue($accessKeyId);
+        $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
+        $crawler = $this->client->submit($form);
+        $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
+    }
+
+    private function updateIgnoreTelcoSettings(bool $ignoreTelcoSetting): void
+    {
+        $integration = $this->em->getRepository(Integration::class)
+            ->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
+
         $this->assertInstanceOf(Integration::class, $integration);
 
         $featureSettings = $integration->getFeatureSettings();
-
         if (!is_array($featureSettings)) {
             $featureSettings = [];
         }
 
-        if (!isset($featureSettings['integration']) || !is_array($featureSettings['integration'])) {
+        if (!isset($featureSettings['integration'])) {
             $featureSettings['integration'] = [];
         }
+        $featureSettings['integration']['ignore_telcos'] = $ignoreTelcoSetting ? '1' : '0';
 
-        $featureSettings['integration']['last_429_timestamp'] = time() - (61 * 60);
         $integration->setFeatureSettings($featureSettings);
         $this->em->persist($integration);
         $this->em->flush();
+    }
+
+    private function processHit(string $remoteAddress, Lead $lead): void
+    {
+        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
+        $request              = new \Symfony\Component\HttpFoundation\Request();
+        $request->server->set('REMOTE_ADDR', $remoteAddress);
+        $hit              = $this->createHit($lead, $remoteAddress);
+        $pageHitEventMock = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
+        $pageHitEventMock->expects($this->any())->method('getHit')->willReturn($hit);
+        $pageHitEventMock->expects($this->any())->method('getRequest')->willReturn($request);
+        $floodlightSubscriber->onPageHit($pageHitEventMock);
     }
 
     private function createHit(Lead $lead, string $ipAdress = '127.0.0.1'): Hit
@@ -778,20 +753,19 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $lead;
     }
 
-    private function createLead(): Lead
+    private function createKnownLeadAndAddToCompany(Company $company): void
     {
-        $lead = new Lead();
-        $this->em->persist($lead);
-        $this->em->flush();
-
-        return $lead;
+        $lead         = $this->createKnownLead();
+        $companyModel = self::getContainer()->get(CompanyModel::class);
+        $companyModel->addLeadToCompany($company, $lead);
+        $companyModel->saveEntity($company);
     }
 
     private function createCompany(string $name, ?string $website = null): Company
     {
         $company = new Company();
         $company->setName($name);
-        if($website){
+        if ($website) {
             $company->setWebsite($website);
         }
         $this->em->persist($company);
@@ -821,7 +795,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $floodlightLeadDomain;
     }
 
-    private function addNewCompanyDomain(string $domain, Company $company, ?bool $isTelco = false): FloodlightCompanyDomains
+    private function addNewCompanyDomain(string $domain, Company $company, bool $isTelco = false): FloodlightCompanyDomains
     {
         $floodlightCompanyDomain = new FloodlightCompanyDomains();
         $floodlightCompanyDomain->setDateAdded(new \DateTime());
@@ -836,16 +810,40 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         return $floodlightCompanyDomain;
     }
 
-    private function processHit(string $remoteAddress, Lead $lead): void
+    private function checkNumberOfLeadsAssignedToCompany(int $count): void
     {
-        $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);
-        $request              = new \Symfony\Component\HttpFoundation\Request();
-        $request->server->set('REMOTE_ADDR', $remoteAddress);
-        $hit              = $this->createHit($lead, $remoteAddress);
-        $pageHitEventMock = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock->expects($this->any())->method('getHit')->willReturn($hit);
-        $pageHitEventMock->expects($this->any())->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock);
+        $companyLeads          = $this->em->getRepository(CompanyLead::class)->findAll();
+        $this->assertCount($count, $companyLeads);
+    }
+
+    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue): void
+    {
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertNotEmpty($companyDomainsHit);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($telcoValue, $companyDomainsHit[0]->getIsTelco());
+    }
+
+    private function setOutdated429Timestamp(): void
+    {
+        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => 'LeuchtfeuerFloodlightB2B']);
+        $this->assertInstanceOf(Integration::class, $integration);
+
+        $featureSettings = $integration->getFeatureSettings();
+
+        if (!is_array($featureSettings)) {
+            $featureSettings = [];
+        }
+
+        if (!isset($featureSettings['integration']) || !is_array($featureSettings['integration'])) {
+            $featureSettings['integration'] = [];
+        }
+
+        $featureSettings['integration']['last_429_timestamp'] = time() - (61 * 60);
+        $integration->setFeatureSettings($featureSettings);
+        $this->em->persist($integration);
+        $this->em->flush();
     }
 
     private function mockDnsLookupResultDependingOnIp(): void
