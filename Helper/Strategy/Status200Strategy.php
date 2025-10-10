@@ -2,6 +2,7 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy;
 
+use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyLeadRepository;
 use Mautic\LeadBundle\Entity\CompanyRepository;
@@ -18,6 +19,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+use Symfony\Component\HttpClient\HttpClient;
 
 class Status200Strategy implements StatusCodeStrategyInterface
 {
@@ -33,6 +35,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         private DtoHelper $dtoHelper,
         private Config $config,
         private CompanyLeadRepository $companyLeadRepository,
+        private PathsHelper $pathsHelper,
     ) {
     }
 
@@ -167,6 +170,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $company       = $this->companyModel->getEntity();
         \assert($company instanceof Company);
         $company       = $floodlightDTO->fillCompany($company);
+        $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl() ?? '');
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
 
@@ -177,6 +181,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
     {
         $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
         $company       = $floodlightDTO->fillCompany($company);
+        $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl() ?? '');
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
     }
@@ -228,5 +233,68 @@ class Status200Strategy implements StatusCodeStrategyInterface
             $companyDomain->setIsTelco(false);
         }
         $this->companyDomainsModel->saveEntities($companyDomains);
+    }
+
+    private function processCompanyLogo(Company $company, string $companyLogoUrl): Company
+    {
+        if ($this->isLogoAlreadySetManually($company) || $companyLogoUrl === '') {
+            return $company;
+        }
+        $fileName = $this->createLogoFile($company, $companyLogoUrl);
+        return $this->updateLogoFilenameInCompany($company, $fileName);
+    }
+
+    private function isLogoAlreadySetManually(Company $company): bool {
+        $logoFileName = $company->getFieldValue('companylogo_filename');
+        if (str_starts_with($logoFileName, 'f4b_') || empty($logoFileName)) {
+            return false;
+        }
+        return true;
+
+    }
+
+    private function createLogoFile(Company $company, string $companyLogoUrl): string
+    {
+
+        //filename = f4b_<md5(companyname+timestamp)>
+        $timestamp = (new \DateTime())->format('Y-m-d-H-i-s');
+        $logoFileName = 'f4b_'.md5($company->getName().$timestamp);
+
+        //filetype = curl request on logofile --> type herausfinden (companyLogoUrl)
+        $httpClient = HttpClient::create();
+        $response = $httpClient->request('GET', $companyLogoUrl);
+        if ($response->getStatusCode() !== 200) {
+            throw new \Exception("Failed to download logo from: {$companyLogoUrl}");
+        }
+
+        $imageData = $response->getContent();
+        $contentType = $response->getHeaders()['content-type'][0] ?? '';
+        $fileExtension = '';
+        if (str_contains($contentType, 'image/png')) {
+            $fileExtension = '.png';
+        } elseif (str_contains($contentType, 'image/jpeg') || str_contains($contentType, 'image/jpg')) {
+            $fileExtension = '.jpg';
+        } else {
+            throw new \Exception("Unsupported image type: {$contentType}");
+        }
+
+        //createFile
+        $fullFileName = $logoFileName . $fileExtension;
+        $filePath = $this->pathsHelper->getMediaPath().'/logos/'.$fullFileName;
+        if (file_put_contents($filePath, $imageData) === false) {
+            throw new \Exception("Failed to save logo file: {$filePath}");
+        }
+
+        return $fullFileName;
+    }
+
+    private function updateLogoFilenameInCompany(Company $company, string $fileName): Company
+    {
+        if ($company->getFieldValue('companylogo_filename') === $fileName) {
+            return $company;
+        }
+
+        $company->addUpdatedField('companylogo_filename', $fileName);
+        return $company;
     }
 }
