@@ -958,6 +958,68 @@
       "responseMode": null,
       "streamingMode": null,
       "streamingInterval": 0
+    },
+    {
+      "uuid": "30943fe6-8e75-4cd8-9e6f-1acdb9468fe8",
+      "type": "http",
+      "documentation": "Company with empty logo url- Status 200 by IP",
+      "method": "get",
+      "endpoint": "v1/companies/ip/12.138.157.208",
+      "responses": [
+        {
+          "uuid": "deeab587-921b-4cf9-a8ce-518042eddcab",
+          "body": "{\n    \"ip_hash\": \"3b928dc5de9bcc8e0546607f1bc1e0e4464bbd18\",\n    \"companyfloodlight_id\": \"k69jf1y0qflw6bsr3ei135ag\",\n    \"primarydomain\": \"emptylogo.com\",\n    \"companyname\": \"Empty Logo\",\n    \"companyname_legal\": \"Empty Logo\",\n    \"companyfounding_year\": 2011,\n    \"companycity\": \"Houston\",\n    \"companyzipcode\": \"65483\",\n    \"companycountry\": \"United States\",\n    \"companycountry_code\": \"US\",\n    \"companyemployees_range\": \"5-9\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "57c5fca5-47ec-4c3c-adb2-cc9b47a8eb85",
+      "type": "http",
+      "documentation": "Company with logo url- Status 200 by IP",
+      "method": "get",
+      "endpoint": "v1/companies/ip/12.138.157.209",
+      "responses": [
+        {
+          "uuid": "dbb276b0-2cd0-47a7-9add-ffba4417fcfe",
+          "body": "{\n    \"ip_hash\": \"3b928dc5de9bcc8e0546607f1bc1e0e4464bbd28\",\n    \"companyfloodlight_id\": \"k69jf1y0qflw6bsr3ei136ag\",\n    \"primarydomain\": \"logo.com\",\n    \"companyname\": \"Logo\",\n    \"companyname_legal\": \"Logo\",\n    \"companyfounding_year\": 2011,\n    \"companycity\": \"Houston\",\n    \"companyzipcode\": \"65483\",\n    \"companycountry\": \"United States\",\n    \"companycountry_code\": \"US\",\n    \"companyemployees_range\": \"5-9\",\n    \"companylogo\": \"http://logo.bigpicture.io/logo/leuchtfeuer.com\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
     }
   ],
   "rootChildren": [
@@ -1036,6 +1098,14 @@
     {
       "type": "route",
       "uuid": "28c10309-e5db-4411-9ffa-2fd72ab4305a"
+    },
+    {
+      "type": "route",
+      "uuid": "30943fe6-8e75-4cd8-9e6f-1acdb9468fe8"
+    },
+    {
+      "type": "route",
+      "uuid": "57c5fca5-47ec-4c3c-adb2-cc9b47a8eb85"
     }
   ],
   "proxyMode": false,
@@ -1077,6 +1147,14 @@
       "value": ""
     }
   ],
-  "data": [],
+  "data": [
+    {
+      "uuid": "9f2e5a47-ad55-4fc0-87b1-2752f9198d6c",
+      "id": "soy9",
+      "name": "New data",
+      "documentation": "",
+      "value": "[\n]"
+    }
+  ],
   "callbacks": []
 }

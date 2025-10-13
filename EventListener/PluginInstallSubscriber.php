@@ -223,10 +223,10 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'externalKeyName' => 'companytwitter_followers',
             ],
             [
-                'alias'           => 'f4b_companylogo',
-                'name'            => 'Company Logo',
-                'type'            => 'url',
-                'externalKeyName' => 'companylogo',
+                'alias'           => 'companylogo_filename',
+                'name'            => 'Company Logo Filename',
+                'type'            => 'text',
+                'externalKeyName' => 'companylogo_filename',
             ],
             [
                 'alias'      => 'f4b_companytype',

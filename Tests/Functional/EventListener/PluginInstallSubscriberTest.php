@@ -19,7 +19,7 @@ class PluginInstallSubscriberTest extends MauticMysqlTestCase
             'f4b_companytimezone',
             'f4b_companyticker',
             'f4b_companytype',
-            'f4b_companylogo',
+            'companylogo_filename',
             'f4b_companytwitter_followers',
             'f4b_companylinkedin_handle',
             'f4b_companyfacebook_handle',

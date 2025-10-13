@@ -3,6 +3,7 @@
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventListener;
 
 use Mautic\CoreBundle\Entity\IpAddress;
+use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyLead;
@@ -340,6 +341,71 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertInstanceOf(Company::class, $company[0]);
         $this->assertEquals('testcity', $company[0]->getCity());
         $this->assertEquals('Leuchtfeuer', $company[0]->getName());
+    }
+
+    public function testCompanyLogoProcessing(): void
+    {
+        $lead = $this->createAnonymousLead();
+        $this->activePlugin();
+        $this->updateApikey();
+
+        $this->processHit('12.138.157.209', $lead);
+        $this->processHit('12.138.157.209', $lead);
+
+        $companies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($companies);
+        $this->assertCount(1, $companies);
+
+        $company      = $companies[0];
+        $logoFileName = $company->getFieldValue('companylogo_filename');
+        $this->assertIsString($logoFileName);
+        $this->assertStringStartsWith('f4b_', $logoFileName);
+
+        $pathsHelper  = self::getContainer()->get(PathsHelper::class);
+        $logoFilePath = $pathsHelper->getMediaPath().'/logos/'.$logoFileName;
+        $this->assertFileExists($logoFilePath);
+        $this->assertTrue(in_array(pathinfo($logoFilePath, PATHINFO_EXTENSION), ['png', 'jpg']));
+    }
+
+    public function testCompanyLogoNotProcessedWhenAlreadySetManually(): void
+    {
+        $lead = $this->createAnonymousLead();
+        $this->activePlugin();
+        $this->updateApikey();
+
+        $this->processHit('12.138.157.209', $lead);
+        $this->processHit('12.138.157.209', $lead);
+
+        $companies = $this->em->getRepository(Company::class)->findAll();
+        $company   = $companies[0];
+        $company->addUpdatedField('companylogo_filename', 'manual_logo.png');
+        $companyModel = self::getContainer()->get(CompanyModel::class);
+        $companyModel->saveEntity($company);
+
+        $lead2 = $this->createAnonymousLead();
+        $this->processHit('12.138.157.209', $lead2);
+        $this->processHit('12.138.157.209', $lead2);
+
+        $company = $this->em->getRepository(Company::class)->find($company->getId());
+        $this->assertInstanceOf(Company::class, $company);
+        $this->assertEquals('manual_logo.png', $company->getFieldValue('companylogo_filename'));
+    }
+
+    public function testCompanyLogoNotProcessedWhenEmptyUrl(): void
+    {
+        $lead = $this->createAnonymousLead();
+        $this->activePlugin();
+        $this->updateApikey();
+
+        $this->processHit('12.138.157.208', $lead);
+        $this->processHit('12.138.157.208', $lead);
+
+        $companies = $this->em->getRepository(Company::class)->findAll();
+        $this->assertNotEmpty($companies);
+
+        $company      = $companies[0];
+        $logoFileName = $company->getFieldValue('companylogo_filename');
+        $this->assertNull($logoFileName);
     }
 
     public function testRegularLookupWhenIgnoreTelcoSetToFalse(): void
