@@ -77,7 +77,8 @@ class EnrichCompanyCommand extends ModeratedCommand
         foreach ($companyDomains as $companyDomain) {
             assert($companyDomain instanceof FloodlightCompanyDomains);
             $domain                = $companyDomain->getDomain();
-            $company               = $companyDomain->getCompany();
+            // use getEntity to make sure that also custom fields are loaded
+            $company               = $this->companyModel->getRepository()->getEntity($companyDomain->getCompany()->getId()) ?? $companyDomain->getCompany();
             $companyEnrichmentDate = $company->getFieldValue('f4b_enrichment_date');
             if ('' === trim($domain)) {
                 continue;
@@ -146,6 +147,7 @@ class EnrichCompanyCommand extends ModeratedCommand
             $this->fieldHelper->updateProperties($floodlightDTO);
 
             $company = $floodlightDTO->fillCompany($company);
+            $this->status200Strategy->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl());
             $this->companyModel->saveEntity($company);
             if (
                 false === $this->config->getIgnoreTelcosSettings()

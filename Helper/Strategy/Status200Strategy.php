@@ -2,6 +2,7 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy;
 
+use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyLeadRepository;
 use Mautic\LeadBundle\Entity\CompanyRepository;
@@ -18,6 +19,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
+use Symfony\Component\HttpClient\HttpClient;
 
 class Status200Strategy implements StatusCodeStrategyInterface
 {
@@ -33,6 +35,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         private DtoHelper $dtoHelper,
         private Config $config,
         private CompanyLeadRepository $companyLeadRepository,
+        private PathsHelper $pathsHelper,
     ) {
     }
 
@@ -167,6 +170,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $company       = $this->companyModel->getEntity();
         \assert($company instanceof Company);
         $company       = $floodlightDTO->fillCompany($company);
+        $company       = $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl());
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
 
@@ -175,8 +179,11 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
     private function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company): void
     {
+        // use getEntity to make sure that also custom fields are loaded
+        $company       = $this->companyRepository->getEntity($company->getId()) ?? $company;
         $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
         $company       = $floodlightDTO->fillCompany($company);
+        $company       = $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl());
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
     }
@@ -201,6 +208,8 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
     public function updateTelcoCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company): void
     {
+        // use getEntity to make sure that also custom fields are loaded
+        $company = $this->companyRepository->getEntity($company->getId()) ?? $company;
         $this->fieldHelper->updateProperties($floodlightDTO);
         $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
         $this->updateCompany($floodlightDTO, $lead, $company);
@@ -228,5 +237,84 @@ class Status200Strategy implements StatusCodeStrategyInterface
             $companyDomain->setIsTelco(false);
         }
         $this->companyDomainsModel->saveEntities($companyDomains);
+    }
+
+    public function processCompanyLogo(Company $company, string $companyLogoUrl): Company
+    {
+        if ($this->isLogoAlreadySetManually($company) || '' === $companyLogoUrl) {
+            return $company;
+        }
+        $this->deleteOldLogoFile($company);
+        $fileName = $this->createLogoFile($company, $companyLogoUrl);
+        if (null === $fileName) {
+            return $company;
+        }
+
+        return $this->updateLogoFilenameInCompany($company, $fileName);
+    }
+
+    private function isLogoAlreadySetManually(Company $company): bool
+    {
+        $logoFileName = $company->getFieldValue('companylogo_filename');
+        if (null === $logoFileName || empty($logoFileName)) {
+            return false;
+        }
+        if (is_string($logoFileName) && str_starts_with($logoFileName, 'f4b_')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function deleteOldLogoFile(Company $company): void
+    {
+        $oldLogoFileName = $company->getFieldValue('companylogo_filename');
+        if (null === $oldLogoFileName || '' === $oldLogoFileName || !is_string($oldLogoFileName)) {
+            return;
+        }
+        $filePath = $this->pathsHelper->getMediaPath().'/logos/'.$oldLogoFileName;
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+    }
+
+    private function createLogoFile(Company $company, string $companyLogoUrl): ?string
+    {
+        $timestamp    = (new \DateTime())->format('Y-m-d-H-i-s');
+        $logoFileName = 'f4b_'.md5($company->getName().$timestamp);
+
+        $httpClient = HttpClient::create();
+        $response   = $httpClient->request('GET', $companyLogoUrl);
+        if (200 !== $response->getStatusCode()) {
+            return null;
+        }
+
+        $imageData     = $response->getContent();
+        $contentType   = $response->getHeaders()['content-type'][0] ?? '';
+        $fileExtension = '';
+        if (str_contains($contentType, 'image/png')) {
+            $fileExtension = '.png';
+        } elseif (str_contains($contentType, 'image/jpeg') || str_contains($contentType, 'image/jpg')) {
+            $fileExtension = '.jpg';
+        }
+
+        $fullFileName = $logoFileName.$fileExtension;
+        $filePath     = $this->pathsHelper->getMediaPath().'/logos/'.$fullFileName;
+        if (false === file_put_contents($filePath, $imageData)) {
+            return null;
+        }
+
+        return $fullFileName;
+    }
+
+    private function updateLogoFilenameInCompany(Company $company, string $fileName): Company
+    {
+        if ($company->getFieldValue('companylogo_filename') === $fileName) {
+            return $company;
+        }
+
+        $company->addUpdatedField('companylogo_filename', $fileName);
+
+        return $company;
     }
 }

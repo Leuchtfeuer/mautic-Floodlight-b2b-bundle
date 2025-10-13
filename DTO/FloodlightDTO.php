@@ -40,7 +40,6 @@ class FloodlightDTO implements DTOInterface
         'companytwitter_handle'             => 'f4b_companytwitter_handle',
         'companylinkedin_handle'            => 'f4b_companylinkedin_handle',
         'companytwitter_followers'          => 'f4b_companytwitter_followers',
-        'companylogo'                       => 'f4b_companylogo',
         'companytype'                       => 'f4b_companytype',
         'companyticker'                     => 'f4b_companyticker',
         'companytimezone'                   => 'f4b_companytimezone',
@@ -985,9 +984,6 @@ class FloodlightDTO implements DTOInterface
         }
         if (!empty($this->getCompanyTwitterFollowers())) {
             $company->addUpdatedField('f4b_companytwitter_followers', $this->getCompanyTwitterFollowers());
-        }
-        if (!empty($this->getCompanyLogoUrl())) {
-            $company->addUpdatedField('f4b_companylogo', $this->getCompanyLogoUrl());
         }
         if (!empty($this->getCompanyType())) {
             $company->addUpdatedField('f4b_companytype', $this->getCompanyType());

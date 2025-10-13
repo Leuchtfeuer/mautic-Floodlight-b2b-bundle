@@ -2,6 +2,8 @@
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener;
 
+use Mautic\CoreBundle\Helper\FilePathResolver;
+use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\PluginBundle\Event\PluginInstallEvent;
 use Mautic\PluginBundle\PluginEvents;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\InstallHelper;
@@ -223,10 +225,10 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'externalKeyName' => 'companytwitter_followers',
             ],
             [
-                'alias'           => 'f4b_companylogo',
-                'name'            => 'Company Logo',
-                'type'            => 'url',
-                'externalKeyName' => 'companylogo',
+                'alias'           => 'companylogo_filename',
+                'name'            => 'Company Logo Filename',
+                'type'            => 'text',
+                'externalKeyName' => 'companylogo_filename',
             ],
             [
                 'alias'      => 'f4b_companytype',
@@ -273,7 +275,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
             ],
         ];
 
-    public function __construct(private InstallHelper $installHelper)
+    public function __construct(private InstallHelper $installHelper, private PathsHelper $pathsHelper, private FilePathResolver $filePathResolver)
     {
     }
 
@@ -296,6 +298,9 @@ class PluginInstallSubscriber implements EventSubscriberInterface
     private function executeInstallLogic(): void
     {
         $this->installHelper->copyBlacklistFiles();
+        $logoPath = $this->pathsHelper->getMediaPath().'/logos';
+        $this->filePathResolver->createDirectory($logoPath);
+
         foreach (self::FIELD_DATA as $fieldData) {
             $options = [];
             if (isset($fieldData['properties'])) {
