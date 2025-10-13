@@ -163,6 +163,63 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->assertStringContainsString('No companies to enrich', $commandTester->getDisplay());
     }
 
+    public function testEnrichTelcoCompanyWhenIgnoreTelcoSetSettingsSetToFalse(): void
+    {
+        $this->activatePlugin(true);
+        $this->updateIgnoreTelcoSettings(false);
+        $company       = $this->addCompany('Telco', 'telcodomain.com');
+        $this->addCompanyDomain('telcodomain.com', $company);
+        $this->createUnknownLeadAndAddToCompany($company);
+        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(false);
+    }
+
+    public function testEnrichTelcoCompanyWithKnownLead(): void
+    {
+        $this->activatePlugin();
+        $this->updateIgnoreTelcoSettings(true);
+        $company       = $this->addCompany('Telco', 'telcodomain.com');
+        $this->addCompanyDomain('telcodomain.com', $company);
+        $this->createKnownLeadAndAddToCompany($company);
+        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(false);
+    }
+
+    public function testEnrichNonTelcoCompany(): void
+    {
+        $this->activatePlugin();
+        $this->updateIgnoreTelcoSettings(true);
+        $company       = $this->addCompany('Leuchtfeuer');
+        $this->addCompanyDomain('leuchtfeuer.com', $company);
+        $this->createUnknownLeadAndAddToCompany($company);
+        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->checkNumberOfLeadsAssignedToCompany(1);
+        $this->checkIfCompanyDomainHasIsTelcoValue(false);
+    }
+
+    public function testEnrichTelcoCompany(): void
+    {
+        $this->activatePlugin();
+        $this->updateIgnoreTelcoSettings(true);
+        $company       = $this->addCompany('Telco', 'telcodomain.com');
+        $this->addCompanyDomain('telcodomain.com', $company);
+        $this->createUnknownLeadAndAddToCompany($company);
+        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->checkNumberOfLeadsAssignedToCompany(0);
+        $this->checkIfCompanyDomainHasIsTelcoValue(true);
+    }
+
+    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue): void
+    {
+        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
+        $this->assertNotEmpty($companyDomainsHit);
+        $this->assertCount(1, $companyDomainsHit);
+        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
+        $this->assertSame($telcoValue, $companyDomainsHit[0]->getIsTelco());
+    }
+
     private function activatePlugin(bool $isPublished = true, string $accessKeyId = 'validAccessKeyId', string $secretKey = 'validSecretKey'): void
     {
         $reloadFacade = self::getContainer()->get(ReloadFacade::class);
@@ -216,78 +273,6 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->em->flush();
 
         return $companyDomain;
-    }
-
-    public function testEnrichTelcoCompanyWhenIgnoreTelcoSetSettingsSetToFalse(): void
-    {
-        $this->activatePlugin(true);
-        $this->updateIgnoreTelcoSettings(false);
-        $company       = $this->addCompany('Telco', 'telcodomain.com');
-        $this->addCompanyDomain('telcodomain.com', $company);
-        $this->createUnknownLeadAndAddToCompany($company);
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
-        $this->assertEquals(true, $this->checkIfCompanyPublished());
-        $this->checkNumberOfLeadsAssignedToCompany(1);
-        $this->checkIfCompanyDomainHasIsTelcoValue(false);
-    }
-
-    public function testEnrichTelcoCompanyWithKnownLead(): void
-    {
-        $this->activatePlugin();
-        $this->updateIgnoreTelcoSettings(true);
-        $company       = $this->addCompany('Telco', 'telcodomain.com');
-        $this->addCompanyDomain('telcodomain.com', $company);
-        $this->createKnownLeadAndAddToCompany($company);
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
-
-        $this->assertEquals(true, $this->checkIfCompanyPublished());
-        $this->checkNumberOfLeadsAssignedToCompany(1);
-        $this->checkIfCompanyDomainHasIsTelcoValue(false);
-    }
-
-    public function testEnrichNonTelcoCompany(): void
-    {
-        $this->activatePlugin();
-        $this->updateIgnoreTelcoSettings(true);
-        $company       = $this->addCompany('Leuchtfeuer');
-        $this->addCompanyDomain('leuchtfeuer.com', $company);
-        $this->createUnknownLeadAndAddToCompany($company);
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
-        $this->assertEquals(true, $this->checkIfCompanyPublished());
-        $this->checkNumberOfLeadsAssignedToCompany(1);
-        $this->checkIfCompanyDomainHasIsTelcoValue(false);
-    }
-
-    public function testEnrichTelcoCompany(): void
-    {
-        $this->activatePlugin();
-        $this->updateIgnoreTelcoSettings(true);
-        $company       = $this->addCompany('Telco', 'telcodomain.com');
-        $this->addCompanyDomain('telcodomain.com', $company);
-        $this->createUnknownLeadAndAddToCompany($company);
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
-        $this->assertEquals(false, $this->checkIfCompanyPublished());
-        $this->checkNumberOfLeadsAssignedToCompany(0);
-        $this->checkIfCompanyDomainHasIsTelcoValue(true);
-    }
-
-    private function checkIfCompanyDomainHasIsTelcoValue(?bool $telcoValue): void
-    {
-        $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
-        $this->assertNotEmpty($companyDomainsHit);
-        $this->assertCount(1, $companyDomainsHit);
-        $this->assertInstanceOf(FloodlightCompanyDomains::class, $companyDomainsHit[0]);
-        $this->assertEquals($telcoValue, $companyDomainsHit[0]->getIsTelco());
-    }
-
-    private function checkIfCompanyPublished(): bool
-    {
-        $company = $this->em->getRepository(Company::class)->findAll();
-        $this->assertNotEmpty($company);
-        $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
-
-        return $company[0]->isPublished();
     }
 
     private function checkNumberOfLeadsAssignedToCompany(int $count): void
