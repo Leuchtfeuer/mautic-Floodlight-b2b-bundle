@@ -170,7 +170,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $company       = $this->companyModel->getEntity();
         \assert($company instanceof Company);
         $company       = $floodlightDTO->fillCompany($company);
-        $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl() ?? '');
+        $company = $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl() ?? '');
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
 
@@ -179,9 +179,11 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
     private function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company): void
     {
+        // use getEntity to make sure that also custom fields are loaded
+        $company = $this->companyRepository->getEntity($company->getId());
         $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
         $company       = $floodlightDTO->fillCompany($company);
-        $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl() ?? '');
+        $company = $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl() ?? '');
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
     }
@@ -206,6 +208,8 @@ class Status200Strategy implements StatusCodeStrategyInterface
 
     public function updateTelcoCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company): void
     {
+        // use getEntity to make sure that also custom fields are loaded
+        $company = $this->companyRepository->getEntity($company->getId());
         $this->fieldHelper->updateProperties($floodlightDTO);
         $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
         $this->updateCompany($floodlightDTO, $lead, $company);
@@ -240,31 +244,47 @@ class Status200Strategy implements StatusCodeStrategyInterface
         if ($this->isLogoAlreadySetManually($company) || $companyLogoUrl === '') {
             return $company;
         }
+        $this->deleteOldLogoFile($company);
         $fileName = $this->createLogoFile($company, $companyLogoUrl);
+        if ($fileName === null) {
+            return $company;
+        }
         return $this->updateLogoFilenameInCompany($company, $fileName);
     }
 
     private function isLogoAlreadySetManually(Company $company): bool {
         $logoFileName = $company->getFieldValue('companylogo_filename');
-        if (str_starts_with($logoFileName, 'f4b_') || empty($logoFileName)) {
+        if ($logoFileName === null || empty($logoFileName)) {
+            return false;
+        }
+        if (str_starts_with($logoFileName, 'f4b_')) {
             return false;
         }
         return true;
 
     }
 
-    private function createLogoFile(Company $company, string $companyLogoUrl): string
+    private function deleteOldLogoFile(Company $company): void
     {
+        $oldLogoFileName = $company->getFieldValue('companylogo_filename');
+        if ($oldLogoFileName === null || $oldLogoFileName === '' || str_starts_with($oldLogoFileName, 'f4b_') === false) {
+            return;
+        }
+        $filePath = $this->pathsHelper->getMediaPath().'/logos/'.$oldLogoFileName;
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+    }
 
-        //filename = f4b_<md5(companyname+timestamp)>
+    private function createLogoFile(Company $company, string $companyLogoUrl): ?string
+    {
         $timestamp = (new \DateTime())->format('Y-m-d-H-i-s');
         $logoFileName = 'f4b_'.md5($company->getName().$timestamp);
 
-        //filetype = curl request on logofile --> type herausfinden (companyLogoUrl)
         $httpClient = HttpClient::create();
         $response = $httpClient->request('GET', $companyLogoUrl);
         if ($response->getStatusCode() !== 200) {
-            throw new \Exception("Failed to download logo from: {$companyLogoUrl}");
+            return null;
         }
 
         $imageData = $response->getContent();
@@ -274,15 +294,12 @@ class Status200Strategy implements StatusCodeStrategyInterface
             $fileExtension = '.png';
         } elseif (str_contains($contentType, 'image/jpeg') || str_contains($contentType, 'image/jpg')) {
             $fileExtension = '.jpg';
-        } else {
-            throw new \Exception("Unsupported image type: {$contentType}");
         }
 
-        //createFile
         $fullFileName = $logoFileName . $fileExtension;
         $filePath = $this->pathsHelper->getMediaPath().'/logos/'.$fullFileName;
         if (file_put_contents($filePath, $imageData) === false) {
-            throw new \Exception("Failed to save logo file: {$filePath}");
+            return null;
         }
 
         return $fullFileName;
