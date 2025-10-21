@@ -178,8 +178,9 @@ class FieldHelper
             $listValues = $this->getListFieldValues($fieldAllowedToBeUpdated['properties']['list']);
 
             foreach ($valuesField as $value) {
-                $value = html_entity_decode($value);
-                if (in_array($value, $listValues)) {
+                $value              = $this->sanitizeHtmlEntities($value);
+                $valueForComparison = str_replace([' '], ['-'], $value);
+                if (in_array($valueForComparison, $listValues)) {
                     continue;
                 }
                 if (!isset($result[$key])) {
@@ -211,7 +212,7 @@ class FieldHelper
     {
         $values = [];
         foreach ($list as $item) {
-            $values[] = html_entity_decode($item['value']);
+            $values[] = $this->sanitizeHtmlEntities($item['value']);
         }
 
         return $values;
@@ -256,8 +257,8 @@ class FieldHelper
         }
 
         foreach ($properties as $value) {
-            $label                   = $value;
-            $value                   = str_replace([' '], ['-'], $value);
+            $label                   = $this->sanitizeHtmlEntities($value);
+            $value                   = str_replace([' '], ['-'], $label);
             $newProperties['list'][] = [
                 'label' => $label,
                 'value' => $value,
@@ -270,5 +271,22 @@ class FieldHelper
         } else {
             $this->logger->error('Field properties could not be saved');
         }
+    }
+
+    private function sanitizeHtmlEntities(string $value): string
+    {
+        $previous = '';
+        $value    = preg_replace('/&#38;(#38;)*/', '&', $value) ?? $value;
+        $value    = preg_replace('/&#60;(#60;)*/', '<', $value) ?? $value;
+        $value    = preg_replace('/&#62;(#62;)*/', '>', $value) ?? $value;
+        $value    = preg_replace('/&#34;(#34;)*/', '"', $value) ?? $value;
+        $value    = preg_replace('/&#39;(#39;)*/', "'", $value) ?? $value;
+
+        while ($value !== $previous) {
+            $previous = $value;
+            $value    = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+
+        return $value;
     }
 }
