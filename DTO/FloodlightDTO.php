@@ -725,6 +725,7 @@ class FloodlightDTO implements DTOInterface
 
         if (is_string($value[$key])) {
             $value[$key] = $this->truncateString($value[$key], $key);
+            $value[$key] = $this->sanitizeHtmlEntities($value[$key]);
         }
 
         if (is_numeric($value[$key])) {
@@ -750,7 +751,8 @@ class FloodlightDTO implements DTOInterface
         }
 
         if (is_string($value[$key]) || is_numeric($value[$key])) {
-            $stringvalue = $this->truncateString((string) $value[$key], $key);
+            $stringvalue = $this->sanitizeHtmlEntities((string) $value[$key]);
+            $stringvalue = $this->truncateString($stringvalue, $key);
 
             return [$stringvalue];
         }
@@ -1165,5 +1167,22 @@ class FloodlightDTO implements DTOInterface
         $field = $this->fieldModel->getEntityByAlias($dbFieldName);
 
         return $field && method_exists($field, 'getCharLengthLimit') ? $field->getCharLengthLimit() : null;
+    }
+
+    private function sanitizeHtmlEntities(string $value): string
+    {
+        $previous = '';
+        $value    = preg_replace('/&#38;(#38;)*/', '&', $value) ?? $value;
+        $value    = preg_replace('/&#60;(#60;)*/', '<', $value) ?? $value;
+        $value    = preg_replace('/&#62;(#62;)*/', '>', $value) ?? $value;
+        $value    = preg_replace('/&#34;(#34;)*/', '"', $value) ?? $value;
+        $value    = preg_replace('/&#39;(#39;)*/', "'", $value) ?? $value;
+
+        while ($value !== $previous) {
+            $previous = $value;
+            $value    = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
+
+        return $value;
     }
 }
