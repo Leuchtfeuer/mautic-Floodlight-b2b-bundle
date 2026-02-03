@@ -16,7 +16,7 @@ The Floodlight for B2B is one plugin of ABM solution, it is responsible to detec
 
 REQUIREMENTS
 ------------
-- Mautic 5.0 or higher
+- Mautic 5.x
 - PHP 8.0 or higher
 
 INSTALLATION
