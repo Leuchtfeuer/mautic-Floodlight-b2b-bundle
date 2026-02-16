@@ -36,13 +36,10 @@ class Version_1_6_0 extends AbstractMigration
         $tableName = $this->concatPrefix($this->table);
 
         if ($this->needsTelcoColumn) {
-            try {
-                $this->addSql(
-                    "ALTER TABLE `{$tableName}`
-                   ADD COLUMN `is_telco` TINYINT(1) NULL DEFAULT NULL "
-                );
-            } catch (\Exception $e) {
-            }
+            $this->addSql(
+                "ALTER TABLE `{$tableName}`
+               ADD COLUMN `is_telco` TINYINT(1) NULL DEFAULT NULL "
+            );
         }
 
         if ($this->companyIsPartOfCombinedPrimaryKey) {
@@ -72,9 +69,8 @@ class Version_1_6_0 extends AbstractMigration
 
                 $this->addSql("ALTER TABLE `{$tableName}` DROP PRIMARY KEY");
                 $this->addSql("ALTER TABLE `{$tableName}` ADD PRIMARY KEY (`domain`)");
-
+            } finally {
                 $this->addSql('SET FOREIGN_KEY_CHECKS = 1');
-            } catch (\Exception $e) {
             }
         }
     }
