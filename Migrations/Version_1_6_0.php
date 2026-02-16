@@ -48,12 +48,12 @@ class Version_1_6_0 extends AbstractMigration
 
                 $this->addSql("DELETE FROM `{$tableName}` WHERE domain IS NULL OR domain = ''");
 
-                // Delete duplicates, keep only the entry with the smallest company_id per domain
+                // Delete duplicates, keep only the entry with the newest company_id per domain
                 $this->addSql("
             DELETE t1 FROM `{$tableName}` t1
             INNER JOIN `{$tableName}` t2
             WHERE t1.domain = t2.domain
-            AND t1.company_id > t2.company_id
+            AND t1.company_id < t2.company_id
         ");
 
                 $this->addSql("ALTER TABLE `{$tableName}` CHANGE COLUMN `domain` `domain` VARCHAR(255) NOT NULL");
