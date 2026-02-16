@@ -43,35 +43,29 @@ class Version_1_6_0 extends AbstractMigration
         }
 
         if ($this->companyIsPartOfCombinedPrimaryKey) {
-            try {
-                $this->addSql('SET FOREIGN_KEY_CHECKS = 0');
+            $this->addSql("DELETE FROM `{$tableName}` WHERE domain IS NULL OR domain = ''");
 
-                $this->addSql("DELETE FROM `{$tableName}` WHERE domain IS NULL OR domain = ''");
-
-                // Delete duplicates, keep only the entry with the newest company_id per domain
-                $this->addSql("
+            // Delete duplicates, keep only the entry with the newest company_id per domain
+            $this->addSql("
             DELETE t1 FROM `{$tableName}` t1
             INNER JOIN `{$tableName}` t2
             WHERE t1.domain = t2.domain
             AND t1.company_id < t2.company_id
         ");
 
-                $this->addSql("ALTER TABLE `{$tableName}` CHANGE COLUMN `domain` `domain` VARCHAR(255) NOT NULL");
+            $this->addSql("ALTER TABLE `{$tableName}` CHANGE COLUMN `domain` `domain` VARCHAR(255) NOT NULL");
 
-                if ($this->domainNeedsUniqueIndex) {
-                    $this->addSql("ALTER TABLE `{$tableName}` ADD UNIQUE KEY `unique_domain` (`domain`)");
-                }
-
-                // Add index on company_id BEFORE dropping primary key (FK requires an index)
-                if ($this->companyNeedsIdIndex) {
-                    $this->addSql("ALTER TABLE `{$tableName}` ADD INDEX `idx_company_id` (`company_id`)");
-                }
-
-                $this->addSql("ALTER TABLE `{$tableName}` DROP PRIMARY KEY");
-                $this->addSql("ALTER TABLE `{$tableName}` ADD PRIMARY KEY (`domain`)");
-            } finally {
-                $this->addSql('SET FOREIGN_KEY_CHECKS = 1');
+            if ($this->domainNeedsUniqueIndex) {
+                $this->addSql("ALTER TABLE `{$tableName}` ADD UNIQUE KEY `unique_domain` (`domain`)");
             }
+
+            // Add index on company_id BEFORE dropping primary key (FK requires an index)
+            if ($this->companyNeedsIdIndex) {
+                $this->addSql("ALTER TABLE `{$tableName}` ADD INDEX `idx_company_id` (`company_id`)");
+            }
+
+            $this->addSql("ALTER TABLE `{$tableName}` DROP PRIMARY KEY");
+            $this->addSql("ALTER TABLE `{$tableName}` ADD PRIMARY KEY (`domain`)");
         }
     }
 }
