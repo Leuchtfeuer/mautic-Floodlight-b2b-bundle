@@ -9,9 +9,11 @@ use Mautic\IntegrationsBundle\Migration\AbstractMigration;
 
 class Version_1_6_0 extends AbstractMigration
 {
-    private string $table                                   = 'f4b_company_domains';
-    private bool $needsTelcoColumn                          = false;
-    private bool $companyIsInPrimaryKeyInCompanyDomainTable = false;
+    private string $table                                         = 'f4b_company_domains';
+    private bool $needsTelcoColumn                                = false;
+    private bool $companyIsPartOfCombinedPrimaryKey               = false;
+    private bool $domainNeedsUniqueIndex                          = false;
+    private bool $companyNeedsIdIndex                             = false;
 
     protected function isApplicable(Schema $schema): bool
     {
@@ -20,8 +22,11 @@ class Version_1_6_0 extends AbstractMigration
 
         $primaryKey = $table->getPrimaryKey();
         if ($primaryKey) {
-            $this->companyIsInPrimaryKeyInCompanyDomainTable = in_array('company_id', $primaryKey->getColumns());
+            $this->companyIsPartOfCombinedPrimaryKey = in_array('company_id', $primaryKey->getColumns());
         }
+
+        $this->domainNeedsUniqueIndex     = !$table->hasIndex('unique_domain');
+        $this->companyNeedsIdIndex        = !$table->hasIndex('idx_company_id');
 
         return true;
     }
@@ -33,35 +38,40 @@ class Version_1_6_0 extends AbstractMigration
         if ($this->needsTelcoColumn) {
             try {
                 $this->addSql(
-                    "ALTER TABLE `{$tableName}` 
+                    "ALTER TABLE `{$tableName}`
                    ADD COLUMN `is_telco` TINYINT(1) NULL DEFAULT NULL "
                 );
             } catch (\Exception $e) {
             }
         }
 
-        if ($this->companyIsInPrimaryKeyInCompanyDomainTable) {
+        if ($this->companyIsPartOfCombinedPrimaryKey) {
             try {
                 $this->addSql('SET FOREIGN_KEY_CHECKS = 0');
 
                 $this->addSql("DELETE FROM `{$tableName}` WHERE domain IS NULL OR domain = ''");
 
+                // Delete duplicates, keep only the entry with the smallest company_id per domain
                 $this->addSql("
-            DELETE t1 FROM `{$tableName}` t1 
-            INNER JOIN `{$tableName}` t2 
-            WHERE t1.domain = t2.domain 
-            AND t1.date_added < t2.date_added
+            DELETE t1 FROM `{$tableName}` t1
+            INNER JOIN `{$tableName}` t2
+            WHERE t1.domain = t2.domain
+            AND t1.company_id > t2.company_id
         ");
 
                 $this->addSql("ALTER TABLE `{$tableName}` CHANGE COLUMN `domain` `domain` VARCHAR(255) NOT NULL");
-                $this->addSql("ALTER TABLE `{$tableName}` ADD UNIQUE KEY `unique_domain` (`domain`)");
+
+                if ($this->domainNeedsUniqueIndex) {
+                    $this->addSql("ALTER TABLE `{$tableName}` ADD UNIQUE KEY `unique_domain` (`domain`)");
+                }
+
+                // Add index on company_id BEFORE dropping primary key (FK requires an index)
+                if ($this->companyNeedsIdIndex) {
+                    $this->addSql("ALTER TABLE `{$tableName}` ADD INDEX `idx_company_id` (`company_id`)");
+                }
 
                 $this->addSql("ALTER TABLE `{$tableName}` DROP PRIMARY KEY");
                 $this->addSql("ALTER TABLE `{$tableName}` ADD PRIMARY KEY (`domain`)");
-
-                // Re-add the foreign key constraint that was lost
-                $companiesTable = $this->concatPrefix('companies');
-                $this->addSql("ALTER TABLE `{$tableName}` ADD CONSTRAINT `FK_{$this->table}_company_id` FOREIGN KEY (`company_id`) REFERENCES `{$companiesTable}` (`id`) ON DELETE CASCADE");
 
                 $this->addSql('SET FOREIGN_KEY_CHECKS = 1');
             } catch (\Exception $e) {
