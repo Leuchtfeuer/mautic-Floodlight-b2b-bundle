@@ -994,6 +994,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
      * Test that client IP is correctly extracted from various proxy headers.
      *
      * @dataProvider proxyHeaderDataProvider
+     *
+     * @param array<string, string> $headers
      */
     public function testClientIpExtractedFromProxyHeaders(
         string $remoteAddr,
@@ -1020,105 +1022,105 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     public static function proxyHeaderDataProvider(): \Generator
     {
         yield 'X-Forwarded-For header with single IP' => [
-            'remoteAddr' => '10.0.0.1',
-            'headers' => ['X-Forwarded-For' => '217.91.35.16'],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'remoteAddr'      => '10.0.0.1',
+            'headers'         => ['X-Forwarded-For' => '217.91.35.16'],
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Should extract IP from X-Forwarded-For header',
         ];
 
         yield 'X-Forwarded-For header with multiple IPs (uses first)' => [
-            'remoteAddr' => '10.0.0.1',
-            'headers' => ['X-Forwarded-For' => '217.91.35.16, 192.168.1.1, 10.0.0.5'],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'remoteAddr'      => '10.0.0.1',
+            'headers'         => ['X-Forwarded-For' => '217.91.35.16, 192.168.1.1, 10.0.0.5'],
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Should use first IP from X-Forwarded-For chain',
         ];
 
         yield 'CF-Connecting-IP header (Cloudflare)' => [
-            'remoteAddr' => '10.0.0.1',
-            'headers' => ['CF-Connecting-IP' => '217.91.35.16'],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'remoteAddr'      => '10.0.0.1',
+            'headers'         => ['CF-Connecting-IP' => '217.91.35.16'],
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Should extract IP from CF-Connecting-IP header',
         ];
 
         yield 'CF-Connecting-IP takes precedence over X-Forwarded-For' => [
             'remoteAddr' => '10.0.0.1',
-            'headers' => [
+            'headers'    => [
                 'CF-Connecting-IP' => '217.91.35.16',
-                'X-Forwarded-For' => '127.0.0.1',
+                'X-Forwarded-For'  => '127.0.0.1',
             ],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'CF-Connecting-IP should override X-Forwarded-For',
         ];
 
         yield 'True-Client-IP header (Akamai)' => [
-            'remoteAddr' => '10.0.0.1',
-            'headers' => ['True-Client-IP' => '217.91.35.16'],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'remoteAddr'      => '10.0.0.1',
+            'headers'         => ['True-Client-IP' => '217.91.35.16'],
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Should extract IP from True-Client-IP header',
         ];
 
         yield 'True-Client-IP takes precedence over X-Forwarded-For' => [
             'remoteAddr' => '10.0.0.1',
-            'headers' => [
-                'True-Client-IP' => '217.91.35.16',
+            'headers'    => [
+                'True-Client-IP'  => '217.91.35.16',
                 'X-Forwarded-For' => '127.0.0.1',
             ],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'True-Client-IP should override X-Forwarded-For',
         ];
 
         yield 'Fastly-Client-IP header' => [
-            'remoteAddr' => '10.0.0.1',
-            'headers' => ['Fastly-Client-IP' => '217.91.35.16'],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'remoteAddr'      => '10.0.0.1',
+            'headers'         => ['Fastly-Client-IP' => '217.91.35.16'],
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Should extract IP from Fastly-Client-IP header',
         ];
 
         yield 'X-Real-IP header (nginx)' => [
-            'remoteAddr' => '10.0.0.1',
-            'headers' => ['X-Real-IP' => '217.91.35.16'],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'remoteAddr'      => '10.0.0.1',
+            'headers'         => ['X-Real-IP' => '217.91.35.16'],
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Should extract IP from X-Real-IP header',
         ];
 
         yield 'X-Real-IP takes precedence over X-Forwarded-For' => [
             'remoteAddr' => '10.0.0.1',
-            'headers' => [
-                'X-Real-IP' => '217.91.35.16',
+            'headers'    => [
+                'X-Real-IP'       => '217.91.35.16',
                 'X-Forwarded-For' => '127.0.0.1',
             ],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'X-Real-IP should override X-Forwarded-For',
         ];
 
         yield 'Forwarded header (RFC 7239) with single IP' => [
-            'remoteAddr' => '10.0.0.1',
-            'headers' => ['Forwarded' => 'for=217.91.35.16; proto=https'],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'remoteAddr'      => '10.0.0.1',
+            'headers'         => ['Forwarded' => 'for=217.91.35.16; proto=https'],
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Should parse IP from RFC 7239 Forwarded header',
         ];
 
         yield 'Forwarded header with multiple entries (uses first)' => [
-            'remoteAddr' => '10.0.0.1',
-            'headers' => ['Forwarded' => 'for=217.91.35.16, for=192.168.1.1'],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'remoteAddr'      => '10.0.0.1',
+            'headers'         => ['Forwarded' => 'for=217.91.35.16, for=192.168.1.1'],
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Should use first entry from Forwarded header chain',
         ];
 
         yield 'Forwarded takes precedence over X-Forwarded-For' => [
             'remoteAddr' => '10.0.0.1',
-            'headers' => [
-                'Forwarded' => 'for=217.91.35.16; proto=https',
+            'headers'    => [
+                'Forwarded'       => 'for=217.91.35.16; proto=https',
                 'X-Forwarded-For' => '127.0.0.1',
             ],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Forwarded should override X-Forwarded-For',
         ];
 
         yield 'No proxy headers (falls back to REMOTE_ADDR)' => [
-            'remoteAddr' => '217.91.35.16',
-            'headers' => [],
-            'expectedDomain' => 'leuchtfeuer.com',
+            'remoteAddr'      => '217.91.35.16',
+            'headers'         => [],
+            'expectedDomain'  => 'leuchtfeuer.com',
             'testDescription' => 'Should fall back to REMOTE_ADDR when no proxy headers present',
         ];
     }

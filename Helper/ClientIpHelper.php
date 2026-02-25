@@ -80,8 +80,6 @@ class ClientIpHelper
 
     /**
      * Parse the Forwarded header to extract the client IP.
-     *
-     * @return string|null
      */
     private function parseForwardedHeader(Request $request): ?string
     {
