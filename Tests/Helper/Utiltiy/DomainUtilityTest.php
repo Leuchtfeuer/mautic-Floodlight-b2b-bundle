@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Helper\Utiltiy;
 
 use Mautic\CoreBundle\Helper\PathsHelper;

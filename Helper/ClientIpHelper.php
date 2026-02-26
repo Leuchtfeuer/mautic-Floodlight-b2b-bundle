@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
 use Symfony\Component\HttpFoundation\Request;
@@ -74,8 +76,17 @@ class ClientIpHelper
 
         // Split by comma and get the first IP (original client)
         $ips = array_map('trim', explode(',', $headerValue));
+        $ip  = $ips[0] ?? null;
 
-        return !empty($ips[0]) ? $ips[0] : null;
+        if (null === $ip || '' === $ip) {
+            return null;
+        }
+
+        if (false === filter_var($ip, FILTER_VALIDATE_IP)) {
+            return null;
+        }
+
+        return $ip;
     }
 
     /**

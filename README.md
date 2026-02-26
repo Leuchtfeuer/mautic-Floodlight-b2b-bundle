@@ -47,6 +47,8 @@ The plugin also allows you to run two commands:
 
 The standalone command leuchtfeuer:floodlight:enrich will not work without the `--by-domain` or `--by-address` options.
 
+Floodlight also supports reverse proxy setups including Cloudflare and others.
+
 BLACKLISTING DOMAINS
 -----------
 When installing the plugin the files `f4b_domain_blacklist.php` and `f4b_domain_keyword_blacklist.php` will be copied in the config directory of you Mautic installation.

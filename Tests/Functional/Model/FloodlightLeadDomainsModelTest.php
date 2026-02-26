@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Model;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;

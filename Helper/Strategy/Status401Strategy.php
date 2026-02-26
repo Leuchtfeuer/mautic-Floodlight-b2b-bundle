@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy;
 
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Reporter;
