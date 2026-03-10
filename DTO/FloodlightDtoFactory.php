@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO;
 
 use Mautic\LeadBundle\Model\FieldModel;

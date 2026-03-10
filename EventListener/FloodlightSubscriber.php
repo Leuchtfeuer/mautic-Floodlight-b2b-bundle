@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener;
 
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\PageBundle\Event\PageHitEvent;
 use Mautic\PageBundle\PageEvents;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\ClientIpHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use Psr\Log\LoggerInterface;
@@ -17,6 +20,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
         private IpLookupRulesHelper $ipLookupRulesHelper,
         private Config $config,
         private LoggerInterface $logger,
+        private ClientIpHelper $clientIpHelper,
     ) {
     }
 
@@ -57,20 +61,17 @@ class FloodlightSubscriber implements EventSubscriberInterface
         $request = $event->getRequest();
         /** @var Request $request */
         assert($request instanceof Request);
-        $remoteAddr = $request->server->get('REMOTE_ADDR');
+        $clientIp = $this->clientIpHelper->getClientIp($request);
 
-        if (!is_string($remoteAddr)) {
+        if (null === $clientIp || empty($clientIp)) {
+            $this->ipLookupRulesHelper->setChannel($this->logger);
+            $this->ipLookupRulesHelper->notifyNoDataFromGetDomain();
+
             return;
         }
 
         $this->ipLookupRulesHelper->setChannel($this->logger);
-
-        if (empty($remoteAddr)) {
-            // @TODO no ip for page hit - this should be notified
-            $this->ipLookupRulesHelper->notifyNoDataFromGetDomain();
-        }
-
-        $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($remoteAddr, $event->getHit()->getLead());
+        $this->ipLookupRulesHelper->getAndProcessFloodlightApiData($clientIp, $event->getHit()->getLead());
     }
 
     private function isKnowLead(Lead $lead): bool
