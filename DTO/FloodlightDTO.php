@@ -171,6 +171,9 @@ class FloodlightDTO implements DTOInterface
 
     private ?int $statusHttpRequest = null;
 
+    /** @var array<string, bool>|null */
+    private ?array $listFieldCache = null;
+
     /**
      * @param array<string, mixed> $pureData
      */
@@ -806,18 +809,17 @@ class FloodlightDTO implements DTOInterface
 
     private function isListField(string $fieldAlias): bool
     {
-        $field = $this->fieldModel->getRepository()->findOneBy([
-            'alias'  => $fieldAlias,
-            'object' => 'company',
-        ]);
-
-        if (!$field) {
-            return false;
+        if (null === $this->listFieldCache) {
+            $this->listFieldCache = [];
+            foreach ($this->fieldModel->getRepository()->findBy(['object' => 'company']) as $field) {
+                $properties                               = $field->getProperties();
+                $this->listFieldCache[$field->getAlias()] = is_array($properties)
+                    && isset($properties['list'])
+                    && is_array($properties['list']);
+            }
         }
 
-        $properties = $field->getProperties();
-
-        return is_array($properties) && isset($properties['list']) && is_array($properties['list']);
+        return $this->listFieldCache[$fieldAlias] ?? false;
     }
 
     /**

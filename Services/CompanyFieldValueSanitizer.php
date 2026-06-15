@@ -27,7 +27,7 @@ class CompanyFieldValueSanitizer
     public function __construct(
         private Connection $connection,
     ) {
-        $this->tablePrefix = defined('MAUTIC_TABLE_PREFIX') ? MAUTIC_TABLE_PREFIX : '';
+        $this->tablePrefix = defined('MAUTIC_TABLE_PREFIX') && is_string(MAUTIC_TABLE_PREFIX) ? MAUTIC_TABLE_PREFIX : '';
     }
 
     public function hasPendingSanitization(): bool
@@ -53,6 +53,31 @@ class CompanyFieldValueSanitizer
                         }
                     }
                 }
+            }
+        }
+
+        return $this->hasCompaniesNeedingNormalization();
+    }
+
+    private function hasCompaniesNeedingNormalization(): bool
+    {
+        $companiesTable = $this->tablePrefix.'companies';
+
+        foreach (self::FIELDS_TO_CHECK as $fieldAlias) {
+            $checkSql = "SHOW COLUMNS FROM {$companiesTable} LIKE :fieldAlias";
+            $stmt     = $this->connection->prepare($checkSql);
+            $stmt->bindValue('fieldAlias', $fieldAlias);
+            $result   = $stmt->executeQuery();
+
+            if (!$result->fetchAssociative()) {
+                continue;
+            }
+
+            $sql    = "SELECT 1 FROM {$companiesTable} WHERE {$fieldAlias} LIKE '% %' LIMIT 1";
+            $result = $this->connection->executeQuery($sql);
+
+            if ($result->fetchAssociative()) {
+                return true;
             }
         }
 
@@ -112,11 +137,7 @@ class CompanyFieldValueSanitizer
 
         // Step 3: Fix legacy company values to match field list format
         // Floodlight used to save "Software & Computer Services" but field list expects "Software-&-Computer-Services"
-        $stats['companies_updated'] = $this->normalizeCompanyValues(
-            $companiesTable,
-            $fieldAlias,
-            $sanitizeResult['valueMappings']
-        );
+        $stats['companies_updated'] = $this->normalizeCompanyValues($companiesTable, $fieldAlias);
 
         return $stats;
     }
@@ -153,11 +174,10 @@ class CompanyFieldValueSanitizer
     /**
      * @param array<array<string, string>> $listItems
      *
-     * @return array{cleanProperties: array<array<string, string>>, valueMappings: array<string, string>, duplicates_removed: int}
+     * @return array{cleanProperties: array<array<string, string>>, duplicates_removed: int}
      */
     private function sanitizeAndDeduplicateProperties(array $listItems): array
     {
-        $valueMappings     = [];
         $seenClean         = [];
         $cleanProperties   = [];
         $duplicatesRemoved = 0;
@@ -167,31 +187,19 @@ class CompanyFieldValueSanitizer
                 continue;
             }
 
-            $oldValue = $item['value'];
-            $oldLabel = $item['label'];
-
-            $newValue = self::sanitizeHtmlEntities($oldValue);
-            $newLabel = self::sanitizeHtmlEntities($oldLabel);
-
-            if ($oldValue !== $newValue) {
-                $valueMappings[$oldValue] = $newValue;
-            }
+            $newValue = self::sanitizeHtmlEntities($item['value']);
+            $newLabel = self::sanitizeHtmlEntities($item['label']);
 
             if (!isset($seenClean[$newValue])) {
-                $cleanProperties[] = [
-                    'label' => $newLabel,
-                    'value' => $newValue,
-                ];
+                $cleanProperties[]    = ['label' => $newLabel, 'value' => $newValue];
                 $seenClean[$newValue] = true;
             } else {
-                $valueMappings[$oldValue] = $newValue;
                 ++$duplicatesRemoved;
             }
         }
 
         return [
             'cleanProperties'    => $cleanProperties,
-            'valueMappings'      => $valueMappings,
             'duplicates_removed' => $duplicatesRemoved,
         ];
     }
@@ -218,10 +226,7 @@ class CompanyFieldValueSanitizer
         return true;
     }
 
-    /**
-     * @param array<string, string> $valueMappings
-     */
-    private function normalizeCompanyValues(string $companiesTable, string $fieldAlias, array $valueMappings): int
+    private function normalizeCompanyValues(string $companiesTable, string $fieldAlias): int
     {
         $checkSql = "SHOW COLUMNS FROM {$companiesTable} LIKE :fieldAlias";
         $stmt     = $this->connection->prepare($checkSql);
@@ -238,21 +243,24 @@ class CompanyFieldValueSanitizer
         $result    = $this->connection->executeQuery($sql);
         $companies = $result->fetchAllAssociative();
 
-        $updated = 0;
+        $updateGroups = [];
         foreach ($companies as $company) {
             $currentValue = $company[$fieldAlias];
-
-            $newValue = $this->mapValue($currentValue, $valueMappings);
-            $newValue = $this->normalizeValue($newValue);
+            $newValue     = $this->normalizeValue($currentValue);
 
             if ($newValue !== $currentValue) {
-                $updateSql = "UPDATE {$companiesTable} SET {$fieldAlias} = :newValue WHERE id = :id";
-                $stmt      = $this->connection->prepare($updateSql);
-                $stmt->bindValue('newValue', $newValue);
-                $stmt->bindValue('id', $company['id']);
-                $stmt->executeStatement();
-                ++$updated;
+                $updateGroups[$newValue][] = $company['id'];
             }
+        }
+
+        $updated = 0;
+        foreach ($updateGroups as $newValue => $ids) {
+            $placeholders = implode(',', array_fill(0, count($ids), '?'));
+            $this->connection->executeStatement(
+                "UPDATE {$companiesTable} SET {$fieldAlias} = ? WHERE id IN ({$placeholders})",
+                array_merge([$newValue], $ids)
+            );
+            $updated += count($ids);
         }
 
         return $updated;
@@ -270,30 +278,9 @@ class CompanyFieldValueSanitizer
         return str_replace(' ', '-', $value);
     }
 
-    /**
-     * @param array<string, string> $mapping
-     */
-    private function mapValue(string $value, array $mapping): string
-    {
-        if (str_contains($value, '|')) {
-            $values    = explode('|', $value);
-            $newValues = [];
-
-            foreach ($values as $singleValue) {
-                $newValues[] = $mapping[$singleValue] ?? $singleValue;
-            }
-
-            return implode('|', $newValues);
-        }
-
-        return $mapping[$value] ?? $value;
-    }
-
     public static function needsSanitization(string $value): bool
     {
-        return str_contains($value, '&#38;#38;')
-            || str_contains($value, '&#38;&#38;')
-            || (str_contains($value, '&#38;') && !str_contains($value, '&'))
+        return str_contains($value, '&#38;')
             || str_contains($value, '&#60;')
             || str_contains($value, '&#62;')
             || str_contains($value, '&#34;')

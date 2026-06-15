@@ -233,7 +233,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $this->em->clear();
 
         $sanitizer = $this->createSanitizer();
-        Assert::assertFalse($sanitizer->hasPendingSanitization(), 'Field list is already clean');
+        Assert::assertTrue($sanitizer->hasPendingSanitization(), 'Companies with spaces need normalization');
 
         $stats = $sanitizer->sanitize();
 

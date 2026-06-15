@@ -226,7 +226,7 @@ class FieldHelper
             $alias = 'f4b_company_technologies';
         }
 
-        return str_replace('f4b_', '', $alias);
+        return strtolower(str_replace('f4b_', '', $alias));
     }
 
     /**
