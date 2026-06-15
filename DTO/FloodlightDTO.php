@@ -767,6 +767,60 @@ class FloodlightDTO implements DTOInterface
     }
 
     /**
+     * @param array<string|int|mixed> $data
+     */
+    private function getListValueToLoad(array $data, string $key, string $fieldAlias): string
+    {
+        $rawValue = $this->getStringToLoad($data, $key);
+        if (empty($rawValue)) {
+            return '';
+        }
+
+        if (!$this->isListField($fieldAlias)) {
+            return $rawValue;
+        }
+
+        // Slugify to match FieldHelper behavior: spaces → dashes
+        return str_replace([' '], ['-'], $rawValue);
+    }
+
+    /**
+     * @param array<string|int|mixed> $data
+     *
+     * @return array<string>
+     */
+    private function getListArrayToLoad(array $data, string $key, string $fieldAlias): array
+    {
+        $rawArray = $this->getArrayToLoad($data, $key);
+        if (empty($rawArray)) {
+            return [];
+        }
+
+        if (!$this->isListField($fieldAlias)) {
+            return $rawArray;
+        }
+
+        // Slugify each item to match FieldHelper behavior
+        return array_map(fn ($item) => str_replace([' '], ['-'], $item), $rawArray);
+    }
+
+    private function isListField(string $fieldAlias): bool
+    {
+        $field = $this->fieldModel->getRepository()->findOneBy([
+            'alias'  => $fieldAlias,
+            'object' => 'company',
+        ]);
+
+        if (!$field) {
+            return false;
+        }
+
+        $properties = $field->getProperties();
+
+        return is_array($properties) && isset($properties['list']) && is_array($properties['list']);
+    }
+
+    /**
      * @param array<string,mixed> $flCompanyData
      */
     public function load(array $flCompanyData): void
@@ -786,10 +840,10 @@ class FloodlightDTO implements DTOInterface
         $this->setDomainAliases($this->getArrayToLoad($flCompanyData, 'domainaliases'));
         $this->setCompanyWebsite($this->getStringToLoad($flCompanyData, 'companywebsite'));
         $this->setCompanyEmail($this->getStringToLoad($flCompanyData, 'companyemail'));
-        $this->setCompanyIndustry($this->getStringToLoad($flCompanyData, 'companyindustry'));
+        $this->setCompanyIndustry($this->getListValueToLoad($flCompanyData, 'companyindustry', 'companyindustry'));
         $this->setCompanyIndustryLinkedin($this->getStringToLoad($flCompanyData, 'companyindustry_linkedin'));
-        $this->setCompanyIndustryList($this->getArrayToLoad($flCompanyData, 'companyindustry_list'));
-        $this->setCompanyLabels($this->getArrayToLoad($flCompanyData, 'companylabels'));
+        $this->setCompanyIndustryList($this->getListArrayToLoad($flCompanyData, 'companyindustry_list', 'f4b_companyindustry_list'));
+        $this->setCompanyLabels($this->getListArrayToLoad($flCompanyData, 'companylabels', 'f4b_companylabels'));
         $this->setCompanyIndustryNaicsCode($this->getStringToLoad($flCompanyData, 'companyindustry_naics'));
         $this->setCompanyDescriptionLong($this->getStringToLoad($flCompanyData, 'companydescription_long'));
         $this->setCompanyDescription($this->getStringToLoad($flCompanyData, 'companydescription'));
@@ -803,25 +857,25 @@ class FloodlightDTO implements DTOInterface
         $this->setCompanyZipCode($this->getStringToLoad($flCompanyData, 'companyzipcode'));
         $this->setCompanyRankTranco($this->getStringToLoad($flCompanyData, 'companyrank_tranco'));
         $this->setCompanyNumberOfEmployees($this->getIntToLoad($flCompanyData, 'companynumber_of_employees'));
-        $this->setCompanyEmployeeRange($this->getStringToLoad($flCompanyData, 'companyemployees_range'));
+        $this->setCompanyEmployeeRange($this->getListValueToLoad($flCompanyData, 'companyemployees_range', 'f4b_companyemployees_range'));
         $this->setCompanyMarketCap($this->getStringToLoad($flCompanyData, 'companymarketcap'));
-        $this->setCompanyAnnualRevenueRange($this->getStringToLoad($flCompanyData, 'companyannual_revenue_range'));
+        $this->setCompanyAnnualRevenueRange($this->getListValueToLoad($flCompanyData, 'companyannual_revenue_range', 'f4b_companyannual_revenue_range'));
         $this->setCompanyFundingRaised($this->getStringToLoad($flCompanyData, 'companyfunding_raised'));
-        $this->setCompanyTechnologies($this->getArrayToLoad($flCompanyData, 'company_technologies'));
+        $this->setCompanyTechnologies($this->getListArrayToLoad($flCompanyData, 'company_technologies', 'f4b_companytechnologies'));
         $this->setCompanyFacebookHandle($this->getStringToLoad($flCompanyData, 'companyfacebook_handle'));
         $this->setCompanyTwitterHandle($this->getStringToLoad($flCompanyData, 'companytwitter_handle'));
         $this->setCompanyLinkedinHandle($this->getStringToLoad($flCompanyData, 'companylinkedin_handle'));
         $this->setCompanyTwitterFollowers($this->getStringToLoad($flCompanyData, 'companytwitter_followers'));
         $this->setCompanyLogoUrl($this->getStringToLoad($flCompanyData, 'companylogo'));
-        $this->setCompanyType($this->getStringToLoad($flCompanyData, 'companytype'));
+        $this->setCompanyType($this->getListValueToLoad($flCompanyData, 'companytype', 'f4b_companytype'));
         $this->setCompanyTicker($this->getStringToLoad($flCompanyData, 'companyticker'));
         $this->setCompanyPhone($this->getStringToLoad($flCompanyData, 'companyphone'));
         $this->setCompanyTimezone($this->getStringToLoad($flCompanyData, 'companytimezone'));
         $this->setIp($this->getStringToLoad($flCompanyData, 'ip'));
-        $this->setCompanyIndustryICBIndustryGroup($this->getStringToLoad($flCompanyData, 'companyindustry_icb_industrygroup'));
-        $this->setCompanyIndustryICBCIndustry($this->getStringToLoad($flCompanyData, 'companyindustry_icb_industry'));
-        $this->setCompanyIndustryICBCSubIndustry($this->getStringToLoad($flCompanyData, 'companyindustry_icb_subindustry'));
-        $this->setCompanyIndustryICBCSector($this->getStringToLoad($flCompanyData, 'companyindustry_icb_sector'));
+        $this->setCompanyIndustryICBIndustryGroup($this->getListValueToLoad($flCompanyData, 'companyindustry_icb_industrygroup', 'f4b_companyindustry_icb_industrygroup'));
+        $this->setCompanyIndustryICBCIndustry($this->getListValueToLoad($flCompanyData, 'companyindustry_icb_industry', 'f4b_companyindustry_icb_industry'));
+        $this->setCompanyIndustryICBCSubIndustry($this->getListValueToLoad($flCompanyData, 'companyindustry_icb_subindustry', 'f4b_companyindustry_icb_subIndustry'));
+        $this->setCompanyIndustryICBCSector($this->getListValueToLoad($flCompanyData, 'companyindustry_icb_sector', 'f4b_companyindustry_icb_sector'));
         $this->setCompanyStateCode($this->getStringToLoad($flCompanyData, 'companystate_code'));
         $this->setIpHash($this->getStringToLoad($flCompanyData, 'ip_hash'));
         if (!empty($this->getDomainAliases())) {
@@ -1134,6 +1188,7 @@ class FloodlightDTO implements DTOInterface
         $pipeSeparated = '';
 
         foreach ($values as $value) {
+            $value      = $this->sanitizeHtmlEntities($value);
             $testString = $pipeSeparated.($pipeSeparated ? '|' : '').$value;
 
             if (strlen($testString) <= $limit) {

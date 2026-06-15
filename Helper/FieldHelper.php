@@ -252,11 +252,13 @@ class FieldHelper
      */
     public function addProperties(LeadField $field, array $properties): void
     {
-        $newProperties = $field->getProperties();
-        assert(is_array($newProperties));
-        if (!isset($newProperties['list'])) {
-            $newProperties['list'] = [];
+        $oldProperties = $field->getProperties();
+        assert(is_array($oldProperties));
+        if (!isset($oldProperties['list'])) {
+            $oldProperties['list'] = [];
         }
+
+        $newProperties = $this->sanitizeExistingProperties($oldProperties);
 
         foreach ($properties as $value) {
             $label                   = $this->sanitizeHtmlEntities($value);
@@ -273,6 +275,30 @@ class FieldHelper
         } else {
             $this->logger->error('Field properties could not be saved');
         }
+    }
+
+    /**
+     * @param array<string, mixed> $properties
+     *
+     * @return array<string, mixed>
+     */
+    private function sanitizeExistingProperties(array $properties): array
+    {
+        if (!isset($properties['list']) || !is_array($properties['list'])) {
+            return $properties;
+        }
+
+        foreach ($properties['list'] as &$item) {
+            if (isset($item['label'])) {
+                $item['label'] = $this->sanitizeHtmlEntities($item['label']);
+            }
+            if (isset($item['value'])) {
+                $item['value'] = $this->sanitizeHtmlEntities($item['value']);
+            }
+        }
+        unset($item);
+
+        return $properties;
     }
 
     private function sanitizeHtmlEntities(string $value): string
