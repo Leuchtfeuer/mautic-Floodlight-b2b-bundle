@@ -7,6 +7,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 use Mautic\LeadBundle\Entity\LeadField;
 use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\CompanyFieldValueSanitizer;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Form\FormFactoryInterface;
 
@@ -23,20 +24,6 @@ class FieldHelper
         'is_publicity_updatable' => false,
         'is_unique_identifier'   => false,
         'is_index'               => false,
-    ];
-
-    public const KEY_FIELDS_TO_UPDATE = [
-        'companyindustry',
-        'f4b_companyindustry_list',
-        'f4b_companylabels',
-        'f4b_companyindustry_icb_industrygroup',
-        'f4b_companyindustry_icb_industry',
-        'f4b_companyindustry_icb_subIndustry',
-        'f4b_companyindustry_icb_sector',
-        'f4b_companyemployees_range',
-        'f4b_companyannual_revenue_range',
-        'f4b_companytechnologies',
-        'f4b_companytype',
     ];
 
     public function __construct(private FieldModel $fieldModel, protected FormFactoryInterface $formFactory, protected LoggerInterface $logger)
@@ -236,7 +223,7 @@ class FieldHelper
     {
         $fields         = $this->fieldModel->getFieldListWithProperties('company');
         $fieldsToUpdate = [];
-        foreach (self::KEY_FIELDS_TO_UPDATE as $key) {
+        foreach (CompanyFieldValueSanitizer::FLOODLIGHT_LIST_FIELDS as $key) {
             if (!array_key_exists($key, $fields)) {
                 continue;
             }
@@ -303,18 +290,6 @@ class FieldHelper
 
     private function sanitizeHtmlEntities(string $value): string
     {
-        $previous = '';
-        $value    = preg_replace('/&#38;(#38;)*/', '&', $value) ?? $value;
-        $value    = preg_replace('/&#60;(#60;)*/', '<', $value) ?? $value;
-        $value    = preg_replace('/&#62;(#62;)*/', '>', $value) ?? $value;
-        $value    = preg_replace('/&#34;(#34;)*/', '"', $value) ?? $value;
-        $value    = preg_replace('/&#39;(#39;)*/', "'", $value) ?? $value;
-
-        while ($value !== $previous) {
-            $previous = $value;
-            $value    = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        }
-
-        return $value;
+        return CompanyFieldValueSanitizer::sanitizeHtmlEntities($value);
     }
 }

@@ -8,7 +8,7 @@ use Doctrine\DBAL\Connection;
 
 class CompanyFieldValueSanitizer
 {
-    private const FIELDS_TO_CHECK = [
+    public const FLOODLIGHT_LIST_FIELDS = [
         'companyindustry',
         'f4b_companyindustry_list',
         'f4b_companylabels',
@@ -34,7 +34,7 @@ class CompanyFieldValueSanitizer
     {
         $leadFieldsTable = $this->tablePrefix.'lead_fields';
 
-        foreach (self::FIELDS_TO_CHECK as $fieldAlias) {
+        foreach (self::FLOODLIGHT_LIST_FIELDS as $fieldAlias) {
             $sql = "SELECT properties FROM {$leadFieldsTable}
                     WHERE alias = :alias AND object = 'company' LIMIT 1";
 
@@ -63,7 +63,7 @@ class CompanyFieldValueSanitizer
     {
         $companiesTable = $this->tablePrefix.'companies';
 
-        foreach (self::FIELDS_TO_CHECK as $fieldAlias) {
+        foreach (self::FLOODLIGHT_LIST_FIELDS as $fieldAlias) {
             $checkSql = "SHOW COLUMNS FROM {$companiesTable} LIKE :fieldAlias";
             $stmt     = $this->connection->prepare($checkSql);
             $stmt->bindValue('fieldAlias', $fieldAlias);
@@ -98,7 +98,7 @@ class CompanyFieldValueSanitizer
             'duplicates_removed'  => 0,
         ];
 
-        foreach (self::FIELDS_TO_CHECK as $fieldAlias) {
+        foreach (self::FLOODLIGHT_LIST_FIELDS as $fieldAlias) {
             $fieldStats = $this->sanitizeField($leadFieldsTable, $companiesTable, $fieldAlias);
             $stats['fields_updated'] += $fieldStats['field_updated'] ? 1 : 0;
             $stats['companies_updated'] += $fieldStats['companies_updated'];

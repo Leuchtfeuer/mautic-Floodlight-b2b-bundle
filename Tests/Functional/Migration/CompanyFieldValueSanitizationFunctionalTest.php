@@ -58,7 +58,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
 
     public function testSanitizerDetectsAndFixesMultipleEncodedValues(): void
     {
-        // Use real F4B field alias from FIELDS_TO_CHECK
+        // Use real F4B field alias from CompanyFieldValueSanitizer::FLOODLIGHT_LIST_FIELDS
         $testAlias = 'f4b_companyindustry_icb_industry';
 
         // Realistic corrupted data from screenshot
@@ -171,7 +171,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
 
     public function testSanitizerIgnoresFieldsNotInF4BList(): void
     {
-        // Field NOT in FIELDS_TO_CHECK - should be completely ignored
+        // Field NOT in CompanyFieldValueSanitizer::FLOODLIGHT_LIST_FIELDS - should be completely ignored
         $nonF4BAlias = 'some_other_company_field';
 
         $corruptedList = [

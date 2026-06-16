@@ -10,6 +10,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\CompanyFieldValueSanitizer;
 
 class FloodlightDTO implements DTOInterface
 {
@@ -1230,18 +1231,6 @@ class FloodlightDTO implements DTOInterface
 
     private function sanitizeHtmlEntities(string $value): string
     {
-        $previous = '';
-        $value    = preg_replace('/&#38;(#38;)*/', '&', $value) ?? $value;
-        $value    = preg_replace('/&#60;(#60;)*/', '<', $value) ?? $value;
-        $value    = preg_replace('/&#62;(#62;)*/', '>', $value) ?? $value;
-        $value    = preg_replace('/&#34;(#34;)*/', '"', $value) ?? $value;
-        $value    = preg_replace('/&#39;(#39;)*/', "'", $value) ?? $value;
-
-        while ($value !== $previous) {
-            $previous = $value;
-            $value    = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        }
-
-        return $value;
+        return CompanyFieldValueSanitizer::sanitizeHtmlEntities($value);
     }
 }
