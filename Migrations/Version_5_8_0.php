@@ -11,13 +11,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\CompanyFieldValueSaniti
 
 class Version_5_8_0 extends AbstractMigration
 {
-    private static ?CompanyFieldValueSanitizer $sanitizer = null;
-
-    public static function setSanitizer(CompanyFieldValueSanitizer $sanitizer): void
-    {
-        self::$sanitizer = $sanitizer;
-    }
-
     protected function isApplicable(Schema $schema): bool
     {
         try {
@@ -31,23 +24,16 @@ class Version_5_8_0 extends AbstractMigration
             return false;
         }
 
-        $sanitizer = $this->getSanitizer();
-
-        return $sanitizer->hasPendingSanitization();
+        return $this->getSanitizer()->hasPendingSanitization();
     }
 
     protected function up(): void
     {
-        $sanitizer = $this->getSanitizer();
-        $sanitizer->sanitize();
+        $this->getSanitizer()->sanitize();
     }
 
     private function getSanitizer(): CompanyFieldValueSanitizer
     {
-        if (null === self::$sanitizer) {
-            throw new \RuntimeException('CompanyFieldValueSanitizer must be set before running Version_5_8_0 migration.');
-        }
-
-        return self::$sanitizer;
+        return new CompanyFieldValueSanitizer($this->entityManager->getConnection());
     }
 }
