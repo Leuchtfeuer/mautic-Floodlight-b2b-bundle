@@ -18,6 +18,8 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     {
         parent::setUp();
 
+        $this->client->request('GET', '/s/plugins/reload');
+
         $configPathTo   = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         $pluginPathFrom = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
         if (!file_exists($configPathTo)) {
@@ -195,13 +197,18 @@ class FloodlightDTOTest extends MauticMysqlTestCase
         ];
 
         foreach ($testFields as $fieldData) {
-            $field = new \Mautic\LeadBundle\Entity\LeadField();
-            $field->setLabel($fieldData['name']);
-            $field->setAlias($fieldData['alias']);
-            $field->setType($fieldData['type']);
-            $field->setObject($fieldData['object']);
-            $field->setGroup('core');
-            $field->setIsPublished(true);
+            $field = $fieldModel->getRepository()->findOneBy(['alias' => $fieldData['alias']]);
+
+            if (!$field) {
+                $field = new \Mautic\LeadBundle\Entity\LeadField();
+                $field->setLabel($fieldData['name']);
+                $field->setAlias($fieldData['alias']);
+                $field->setType($fieldData['type']);
+                $field->setObject($fieldData['object']);
+                $field->setGroup('core');
+                $field->setIsPublished(true);
+            }
+
             $field->setCharLengthLimit($fieldData['limit']);
 
             if (isset($fieldData['properties'])) {
@@ -213,5 +220,221 @@ class FloodlightDTOTest extends MauticMysqlTestCase
 
         $this->em->flush();
         $this->em->clear();
+    }
+
+    public function testListFieldValuesAreNormalizedWithDashes(): void
+    {
+        $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
+        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+
+        // Update existing field or create new one
+        $field = $fieldModel->getRepository()->findOneBy(['alias' => 'f4b_companyindustry_icb_industry']);
+        if (!$field) {
+            $field = new \Mautic\LeadBundle\Entity\LeadField();
+            $field->setName('Industry ICB');
+            $field->setAlias('f4b_companyindustry_icb_industry');
+            $field->setType('select');
+            $field->setObject('company');
+            $field->setIsPublished(true);
+        }
+        $field->setProperties([
+            'list' => [
+                ['label' => 'Software & Computer Services', 'value' => 'Software-&-Computer-Services'],
+                ['label' => 'Travel & Tourism', 'value' => 'Travel-&-Tourism'],
+                ['label' => 'Banks', 'value' => 'Banks'],
+            ],
+        ]);
+        $fieldModel->saveEntity($field);
+        $this->em->flush();
+
+        // Simulate Floodlight API data with spaces (legacy format)
+        $floodlightData = [
+            'companyindustry_icb_industry' => 'Software & Computer Services',
+            'statusRequestCode'            => 200,
+        ];
+
+        $dto = new FloodlightDTO($floodlightData, $fieldModel, $domainUtility);
+
+        $this->assertSame('Software-&-Computer-Services', $dto->getCompanyIndustryICBCIndustry());
+
+        $company = new Company();
+        $dto->fillCompany($company);
+
+        $this->assertSame('Software-&-Computer-Services', $company->getFieldValue('f4b_companyindustry_icb_industry'));
+    }
+
+    public function testListFieldMultiselectValuesAreNormalized(): void
+    {
+        $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
+        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+
+        $field = $fieldModel->getRepository()->findOneBy(['alias' => 'f4b_companyindustry_list']);
+        if (!$field) {
+            $field = new \Mautic\LeadBundle\Entity\LeadField();
+            $field->setName('Industry List');
+            $field->setAlias('f4b_companyindustry_list');
+            $field->setType('multiselect');
+            $field->setObject('company');
+            $field->setIsPublished(true);
+        }
+        $field->setProperties([
+            'list' => [
+                ['label' => 'Software & Computer Services', 'value' => 'Software-&-Computer-Services'],
+                ['label' => 'Computer Services', 'value' => 'Computer-Services'],
+            ],
+        ]);
+        $fieldModel->saveEntity($field);
+        $this->em->flush();
+
+        // Simulate Floodlight API data with spaces (legacy format)
+        $floodlightData = [
+            'companyindustry_list' => ['Software & Computer Services', 'Computer Services'],
+            'statusRequestCode'    => 200,
+        ];
+
+        $dto = new FloodlightDTO($floodlightData, $fieldModel, $domainUtility);
+
+        $normalized = $dto->getCompanyIndustryList();
+        $this->assertSame(['Software-&-Computer-Services', 'Computer-Services'], $normalized);
+    }
+
+    public function testNonListFieldValuesRemainUnchanged(): void
+    {
+        $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
+        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+
+        // Simulate data with spaces in a non-list field
+        $floodlightData = [
+            'companydescription' => 'Software & Consulting Services',
+            'statusRequestCode'  => 200,
+        ];
+
+        $dto = new FloodlightDTO($floodlightData, $fieldModel, $domainUtility);
+
+        // Non-list field should keep spaces (not normalized)
+        $this->assertSame('Software & Consulting Services', $dto->getCompanyDescription());
+    }
+
+    public function testNoDoubleEncodingOnMultipleUpdates(): void
+    {
+        $fieldsToTest = [
+            'f4b_companyindustry_list',
+        ];
+
+        $floodlightData = [
+            'statusRequestCode'    => 200,
+            'companyname'          => 'Test Company',
+            'primarydomain'        => 'test.com',
+            'ip'                   => '1.2.3.4',
+            'ip_hash'              => 'testhash',
+            'companyindustry_list' => ['Software & Computer Services', 'Travel & Leisure'],
+        ];
+
+        $fieldModel     = self::getContainer()->get('mautic.lead.model.field');
+        $domainUtility  = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $fieldHelper    = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.field');
+        $companyModel   = self::getContainer()->get('mautic.lead.model.company');
+
+        // Step 1: Create first company
+        $floodlightDto = new FloodlightDTO($floodlightData, $fieldModel, $domainUtility);
+        $company       = new Company();
+        $company->setName('Test Company 1');
+        $company->setDateAdded(new \DateTime());
+
+        $company = $floodlightDto->fillCompany($company);
+        $fieldHelper->updateProperties($floodlightDto);
+        $companyModel->saveEntity($company);
+        $this->em->flush();
+        $this->em->clear();
+
+        // Get the values after first save
+        $savedCompany         = $companyModel->getEntity($company->getId());
+        $valuesAfterFirstSave = [];
+        foreach ($fieldsToTest as $fieldToTest) {
+            $value = $savedCompany->getFieldValue($fieldToTest);
+            $this->assertNotEmpty($value, "Field {$fieldToTest} should not be empty after first save");
+            $this->assertStringNotContainsString('&#38;#38;', $value, "Field {$fieldToTest} should not contain double-encoded ampersands after first save");
+            $valuesAfterFirstSave[$fieldToTest] = $value;
+        }
+
+        // Step 2: Create second company with same data
+        $floodlightDto2 = new FloodlightDTO($floodlightData, $fieldModel, $domainUtility);
+        $company2       = new Company();
+        $company2->setName('Test Company 2');
+        $company2->setDateAdded(new \DateTime());
+
+        $company2 = $floodlightDto2->fillCompany($company2);
+        $fieldHelper->updateProperties($floodlightDto2);
+        $companyModel->saveEntity($company2);
+        $this->em->flush();
+        $this->em->clear();
+
+        // Values should be identical - no double encoding
+        $savedCompany2 = $companyModel->getEntity($company2->getId());
+        foreach ($fieldsToTest as $fieldToTest) {
+            $value = $savedCompany2->getFieldValue($fieldToTest);
+            $this->assertEquals($valuesAfterFirstSave[$fieldToTest], $value, "Field {$fieldToTest}: Values should be identical - no double encoding should occur");
+            $this->assertStringNotContainsString('&#38;#38;', $value, "Field {$fieldToTest} should not contain double-encoded ampersands after second save");
+        }
+
+        // Step 3: Update the first company again
+        $savedCompany   = $companyModel->getEntity($company->getId());
+        $floodlightDto3 = new FloodlightDTO($floodlightData, $fieldModel, $domainUtility);
+        $savedCompany   = $floodlightDto3->fillCompany($savedCompany);
+        $fieldHelper->updateProperties($floodlightDto3);
+        $companyModel->saveEntity($savedCompany);
+        $this->em->flush();
+        $this->em->clear();
+
+        // Value should remain identical after multiple updates
+        $savedCompany = $companyModel->getEntity($company->getId());
+        foreach ($fieldsToTest as $fieldToTest) {
+            $value = $savedCompany->getFieldValue($fieldToTest);
+            $this->assertEquals($valuesAfterFirstSave[$fieldToTest], $value, "Field {$fieldToTest}: Value should remain identical after multiple updates");
+            $this->assertStringNotContainsString('&#38;#38;', $value, "Field {$fieldToTest} should not contain double-encoded ampersands after third save");
+        }
+    }
+
+    public function testArrayValuesAreSanitizedAndNormalized(): void
+    {
+        $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
+        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+
+        // Ensure the field has a list property for the test
+        $field = $fieldModel->getRepository()->findOneBy(['alias' => 'f4b_companyindustry_list']);
+        if ($field) {
+            $field->setProperties([
+                'list' => [
+                    ['label' => 'Software & Computer Services', 'value' => 'Software-&-Computer-Services'],
+                    ['label' => 'Travel & Leisure', 'value' => 'Travel-&-Leisure'],
+                ],
+            ]);
+            $fieldModel->saveEntity($field);
+            $this->em->flush();
+        }
+
+        $floodlightData = [
+            'statusRequestCode'    => 200,
+            'companyname'          => 'Test Company',
+            'primarydomain'        => 'test.com',
+            'ip'                   => '1.2.3.4',
+            'ip_hash'              => 'testhash',
+            'companyindustry_list' => ['Software &#38; Computer Services', 'Travel &#38; Leisure'],
+        ];
+
+        $floodlightDto = new FloodlightDTO($floodlightData, $fieldModel, $domainUtility);
+        $company       = new Company();
+        $company->setName('Test Company');
+        $company->setDateAdded(new \DateTime());
+
+        $company = $floodlightDto->fillCompany($company);
+
+        // Check that the array values were sanitized AND normalized (spaces → dashes for list fields)
+        $industryListValue = $company->getFieldValue('f4b_companyindustry_list');
+        $this->assertIsString($industryListValue);
+        $this->assertStringContainsString('Software-&-Computer-Services', $industryListValue, 'Should be normalized: spaces → dashes');
+        $this->assertStringContainsString('Travel-&-Leisure', $industryListValue, 'Should be normalized: spaces → dashes');
+        $this->assertStringNotContainsString('&#38;', $industryListValue, 'HTML entities should be decoded');
+        $this->assertStringNotContainsString(' & ', $industryListValue, 'Spaces should be replaced with dashes for list fields');
     }
 }
