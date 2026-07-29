@@ -16,9 +16,6 @@ class ApiClient
     ) {
     }
 
-    /**
-     * @throws PluginNotConfiguredException
-     */
     private function getCredentials(): HeaderCredentialsInterface
     {
         return $this->credentials;

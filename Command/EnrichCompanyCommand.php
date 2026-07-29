@@ -17,10 +17,12 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\HttpFoundation\Response;
 
+#[AsCommand(name: 'leuchtfeuer:floodlight:enrich-companies', description: 'Enrich company data with Floodlight data by address')]
 class EnrichCompanyCommand extends ModeratedCommand
 {
     public const DATE_DEFAULT = '1970-01-01 00:00:00';

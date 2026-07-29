@@ -23,7 +23,7 @@ class ReporterTest extends TestCase
         $reporter->setChannel($channel);
 
         $reporter->notify('someText');
-        $this->assertTrue(true);
+
     }
 
     public function testMessageFromCommandWithVerbosity(): void
@@ -42,7 +42,7 @@ class ReporterTest extends TestCase
         $reporter->setChannel($channel);
 
         $reporter->notify('someText', OutputInterface::VERBOSITY_VERBOSE);
-        $this->assertTrue(true);
+
     }
 
     public function testLoggingWithLogger(): void
@@ -57,6 +57,6 @@ class ReporterTest extends TestCase
         $reporter->setChannel($channel);
 
         $reporter->notify('someText');
-        $this->assertTrue(true);
+
     }
 }

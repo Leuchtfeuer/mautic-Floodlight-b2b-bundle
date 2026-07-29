@@ -13,25 +13,26 @@ use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\PageBundle\Entity\Hit;
 use Mautic\PluginBundle\Entity\Integration;
-use Mautic\PluginBundle\Entity\Plugin;
-use Mautic\PluginBundle\Facade\ReloadFacade;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
+    protected $useCleanupRollback = false;
+
     private FloodlightLeadDomainsRepository $leadDomainRepo;
+
+    private FixtureHelper $fixtureHelper;
 
     public function setUp(): void
     {
         parent::setUp();
-
-        $this->leadDomainRepo     = $this->em->getRepository(FloodlightLeadDomains::class);
-        $this->useCleanupRollback = false;
-        $this->setUpSymfony($this->configParams);
+        $this->leadDomainRepo = $this->em->getRepository(FloodlightLeadDomains::class);
+        $this->fixtureHelper  = new FixtureHelper($this->em, $this->client);
     }
 
     public function testPagehitWhenPluginNotActivated(): void
@@ -703,32 +704,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     private function activePlugin(bool $isPublished = true): void
     {
-        $reloadFacade = self::getContainer()->get(ReloadFacade::class);
-        $reloadFacade->reloadPlugins();
-        $this->client->request('GET', '/s/plugins/reload');
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
-        if (!file_exists($configPathTo)) {
-            copy($pluginPathFrom, $configPathTo);
-        }
-        $integration = $this->em->getRepository(Integration::class)->findOneBy(['name' => LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME]);
-
-        if (empty($integration)) {
-            $plugin      = $this->em->getRepository(Plugin::class)->findOneBy(['bundle' => 'LeuchtfeuerFloodlightB2BIntegration']);
-            $integration = new Integration();
-            $integration->setName('LeuchtfeuerFloodlightB2B');
-            $integration->setPlugin($plugin);
-        }
-        $integration->setIsPublished($isPublished);
-        $this->em->persist($integration);
-        $this->em->flush();
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
-        if (!file_exists($configPathTo)) {
-            copy($pluginPathFrom, $configPathTo);
-        }
-        //        $this->useCleanupRollback = false;
-        //        $this->setUpSymfony($this->configParams);
+        $this->fixtureHelper->createAndEnablePlugin($isPublished);
+        $this->fixtureHelper->copyBlacklistConfig();
     }
 
     private function updateApikey(string $accessKeyId='validAccessKeyId', string $secretKey='validSecretKey'): void

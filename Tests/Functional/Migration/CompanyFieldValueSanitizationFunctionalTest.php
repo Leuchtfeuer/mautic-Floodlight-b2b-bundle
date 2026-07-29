@@ -18,7 +18,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
     private function createSanitizer(): CompanyFieldValueSanitizer
     {
         /** @var Connection $connection */
-        $connection = self::$container->get('doctrine.dbal.default_connection');
+        $connection = self::getContainer()->get('doctrine.dbal.default_connection');
 
         return new CompanyFieldValueSanitizer($connection);
     }
@@ -29,7 +29,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
     private function createOrUpdateField(string $alias, string $name, string $type, array $properties): LeadField
     {
         /** @var FieldModel $fieldModel */
-        $fieldModel = self::$container->get('mautic.lead.model.field');
+        $fieldModel = self::getContainer()->get('mautic.lead.model.field');
 
         // Check if field exists
         $existingField = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => $alias]);
@@ -219,7 +219,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $this->createOrUpdateField($testAlias, 'Test Industry', 'select', ['list' => $cleanList]);
 
         /** @var Connection $connection */
-        $connection = self::$container->get('doctrine.dbal.default_connection');
+        $connection = self::getContainer()->get('doctrine.dbal.default_connection');
 
         // Create test companies with legacy Floodlight values (spaces instead of dashes)
         $connection->executeStatement('
@@ -268,7 +268,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $this->createOrUpdateField($testAlias, 'Test Industry List', 'multiselect', ['list' => $cleanList]);
 
         /** @var Connection $connection */
-        $connection = self::$container->get('doctrine.dbal.default_connection');
+        $connection = self::getContainer()->get('doctrine.dbal.default_connection');
 
         // Create company with pipe-separated values containing spaces
         $connection->executeStatement('

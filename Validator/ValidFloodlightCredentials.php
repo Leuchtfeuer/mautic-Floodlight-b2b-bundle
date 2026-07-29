@@ -23,7 +23,7 @@ class ValidFloodlightCredentials extends Constraint
         parent::__construct($options ?? []);
     }
 
-    public function getTargets()
+    public function getTargets(): array|string
     {
         return self::CLASS_CONSTRAINT;
     }
