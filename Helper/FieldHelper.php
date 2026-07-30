@@ -258,7 +258,13 @@ class FieldHelper
         $result = $this->fieldModel->setFieldProperties($field, $newProperties);
         $field->setIsIndex(false);
         if ($result) {
-            $this->fieldModel->saveEntity($field);
+            try {
+                $this->fieldModel->saveEntity($field);
+            } catch (\OutOfRangeException) {
+                // Mautic 7's updateColumnLength() rejects charLengthLimit > 191,
+                // but the entity metadata (properties) is already persisted at this point.
+                // Safe to ignore since we only changed list properties, not the column.
+            }
         } else {
             $this->logger->error('Field properties could not be saved');
         }

@@ -9,7 +9,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use Pdp\Domain;
 use Pdp\Rules;
 use Psr\Log\LoggerInterface;
@@ -19,7 +19,7 @@ class DomainUtility
     private ?Rules $rules = null;
 
     public function __construct(
-        private WhoisPyService $whoisPyService,
+        private WhoisService $whoisService,
         private KeywordBlacklistHelper $keywordBlacklistHelper,
         private DomainBlacklistHelper $domainBlacklistHelper,
         private PathsHelper $pathsHelper,
@@ -125,9 +125,9 @@ class DomainUtility
     /**
      * @return array<string,mixed>
      */
-    public function getDomainByWhoisPyService(string $remoteAddr): array
+    public function getDomainByWhoisService(string $remoteAddr): array
     {
-        $domainWhois = $this->whoisPyService->getWhoisData($remoteAddr);
+        $domainWhois = $this->whoisService->getWhoisData($remoteAddr);
         $cleanDomain = '';
         $details     = [];
         $status      = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;

@@ -19,19 +19,21 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'           => 'f4b_companyfloodlight_id',
                 'name'            => 'Floodlight Company ID',
                 'type'            => 'text',
+                'limit'           => 191,
                 'externalKeyName' => 'companyfloodlight_id',
             ],
             [
                 'alias'             => 'f4b_companycrunchbase_handle',
                 'name'              => 'Crunchbase Handle',
                 'type'              => 'text',
+                'limit'             => 191,
                 'externalKeyName'   => 'companycrunchbase_handle',
             ],
             [
                 'alias'           => 'f4b_companyname_legal',
                 'name'            => 'Legal Company Name',
                 'type'            => 'text',
-                'limit'           => 255,
+                'limit'           => 191,
                 'externalKeyName' => 'companyname_legal',
             ],
             [
@@ -39,14 +41,14 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'name'            => 'Alternative Company Names',
                 'type'            => 'text',
                 'isIndex'         => true,
-                'limit'           => 255,
+                'limit'           => 191,
                 'externalKeyName' => 'companyname_alternatives',
             ],
             [
                 'alias'           => 'f4b_companyindustry_linkedin',
                 'name'            => 'LinkedIn Industry',
                 'type'            => 'text',
-                'limit'           => 255,
+                'limit'           => 191,
                 'isIndex'         => true,
                 'externalKeyName' => 'companyindustry_linkedin',
             ],
@@ -83,6 +85,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'      => 'f4b_companyindustry_icb_industrygroup',
                 'name'       => 'ICB Industry Group',
                 'type'       => 'select',
+                'limit'      => 191,
                 'properties' => [
                     'list' => [
                         ['label' => 'Personal & Household Goods', 'value' => 'personal-household-goods'],
@@ -94,6 +97,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'      => 'f4b_companyindustry_icb_industry',
                 'name'       => 'ICB Industry',
                 'type'       => 'select',
+                'limit'      => 191,
                 'properties' => [
                     'list' => [
                         ['label' => 'Personal Goods', 'value' => 'personal-goods'],
@@ -105,6 +109,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'      => 'f4b_companyindustry_icb_subIndustry',
                 'name'       => 'ICB Sub Industry',
                 'type'       => 'select',
+                'limit'      => 191,
                 'properties' => [
                     'list' => [
                         ['label' => 'Footwear', 'value' => 'footwear'],
@@ -116,6 +121,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'      => 'f4b_companyindustry_icb_sector',
                 'name'       => 'ICB Sector',
                 'type'       => 'select',
+                'limit'      => 191,
                 'properties' => [
                     'list' => [
                         ['label' => 'Consumer Goods', 'value' => 'consumer-goods'],
@@ -128,15 +134,13 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'name'            => 'Company Long Description',
                 'type'            => 'textarea',
                 'limit'           => 2560,
-                'isIndex'         => true,
                 'externalKeyName' => 'companydescription_long',
             ],
             [
                 'alias'           => 'f4b_companydescription',
                 'name'            => 'Company Description',
-                'type'            => 'text',
+                'type'            => 'textarea',
                 'limit'           => 255,
-                'isIndex'         => true,
                 'externalKeyName' => 'companydescription',
             ],
             [
@@ -162,6 +166,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'      => 'f4b_companyemployees_range',
                 'name'       => 'Employee Range',
                 'type'       => 'select',
+                'limit'      => 191,
                 'properties' => [
                     'list' => [
                         ['label' => '10K+', 'value' => '10k+'],
@@ -178,6 +183,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'      => 'f4b_companyannual_revenue_range',
                 'name'       => 'Annual Revenue Range',
                 'type'       => 'select',
+                'limit'      => 191,
                 'properties' => [
                     'list' => [
                         ['label' => '$10B+', 'value' => '$10B+'],
@@ -206,18 +212,21 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'           => 'f4b_companyfacebook_handle',
                 'name'            => 'Facebook Handle',
                 'type'            => 'text',
+                'limit'           => 191,
                 'externalKeyName' => 'companyfacebook_handle',
             ],
             [
                 'alias'           => 'f4b_companylinkedin_handle',
                 'name'            => 'LinkedIn Handle',
                 'type'            => 'text',
+                'limit'           => 191,
                 'externalKeyName' => 'companylinkedin_handle',
             ],
             [
                 'alias'           => 'f4b_companytwitter_handle',
                 'name'            => 'Twitter Handle',
                 'type'            => 'text',
+                'limit'           => 191,
                 'externalKeyName' => 'companytwitter_handle',
             ],
             [
@@ -230,12 +239,14 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'           => 'companylogo_filename',
                 'name'            => 'Company Logo Filename',
                 'type'            => 'text',
+                'limit'           => 191,
                 'externalKeyName' => 'companylogo_filename',
             ],
             [
                 'alias'      => 'f4b_companytype',
                 'name'       => 'Company Type',
                 'type'       => 'select',
+                'limit'      => 191,
                 'properties' => [
                     'list' => [
                         ['label' => 'Public', 'value' => 'public'],
@@ -257,6 +268,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'           => 'f4b_companytimezone',
                 'name'            => 'Company Timezone',
                 'type'            => 'timezone',
+                'limit'           => 191,
                 'externalKeyName' => 'companytimezone',
             ],
             [

@@ -7,8 +7,8 @@ return [
     'author'      => 'Leuchtfeuer Digital Marketing GmbH',
     'services'    => [
         'others' => [
-            'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice' => [
-                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService::class,
+            'mautic.leuchtfeuerfloodlightb2b.services.whoisservice' => [
+                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService::class,
                 'arguments' => [
                     'monolog.logger.mautic',
                 ],
@@ -116,7 +116,7 @@ return [
             'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility::class,
                 'arguments' => [
-                    'mautic.leuchtfeuerfloodlightb2b.services.whoispyservice',
+                    'mautic.leuchtfeuerfloodlightb2b.services.whoisservice',
                     'mautic.leuchtfeuerfloodlightb2b.helper.keywordblacklist',
                     'mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist',
                     'mautic.helper.paths',

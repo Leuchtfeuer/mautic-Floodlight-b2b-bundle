@@ -9,7 +9,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -17,14 +17,14 @@ class DomainUtilityTest extends TestCase
 {
     public function testIsIp(): void
     {
-        $whoisPyService         = $this->createMock(WhoisPyService::class);
+        $whoisService           = $this->createMock(WhoisService::class);
         $keywordBlacklistHelper = $this->createMock(KeywordBlacklistHelper::class);
         $domainBlacklistHelper  = $this->createMock(DomainBlacklistHelper::class);
         $pathsHelper            = $this->createMock(PathsHelper::class);
         $pdpLoader              = $this->createMock(PdpLoader::class);
         $logger                 = $this->createMock(LoggerInterface::class);
 
-        $domainUtility = new DomainUtility($whoisPyService, $keywordBlacklistHelper, $domainBlacklistHelper, $pathsHelper, $pdpLoader, $logger);
+        $domainUtility = new DomainUtility($whoisService, $keywordBlacklistHelper, $domainBlacklistHelper, $pathsHelper, $pdpLoader, $logger);
         $this->assertTrue($domainUtility->hasMoreThanFourNumbers('123.23'));
         $this->assertFalse($domainUtility->hasMoreThanFourNumbers('google.com'));
         $this->assertTrue($domainUtility->hasMoreThanFourNumbers('127.0.0.1'));

@@ -931,39 +931,52 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     private function mockWhoisResultDependingOnIp(): void
     {
-        if (function_exists('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Services\\shell_exec')) {
+        if (function_exists('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Services\\curl_init')) {
             return;
         }
 
+        $rdap57 = json_encode(['name' => 'NET', 'entities' => [['vcardArray' => ['vcard', [['fn', new \stdClass(), 'text', 'AT&T Enterprises, LLC'], ['email', new \stdClass(), 'text', 'contact@NEPHRONPHARM.COM']]]]]]);
+        $rdap59 = json_encode(['name' => 'NET', 'entities' => [['vcardArray' => ['vcard', [['fn', new \stdClass(), 'text', 'AT&T Enterprises, LLC'], ['email', new \stdClass(), 'text', 'contact@floodlightblacklistkeyword.com']]]]]]);
+        $rdap60 = json_encode(['name' => 'NET', 'entities' => [['vcardArray' => ['vcard', [['fn', new \stdClass(), 'text', 'AT&T Enterprises, LLC'], ['email', new \stdClass(), 'text', 'contact@floodlightblacklistdomain.com']]]]]]);
+
+        $GLOBALS['__whois_mock_responses'] = [
+            '86.101.230.57' => $rdap57,
+            '86.101.230.59' => $rdap59,
+            '86.101.230.60' => $rdap60,
+        ];
+
         $mockCode = "
         namespace MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Services {
-            function shell_exec(\$command) {
-                if (strpos(\$command, '86.101.230.57') !== false && strpos(\$command, 'main.py') !== false) {
-                    return \"{'company_domain': 'NEPHRONPHARM.COM', 'company_name': 'AT&T Enterprises, LLC', 'is_isp': False, 'is_dialup': False}\\n\";
-                }
-                
-                if (strpos(\$command, '86.101.230.58') !== false && strpos(\$command, 'main.py') !== false) {
-                    return 'Error: ...';
-                }
-                
-                if (strpos(\$command, '86.101.230.59') !== false && strpos(\$command, 'main.py') !== false) {
-                    return \"{'company_domain': 'floodlightblacklistkeyword.com', 'company_name': 'AT&T Enterprises, LLC', 'is_isp': False, 'is_dialup': False}\\n\";
-                }
-                
-                if (strpos(\$command, '86.101.230.60') !== false && strpos(\$command, 'main.py') !== false) {
-                    return \"{'company_domain': 'floodlightblacklistdomain.com', 'company_name': 'AT&T Enterprises, LLC', 'is_isp': False, 'is_dialup': False}\\n\";
-                }
-                
-                if (strpos(\$command, '86.101.230.61') !== false && strpos(\$command, 'main.py') !== false) {
-                    return 'Error: IPv4 address 127.0.0.1 is already defined as Loopback via RFC 1122, Section 3.2.1.3.';
-                }
-                
-                if (strpos(\$command, '127.0.0.1') !== false) {
-                    return 'Error: IPv4 address 127.0.0.1 is already defined as Loopback via RFC 1122, Section 3.2.1.3.';
-                }
-                
-                return \\shell_exec(\$command);
+            function curl_init(\$url = null) {
+                \$GLOBALS['__whois_mock_current_url'] = \$url;
+                return 'mock_handle';
             }
+
+            function curl_setopt_array(\$handle, \$options) {
+                return true;
+            }
+
+            function curl_exec(\$handle) {
+                \$url = \$GLOBALS['__whois_mock_current_url'] ?? '';
+                foreach (\$GLOBALS['__whois_mock_responses'] as \$ip => \$json) {
+                    if (strpos(\$url, \$ip) !== false) {
+                        return \$json;
+                    }
+                }
+                return false;
+            }
+
+            function curl_getinfo(\$handle, \$opt = null) {
+                \$url = \$GLOBALS['__whois_mock_current_url'] ?? '';
+                \$failIps = ['86.101.230.58', '86.101.230.61', '127.0.0.1'];
+                foreach (\$failIps as \$ip) {
+                    if (strpos(\$url, \$ip) !== false) {
+                        return 500;
+                    }
+                }
+                return 200;
+            }
+
         }";
 
         eval($mockCode);

@@ -215,7 +215,13 @@ class FloodlightDTOTest extends MauticMysqlTestCase
                 $field->setProperties($fieldData['properties']);
             }
 
-            $fieldModel->saveEntity($field);
+            if ($field->isNew()) {
+                $fieldModel->saveEntity($field);
+            } else {
+                // For existing fields, save via repository to avoid Mautic 7's
+                // updateColumnLength() which throws for charLengthLimit > 191.
+                $fieldModel->getRepository()->saveEntity($field);
+            }
         }
 
         $this->em->flush();
@@ -283,7 +289,11 @@ class FloodlightDTOTest extends MauticMysqlTestCase
                 ['label' => 'Computer Services', 'value' => 'Computer-Services'],
             ],
         ]);
-        $fieldModel->saveEntity($field);
+        if ($field->isNew()) {
+            $fieldModel->saveEntity($field);
+        } else {
+            $fieldModel->getRepository()->saveEntity($field);
+        }
         $this->em->flush();
 
         // Simulate Floodlight API data with spaces (legacy format)
@@ -409,7 +419,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
                     ['label' => 'Travel & Leisure', 'value' => 'Travel-&-Leisure'],
                 ],
             ]);
-            $fieldModel->saveEntity($field);
+            $fieldModel->getRepository()->saveEntity($field);
             $this->em->flush();
         }
 
