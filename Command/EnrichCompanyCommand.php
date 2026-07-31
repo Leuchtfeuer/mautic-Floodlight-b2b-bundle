@@ -14,6 +14,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DtoHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
@@ -39,6 +40,7 @@ class EnrichCompanyCommand extends ModeratedCommand
         protected FloodlightDtoFactory $floodlightDtoFactory,
         protected DtoHelper $dtoHelper,
         protected Status200Strategy $status200Strategy,
+        protected CompanyMapper $companyMapper,
     ) {
         parent::__construct($pathsHelper, $coreParametersHelper);
     }
@@ -150,7 +152,7 @@ class EnrichCompanyCommand extends ModeratedCommand
             $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
             $this->fieldHelper->updateProperties($floodlightDTO);
 
-            $company = $floodlightDTO->fillCompany($company);
+            $company = $this->companyMapper->mapToCompany($floodlightDTO, $company);
             $this->status200Strategy->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl());
             $this->companyModel->saveEntity($company);
             if (

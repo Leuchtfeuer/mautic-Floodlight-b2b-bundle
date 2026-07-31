@@ -13,6 +13,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 
@@ -25,6 +26,7 @@ class Status429Strategy
         private CompanyModel $companyModel,
         private readonly LeadModel $leadModel,
         private FloodlightCompanyDomainsModel $companyDomainsModel,
+        private CompanyMapper $companyMapper,
     ) {
     }
 
@@ -124,7 +126,7 @@ class Status429Strategy
 
     public function updateCompany(FloodlightDTO $floodlightDTO, Lead $lead, Company $company): void
     {
-        $company = $floodlightDTO->fillCompany($company);
+        $company = $this->companyMapper->mapToCompany($floodlightDTO, $company);
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
     }

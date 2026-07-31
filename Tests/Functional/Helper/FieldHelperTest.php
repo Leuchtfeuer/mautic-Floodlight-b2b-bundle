@@ -7,8 +7,9 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Helper;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\LeadField;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
 
 class FieldHelperTest extends MauticMysqlTestCase
 {
@@ -30,8 +31,9 @@ class FieldHelperTest extends MauticMysqlTestCase
 
     public function testFieldPropertiesNotDoubleEncodedWhenAddingMultipleCompanies(): void
     {
+        $dtoFactory    = self::getContainer()->get(FloodlightDtoFactory::class);
+        $companyMapper = self::getContainer()->get(CompanyMapper::class);
         $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
         $fieldHelper   = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.field');
         $companyModel  = self::getContainer()->get('mautic.lead.model.company');
 
@@ -45,11 +47,11 @@ class FieldHelperTest extends MauticMysqlTestCase
             'companyindustry_list' => ['Software & Computer Services', 'Internet'],
         ];
 
-        $floodlightDto1 = new FloodlightDTO($floodlightData1, $fieldModel, $domainUtility);
+        $floodlightDto1 = $dtoFactory->create($floodlightData1);
         $company1       = new Company();
         $company1->setName('Test Company 1');
         $company1->setDateAdded(new \DateTime());
-        $company1 = $floodlightDto1->fillCompany($company1);
+        $company1 = $companyMapper->mapToCompany($floodlightDto1, $company1);
 
         $fieldHelper->updateProperties($floodlightDto1);
         $companyModel->saveEntity($company1);
@@ -89,11 +91,11 @@ class FieldHelperTest extends MauticMysqlTestCase
             'companyindustry_list' => ['Travel & Leisure', 'Pharmaceuticals & Biotechnology'],
         ];
 
-        $floodlightDto2 = new FloodlightDTO($floodlightData2, $fieldModel, $domainUtility);
+        $floodlightDto2 = $dtoFactory->create($floodlightData2);
         $company2       = new Company();
         $company2->setName('Test Company 2');
         $company2->setDateAdded(new \DateTime());
-        $company2 = $floodlightDto2->fillCompany($company2);
+        $company2 = $companyMapper->mapToCompany($floodlightDto2, $company2);
 
         $fieldHelper->updateProperties($floodlightDto2);
         $companyModel->saveEntity($company2);

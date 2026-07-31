@@ -15,6 +15,7 @@ use Mautic\LeadBundle\Model\CompanyModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyDomainMapper;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -32,6 +33,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         CoreParametersHelper $coreParametersHelper,
         private DomainUtility $domainUtility,
         private CompanyModel $companyModel,
+        private CompanyDomainMapper $companyDomainMapper,
     ) {
         parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $logger, $coreParametersHelper);
     }
@@ -162,7 +164,7 @@ class FloodlightCompanyDomainsModel extends FormModel
      */
     public function createNewCompanyDomain(FloodlightDTO $floodlightDTO, Company $company): array
     {
-        $companiesDomains = $floodlightDTO->fillCompaniesDomain($this, $company);
+        $companiesDomains = $this->companyDomainMapper->mapToCompanyDomains($floodlightDTO, $this, $company);
 
         if (!empty($companiesDomains)) {
             foreach ($companiesDomains as $companiesDomain) {

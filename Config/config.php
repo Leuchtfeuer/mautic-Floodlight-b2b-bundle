@@ -57,31 +57,8 @@ return [
                 ],
             ],
 
-            'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto' => [
-                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory::class,
-                'arguments' => [
-                    'mautic.lead.model.field',
-                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
-                ],
-            ],
-
-            'mautic.leuchtfeuerfloodlightb2b.status200strategy' => [
-                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy::class,
-                'arguments' => [
-                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
-                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
-                    'mautic.lead.repository.company',
-                    'mautic.lead.model.company',
-                    'mautic.lead.model.lead',
-                    'mautic.leuchtfeuerfloodlightb2b.helper.field',
-                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
-                    'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto',
-                    'mautic.leuchtfeuerfloodlightb2b.helper.dto',
-                    'mautic.integration.leuchtfeuerfloodlightb2b.config',
-                    'mautic.lead.repository.company_lead',
-                    'mautic.helper.paths',
-                ],
-            ],
+            // FloodlightDtoFactory and Status200Strategy are autowired via services.php
+            // Aliases for backward compatibility are defined in services.php
             'mautic.leuchtfeuerfloodlightb2b.status202strategy' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status202Strategy::class,
                 'arguments' => [
@@ -102,17 +79,8 @@ return [
                     'mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto',
                 ],
             ],
-            'mautic.leuchtfeuerfloodlightb2b.status429strategy' => [
-                'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status429Strategy::class,
-                'arguments' => [
-                    'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain',
-                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains',
-                    'mautic.lead.repository.company',
-                    'mautic.lead.model.company',
-                    'mautic.lead.model.lead',
-                    'mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains',
-                ],
-            ],
+            // Status429Strategy is autowired via services.php
+            // Alias for backward compatibility is defined in services.php
             'mautic.leuchtfeuerfloodlightb2b.helper.utility.domain' => [
                 'class'     => MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility::class,
                 'arguments' => [

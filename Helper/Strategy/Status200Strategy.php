@@ -19,6 +19,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DtoHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use Symfony\Component\HttpClient\HttpClient;
@@ -38,6 +39,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         private Config $config,
         private CompanyLeadRepository $companyLeadRepository,
         private PathsHelper $pathsHelper,
+        private CompanyMapper $companyMapper,
     ) {
     }
 
@@ -171,7 +173,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
     {
         $company       = $this->companyModel->getEntity();
         \assert($company instanceof Company);
-        $company       = $floodlightDTO->fillCompany($company);
+        $company       = $this->companyMapper->mapToCompany($floodlightDTO, $company);
         $company       = $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl());
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);
@@ -184,7 +186,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         // use getEntity to make sure that also custom fields are loaded
         $company       = $this->companyRepository->getEntity($company->getId()) ?? $company;
         $floodlightDTO = $this->dtoHelper->cleanDtoFromNonFloodlightUpdatableFields($floodlightDTO, $company);
-        $company       = $floodlightDTO->fillCompany($company);
+        $company       = $this->companyMapper->mapToCompany($floodlightDTO, $company);
         $company       = $this->processCompanyLogo($company, $floodlightDTO->getCompanyLogoUrl());
         $this->companyModel->saveEntity($company);
         $this->leadModel->addToCompany($lead, $company);

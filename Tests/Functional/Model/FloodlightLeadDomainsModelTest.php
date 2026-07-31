@@ -7,7 +7,7 @@ namespace LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Model;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\Lead;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
@@ -43,8 +43,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
     public function disabledtestAddNewLeadDomainOrCountPlusOneInLeadDomainLeadFloodlightDetailsWithLeadDomainExisted(): void
     {
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
-        $fieldModel                 = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility              = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $dtoFactory                 = self::getContainer()->get(FloodlightDtoFactory::class);
         assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
         $lead          = new Lead();
         $domain        = 'leuchtfeuer.com';
@@ -54,7 +53,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $this->assertNotFalse($fileContent);
         $dataJson      = json_decode($fileContent, true);
         $this->assertIsArray($dataJson);
-        $floodlightDTO = new FloodlightDTO($dataJson, $fieldModel, $domainUtility);
+        $floodlightDTO = $dtoFactory->create($dataJson);
         $dataDomain    = [
             'domain'     => $domain,
             'status'     => 'valid',
@@ -75,8 +74,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
     public function testAddNewLeadDomainOrCountPlusOneInLeadDomainLeadFloodlightDetailsWithLeadDomainNotExist(): void
     {
         $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
-        $fieldModel                 = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility              = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $dtoFactory                 = self::getContainer()->get(FloodlightDtoFactory::class);
         assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
         $domain        = 'lfexample.com';
         $lead          = $this->addLead();
@@ -84,7 +82,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $this->assertNotFalse($fileContent);
         $dataJson      = json_decode($fileContent, true);
         $this->assertIsArray($dataJson);
-        $floodlightDTO = new FloodlightDTO($dataJson, $fieldModel, $domainUtility);
+        $floodlightDTO = $dtoFactory->create($dataJson);
         $dataDomain    = [
             'domain'     => $domain,
             'status'     => 'valid',
