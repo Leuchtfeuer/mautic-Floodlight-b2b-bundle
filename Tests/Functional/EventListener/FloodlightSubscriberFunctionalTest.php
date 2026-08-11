@@ -919,7 +919,7 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
             ->getMock();
 
         $domainUtility->method('lookupHostname')->willReturnCallback(
-            fn (string $ip) => $hostnames[$ip] ?? gethostbyaddr($ip)
+            fn (string $ip): string|false => $hostnames[$ip] ?? gethostbyaddr($ip)
         );
 
         $container->set(DomainUtility::class, $domainUtility);
@@ -943,7 +943,7 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
             ->onlyMethods(['fetchRdap'])
             ->getMock();
 
-        $whoisService->method('fetchRdap')->willReturnCallback(function (string $ip) use ($responses, $failIps) {
+        $whoisService->method('fetchRdap')->willReturnCallback(function (string $ip) use ($responses, $failIps): ?array {
             if (in_array($ip, $failIps, true)) {
                 return null;
             }
