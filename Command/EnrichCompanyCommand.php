@@ -41,14 +41,9 @@ class EnrichCompanyCommand extends ModeratedCommand
         protected DtoHelper $dtoHelper,
         protected Status200Strategy $status200Strategy,
         protected CompanyMapper $companyMapper,
+        private readonly \Mautic\LeadBundle\Entity\CompanyRepository $companyRepository,
     ) {
         parent::__construct($pathsHelper, $coreParametersHelper);
-    }
-
-    protected function configure(): void
-    {
-        $this->setName('leuchtfeuer:floodlight:enrich-companies')
-            ->setDescription('Enrich company data with Floodlight data by address');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -56,13 +51,13 @@ class EnrichCompanyCommand extends ModeratedCommand
         if (!$this->config->isPublished()) {
             $output->writeln('<error>Plugin is not published</error>');
 
-            return 0;
+            return \Symfony\Component\Console\Command\Command::SUCCESS;
         }
 
         if (!$this->config->isConfigured()) {
             $output->writeln('<error>There is no API key set for the plugin</error>');
 
-            return 0;
+            return \Symfony\Component\Console\Command\Command::SUCCESS;
         }
 
         $this->flCompanyDomainsModel->saveDomainsForNonFloodlightCompanies();
@@ -71,20 +66,20 @@ class EnrichCompanyCommand extends ModeratedCommand
         if (empty($companyDomains) || !is_array($companyDomains)) {
             $output->writeln('<info>No companies to enrich</info>');
 
-            return 0;
+            return \Symfony\Component\Console\Command\Command::SUCCESS;
         }
 
-        if (true === $this->config->checkIfLookupReturned429ResponseInLast60Minutes()) {
+        if ($this->config->checkIfLookupReturned429ResponseInLast60Minutes()) {
             $output->writeln('<error>Floodlight quota exceeded, please try again later</error>');
 
-            return 0;
+            return \Symfony\Component\Console\Command\Command::SUCCESS;
         }
 
         foreach ($companyDomains as $companyDomain) {
             assert($companyDomain instanceof FloodlightCompanyDomains);
             $domain                = $companyDomain->getDomain();
             // use getEntity to make sure that also custom fields are loaded
-            $company               = $this->companyModel->getRepository()->getEntity($companyDomain->getCompany()->getId()) ?? $companyDomain->getCompany();
+            $company               = $this->companyRepository->getEntity($companyDomain->getCompany()->getId()) ?? $companyDomain->getCompany();
             $companyEnrichmentDate = $company->getFieldValue('f4b_enrichment_date');
             if ('' === trim($domain)) {
                 continue;
@@ -175,6 +170,6 @@ class EnrichCompanyCommand extends ModeratedCommand
 
         $output->writeln('<info>Enriching company data DONE!</info>');
 
-        return 0;
+        return \Symfony\Component\Console\Command\Command::SUCCESS;
     }
 }

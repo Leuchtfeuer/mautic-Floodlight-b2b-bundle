@@ -14,7 +14,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsMo
 class CompanyDomainMapper
 {
     public function __construct(
-        private DomainUtility $domainUtility,
+        private readonly DomainUtility $domainUtility, private readonly \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository $floodlightCompanyDomainsRepository,
     ) {
     }
 
@@ -39,7 +39,7 @@ class CompanyDomainMapper
                 continue;
             }
 
-            $companyDomain = $floodlightCompanyDomainsModel->getRepository()->findOneBy(
+            $companyDomain = $this->floodlightCompanyDomainsRepository->findOneBy(
                 [
                     'domain'  => $domain,
                     'company' => $company,

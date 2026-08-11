@@ -17,8 +17,9 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
+use Symfony\Component\HttpKernel\KernelInterface;
 
-class EnrichCompanyCommandTest extends MauticMysqlTestCase
+final class EnrichCompanyCommandTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
 
@@ -55,7 +56,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
     {
         $this->fixtureHelper->createAndEnablePlugin(true, 'invalidAccessKeyId', 'invalidSecretKey');
         $company       = $this->addCompany('Test Company');
-        $companyDomain = $this->addCompanyDomain('leuchtfeuer.com', $company);
+        $this->addCompanyDomain('leuchtfeuer.com', $company);
         $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
         $this->assertStringContainsString('You are using an invalid API key', $commandTester->getDisplay());
     }
@@ -67,7 +68,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
     {
         $this->fixtureHelper->createAndEnablePlugin();
         $company       = $this->addCompany('Leuchtfeuer');
-        $companyDomain = $this->addCompanyDomain('leuchtfeuer.com', $company);
+        $this->addCompanyDomain('leuchtfeuer.com', $company);
 
         // First 200 command --> company should be updated
         $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
@@ -95,20 +96,20 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
     public function testNewCompanyDomainAddedForCompanyThatExistedBeforeFloodlight(): void
     {
         $this->fixtureHelper->createAndEnablePlugin();
-        $company = $this->addCompany('Test Company', '202domain.com');
+        $this->addCompany('Test Company', '202domain.com');
 
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
         $newCompanyDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy([], ['company' => 'ASC', 'domain' => 'ASC']);
         $this->assertCount(1, $newCompanyDomains);
         $this->assertInstanceOf(FloodlightCompanyDomains::class, $newCompanyDomains[0]);
-        $this->assertEquals('202domain.com', $newCompanyDomains[0]->getDomain());
+        $this->assertSame('202domain.com', $newCompanyDomains[0]->getDomain());
     }
 
     public function testPreviousValuesDontGetOverriddenViaEnrichment(): void
     {
         $this->fixtureHelper->createAndEnablePlugin();
-        $company           = $this->addCompany('Leuchtfeuer', 'leuchtfeuer.com');
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->addCompany('Leuchtfeuer', 'leuchtfeuer.com');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
         $companies         = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $companies);
         // Leuchtfeuer doesn't get overridden by Leuchtfeuer Digital Marketing GmbH
@@ -123,10 +124,9 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
     public function testEnrichByDomainStatus202(): void
     {
         $this->fixtureHelper->createAndEnablePlugin();
-        $company = $this->addCompany('Test Company', '202domain.com');
+        $this->addCompany('Test Company', '202domain.com');
 
-        $kernel = static::getContainer()->get('kernel');
-        $this->assertInstanceOf(\Symfony\Component\HttpKernel\KernelInterface::class, $kernel);
+        $kernel        = self::getContainer()->get(KernelInterface::class);
         $application   = new Application($kernel);
         $command       = $application->find('leuchtfeuer:floodlight:enrich-companies');
         $commandTester = new CommandTester($command);
@@ -150,7 +150,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
     {
         $this->fixtureHelper->createAndEnablePlugin();
         $company       = $this->addCompany('Test Company', 'https://localhostdomain1245.com');
-        $companyDomain = $this->addCompanyDomain('localhostdomain1245.com', $company);
+        $this->addCompanyDomain('localhostdomain1245.com', $company);
 
         // First 404 command, enrichment date should be set to current date
         $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
@@ -175,7 +175,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $company       = $this->addCompany('Telco', 'telcodomain.com');
         $this->addCompanyDomain('telcodomain.com', $company);
         $this->createUnknownLeadAndAddToCompany($company);
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
@@ -187,7 +187,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $company       = $this->addCompany('Telco', 'telcodomain.com');
         $this->addCompanyDomain('telcodomain.com', $company);
         $this->createKnownLeadAndAddToCompany($company);
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
@@ -199,7 +199,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $company       = $this->addCompany('Leuchtfeuer');
         $this->addCompanyDomain('leuchtfeuer.com', $company);
         $this->createUnknownLeadAndAddToCompany($company);
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
         $this->checkNumberOfLeadsAssignedToCompany(1);
         $this->checkIfCompanyDomainHasIsTelcoValue(false);
     }
@@ -211,7 +211,7 @@ class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $company       = $this->addCompany('Telco', 'telcodomain.com');
         $this->addCompanyDomain('telcodomain.com', $company);
         $this->createUnknownLeadAndAddToCompany($company);
-        $commandTester     = $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:enrich-companies');
         $this->checkNumberOfLeadsAssignedToCompany(0);
         $this->checkIfCompanyDomainHasIsTelcoValue(true);
     }

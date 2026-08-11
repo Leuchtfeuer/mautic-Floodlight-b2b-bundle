@@ -8,7 +8,7 @@ use Mautic\CoreBundle\Model\AuditLogModel;
 
 class AuditLogHelper
 {
-    public function __construct(private AuditLogModel $auditLogModel)
+    public function __construct(private readonly \Mautic\CoreBundle\Entity\AuditLogRepository $auditLogRepository)
     {
     }
 
@@ -17,12 +17,10 @@ class AuditLogHelper
      */
     public function getNonFloodlightUpdatableFields(int $id): array
     {
-        $result = $this->auditLogModel->getRepository()->findBy(
+        $result = $this->auditLogRepository->findBy(
             ['object' => 'company', 'objectId' => $id],
         );
-        $nonFloodlightAuditLogEntries = array_filter($result, function ($item) {
-            return 'Floodlight B2B' !== $item->getUserName();
-        });
+        $nonFloodlightAuditLogEntries = array_filter($result, fn($item): bool => 'Floodlight B2B' !== $item->getUserName());
 
         $fieldsNotUpdatableByFloodlight = [];
 

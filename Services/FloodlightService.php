@@ -17,7 +17,7 @@ class FloodlightService implements FloodlightServiceInterface
 {
     public const FLOODLIGHT_VERSION = 'v1';
 
-    public function __construct(private ApiClient $client, private LoggerInterface $mauticLogger, private string $floodlightApiUrl = 'https://api.floodlight-b2b.com')
+    public function __construct(private readonly ApiClient $client, private readonly LoggerInterface $mauticLogger, private readonly string $floodlightApiUrl = 'https://api.floodlight-b2b.com')
     {
     }
 

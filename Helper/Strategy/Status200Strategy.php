@@ -27,19 +27,20 @@ use Symfony\Component\HttpClient\HttpClient;
 class Status200Strategy implements StatusCodeStrategyInterface
 {
     public function __construct(
-        private FloodlightLeadDomainsModel $leadDomainsModel,
-        private FloodlightCompanyDomainsModel $companyDomainsModel,
-        private CompanyRepository $companyRepository,
-        private CompanyModel $companyModel,
-        private LeadModel $leadModel,
-        private FieldHelper $fieldHelper,
-        private DomainUtility $domainUtility,
-        private FloodlightDtoFactory $dtoFactory,
-        private DtoHelper $dtoHelper,
-        private Config $config,
-        private CompanyLeadRepository $companyLeadRepository,
-        private PathsHelper $pathsHelper,
-        private CompanyMapper $companyMapper,
+        private readonly FloodlightLeadDomainsModel $leadDomainsModel,
+        private readonly FloodlightCompanyDomainsModel $companyDomainsModel,
+        private readonly CompanyRepository $companyRepository,
+        private readonly CompanyModel $companyModel,
+        private readonly LeadModel $leadModel,
+        private readonly FieldHelper $fieldHelper,
+        private readonly DomainUtility $domainUtility,
+        private readonly FloodlightDtoFactory $dtoFactory,
+        private readonly DtoHelper $dtoHelper,
+        private readonly Config $config,
+        private readonly CompanyLeadRepository $companyLeadRepository,
+        private readonly PathsHelper $pathsHelper,
+        private readonly CompanyMapper $companyMapper,
+        private readonly \Mautic\LeadBundle\Entity\LeadRepository $leadRepository,
     ) {
     }
 
@@ -146,8 +147,6 @@ class Status200Strategy implements StatusCodeStrategyInterface
         } else {
             $this->updateCompany($floodlightDto, $lead, $company);
         }
-
-        \assert($company instanceof Company);
         $this->updateRegularCompanyDomains($floodlightDto, $company);
 
         $this->leadDomainsModel->recalculateLeadPrimaryCompany($lead);
@@ -159,7 +158,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
             return false;
         }
         $leadIds = $this->companyLeadRepository->getCompanyLeads($company->getId());
-        $leads   = $this->leadModel->getRepository()->findBy(['id' => array_column($leadIds, 'lead_id')]);
+        $leads   = $this->leadRepository->findBy(['id' => array_column($leadIds, 'lead_id')]);
         foreach ($leads as $lead) {
             if (false === $this->leadIsAnonymous($lead)) {
                 return true;
@@ -195,9 +194,9 @@ class Status200Strategy implements StatusCodeStrategyInterface
     public function detachAllUnknowContactsFromCompany(Company $company): void
     {
         $leadsIds = $this->companyLeadRepository->getCompanyLeads($company->getId());
-        $leads    = $this->leadModel->getRepository()->findBy(['id' => array_column($leadsIds, 'lead_id')]);
+        $leads    = $this->leadRepository->findBy(['id' => array_column($leadsIds, 'lead_id')]);
         foreach ($leads as $lead) {
-            if (true === $this->leadIsAnonymous($lead)) {
+            if ($this->leadIsAnonymous($lead)) {
                 $this->companyModel->removeLeadFromCompany($company, $lead);
                 $this->companyModel->saveEntity($company);
                 $this->leadModel->saveEntity($lead);
@@ -263,11 +262,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         if (null === $logoFileName || empty($logoFileName)) {
             return false;
         }
-        if (is_string($logoFileName) && str_starts_with($logoFileName, 'f4b_')) {
-            return false;
-        }
-
-        return true;
+        return !is_string($logoFileName) || !str_starts_with($logoFileName, 'f4b_');
     }
 
     private function deleteOldLogoFile(Company $company): void

@@ -39,36 +39,29 @@ class LookupRetryCommand extends ModeratedCommand
         parent::__construct($pathsHelper, $coreParametersHelper);
     }
 
-    protected function configure(): void
-    {
-        $this->setName('leuchtfeuer:floodlight:lookup-retries')
-            ->setDescription('Retry lookups with status retry');
-    }
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->config->isPublished()) {
             $output->writeln('<error>Plugin is not published</error>');
 
-            return 0;
+            return \Symfony\Component\Console\Command\Command::SUCCESS;
         }
 
         if (!$this->config->isConfigured()) {
             $output->writeln('<error>There is no API key set for the plugin</error>');
 
-            return 0;
+            return \Symfony\Component\Console\Command\Command::SUCCESS;
         }
 
         $leadDomains = $this->floodlightLeadDomainsModel->getLeadDomainToEnrichement();
 
-        if (empty($leadDomains)) {
+        if ($leadDomains === []) {
             $output->writeln('<info>No lookups to retry found</info>');
 
-            return 0;
+            return \Symfony\Component\Console\Command\Command::SUCCESS;
         }
 
         foreach ($leadDomains as $leadDomain) {
-            assert($leadDomain instanceof FloodlightLeadDomains);
             $ipHash = $leadDomain->getIpHash();
             if (null === $ipHash) {
                 $output->writeln('<error>Lead domain '.$leadDomain->getDomain().' without IP hash</error>');
@@ -89,6 +82,6 @@ class LookupRetryCommand extends ModeratedCommand
         }
         $output->writeln('<info>Retry for all corresponding lookups done</info>');
 
-        return 0;
+        return \Symfony\Component\Console\Command\Command::SUCCESS;
     }
 }

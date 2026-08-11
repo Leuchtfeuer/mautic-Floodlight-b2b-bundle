@@ -9,8 +9,8 @@ use Mautic\CoreBundle\Helper\PathsHelper;
 class InstallHelper
 {
     public function __construct(
-        private PathsHelper $pathsHelper,
-        private FieldHelper $fieldHelper
+        private readonly PathsHelper $pathsHelper,
+        private readonly FieldHelper $fieldHelper
     ) {
     }
 

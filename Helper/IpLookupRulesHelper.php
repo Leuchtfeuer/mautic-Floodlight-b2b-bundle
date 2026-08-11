@@ -21,38 +21,33 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class IpLookupRulesHelper
 {
-    private ParameterLoader $parameterLoader;
+    private readonly ParameterLoader $parameterLoader;
 
     public function __construct(
-        private PageModel $pageModel,
-        private FloodlightLeadDomainsModel $leadDomainsModel,
-        private FloodlightService $floodlightService,
-        private Reporter $reporter,
-        private Status200Strategy $status200Strategy,
-        private Status202Strategy $status202Strategy,
-        private Status404Strategy $status404Strategy,
-        private Status429Strategy $status429Strategy,
-        private Config $config,
+        private readonly PageModel $pageModel,
+        private readonly FloodlightService $floodlightService,
+        private readonly Reporter $reporter,
+        private readonly Status200Strategy $status200Strategy,
+        private readonly Status202Strategy $status202Strategy,
+        private readonly Status404Strategy $status404Strategy,
+        private readonly Status429Strategy $status429Strategy,
+        private readonly Config $config,
+        private readonly \MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository $floodlightLeadDomainsRepository,
     ) {
         $this->parameterLoader = new ParameterLoader();
     }
 
     public function check(Hit $hit, bool $ignoreSingleClicks): bool
     {
-        if (true === $ignoreSingleClicks && !$this->checkLeadHasMoreThanOnePagehit($hit->getLead()->getId())) {
+        if ($ignoreSingleClicks && !$this->checkLeadHasMoreThanOnePagehit($hit->getLead()->getId())) {
             return false;
         }
-
-        if (!$this->checkIfWasRecent($hit->getLead()->getId())) {
-            return false;
-        }
-
-        return true;
+        return $this->checkIfWasRecent($hit->getLead()->getId());
     }
 
     private function checkIfWasRecent(int $leadId): bool
     {
-        $result = $this->leadDomainsModel->getRepository()->findOneBy(['contact' => $leadId], ['dateModified' => 'DESC']);
+        $result = $this->floodlightLeadDomainsRepository->findOneBy(['contact' => $leadId], ['dateModified' => 'DESC']);
 
         if (empty($result)) {
             return true;
@@ -61,11 +56,7 @@ class IpLookupRulesHelper
         assert($result instanceof FloodlightLeadDomains);
 
         $hour = $this->parameterLoader->getParameterBag()->get('minimum_hour_to_new_entry', 2);
-        if ($result->getDateModified() > (new \DateTime())->modify('-'.$hour.' hour')) {
-            return false;
-        }
-
-        return true;
+        return $result->getDateModified() <= (new \DateTime())->modify('-'.$hour.' hour');
     }
 
     private function checkLeadHasMoreThanOnePagehit(int $leadId): bool
@@ -75,10 +66,7 @@ class IpLookupRulesHelper
         return count($result) > 1;
     }
 
-    /**
-     * @param mixed $data
-     */
-    private function checkIfInListOfValidRequestStatuses($data): bool
+    private function checkIfInListOfValidRequestStatuses(array $data): bool
     {
         $validStatusRequest = [
             '404',
@@ -87,16 +75,7 @@ class IpLookupRulesHelper
             '429',
             '401',
         ];
-
-        if (
-            false === $data
-            || !is_array($data)
-            || !in_array($data['statusRequestCode'], $validStatusRequest)
-        ) {
-            return false;
-        }
-
-        return true;
+        return in_array($data['statusRequestCode'], $validStatusRequest);
     }
 
     public function getAndProcessFloodlightApiData(string $remoteAddr, Lead $lead): void

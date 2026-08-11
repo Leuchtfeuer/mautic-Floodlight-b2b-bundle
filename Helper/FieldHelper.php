@@ -26,7 +26,7 @@ class FieldHelper
         'is_index'               => false,
     ];
 
-    public function __construct(private FieldModel $fieldModel, protected FormFactoryInterface $formFactory, protected LoggerInterface $mauticLogger)
+    public function __construct(private readonly FieldModel $fieldModel, protected FormFactoryInterface $formFactory, protected LoggerInterface $mauticLogger, private readonly \Mautic\LeadBundle\Entity\LeadFieldRepository $leadFieldRepository)
     {
     }
 
@@ -36,7 +36,7 @@ class FieldHelper
     public function createField(string $alias, string $label, string $type, array $options = []): void
     {
         // Update existing field
-        $existingField = $this->fieldModel->getRepository()->findOneBy([
+        $existingField = $this->leadFieldRepository->findOneBy([
             'alias'  => $alias,
             'object' => self::DEFAULT_VALUES['object'],
         ]);
@@ -102,7 +102,7 @@ class FieldHelper
             return;
         }
         foreach ($fieldsToUpdate as $key => $values) {
-            $field = $this->fieldModel->getRepository()->findOneBy(['alias' => $key]);
+            $field = $this->leadFieldRepository->findOneBy(['alias' => $key]);
             if (!$field instanceof LeadField) {
                 continue;
             }
@@ -115,7 +115,7 @@ class FieldHelper
      */
     public function updateFieldCharLengthLimit(string $alias, int $newLimit): bool
     {
-        $field = $this->fieldModel->getRepository()->findOneBy(['alias' => $alias]);
+        $field = $this->leadFieldRepository->findOneBy(['alias' => $alias]);
 
         if (!$field instanceof LeadField) {
             return false;
@@ -179,7 +179,7 @@ class FieldHelper
             }
         }
 
-        if (empty($result)) {
+        if ($result === []) {
             return false;
         }
 
@@ -260,7 +260,7 @@ class FieldHelper
         if ($result) {
             try {
                 $this->fieldModel->saveEntity($field);
-            } catch (\OutOfRangeException) {
+            } catch (\Exception) {
                 // Mautic 7's updateColumnLength() rejects charLengthLimit > 191,
                 // but the entity metadata (properties) is already persisted at this point.
                 // Safe to ignore since we only changed list properties, not the column.

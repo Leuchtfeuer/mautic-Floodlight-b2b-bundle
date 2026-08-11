@@ -11,7 +11,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodligh
 class Credentials implements HeaderCredentialsInterface
 {
     public function __construct(
-        private IntegrationsHelper $integrationsHelper
+        private readonly IntegrationsHelper $integrationsHelper
     ) {
     }
 

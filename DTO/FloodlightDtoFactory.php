@@ -9,7 +9,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Hydration\FloodlightDtoHydrator;
 class FloodlightDtoFactory
 {
     public function __construct(
-        private FloodlightDtoHydrator $hydrator,
+        private readonly FloodlightDtoHydrator $hydrator,
     ) {
     }
 

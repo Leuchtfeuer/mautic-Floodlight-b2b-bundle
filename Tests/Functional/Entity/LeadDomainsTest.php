@@ -8,7 +8,7 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 
-class LeadDomainsTest extends MauticMysqlTestCase
+final class LeadDomainsTest extends MauticMysqlTestCase
 {
     public const TABLE_NAME = 'test_f4b_lead_ip_lookups';
 
@@ -54,17 +54,17 @@ class LeadDomainsTest extends MauticMysqlTestCase
 
     public function testGetDomain(): void
     {
-        $this->assertEquals('test', $this->leadDomain->getDomain());
+        $this->assertSame('test', $this->leadDomain->getDomain());
     }
 
     public function testGetCount(): void
     {
-        $this->assertEquals(1, $this->leadDomain->getCount());
+        $this->assertSame(1, $this->leadDomain->getCount());
     }
 
     public function testGetDateAdded(): void
     {
-        $this->assertInstanceOf(\DateTime::class, $this->leadDomain->getDateAdded());
+        $this->assertLessThanOrEqual(new \DateTime(), $this->leadDomain->getDateAdded());
     }
 
     public function testGetDateModified(): void
@@ -75,26 +75,27 @@ class LeadDomainsTest extends MauticMysqlTestCase
     public function testSetLead(): void
     {
         $leadDomain = new FloodlightLeadDomains();
-        $leadDomain->setContact($this->createMock(Lead::class));
+        $leadDomain->setContact($this->createStub(Lead::class));
         $this->assertInstanceOf(Lead::class, $leadDomain->getContact());
     }
 
     public function testSetDomain(): void
     {
         $this->leadDomain->setDomain('test2');
-        $this->assertEquals('test2', $this->leadDomain->getDomain());
+        $this->assertSame('test2', $this->leadDomain->getDomain());
     }
 
     public function testSetCount(): void
     {
         $this->leadDomain->setCount(2);
-        $this->assertEquals(2, $this->leadDomain->getCount());
+        $this->assertSame(2, $this->leadDomain->getCount());
     }
 
     public function testSetDateAdded(): void
     {
-        $this->leadDomain->setDateAdded(new \DateTime());
-        $this->assertInstanceOf(\DateTime::class, $this->leadDomain->getDateAdded());
+        $dateAdded = new \DateTime();
+        $this->leadDomain->setDateAdded($dateAdded);
+        $this->assertSame($dateAdded, $this->leadDomain->getDateAdded());
     }
 
     public function testSetDateModified(): void
@@ -106,6 +107,6 @@ class LeadDomainsTest extends MauticMysqlTestCase
     public function testAddCount(): void
     {
         $this->leadDomain->addCount();
-        $this->assertEquals(2, $this->leadDomain->getCount());
+        $this->assertSame(2, $this->leadDomain->getCount());
     }
 }

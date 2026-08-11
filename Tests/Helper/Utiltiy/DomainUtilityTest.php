@@ -12,15 +12,15 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
-class DomainUtilityTest extends TestCase
+final class DomainUtilityTest extends TestCase
 {
     public function testIsIp(): void
     {
-        $whoisService           = $this->createMock(WhoisService::class);
-        $keywordBlacklistHelper = $this->createMock(KeywordBlacklistHelper::class);
-        $domainBlacklistHelper  = $this->createMock(DomainBlacklistHelper::class);
-        $pathsHelper            = $this->createMock(PathsHelper::class);
-        $logger                 = $this->createMock(LoggerInterface::class);
+        $whoisService           = $this->createStub(WhoisService::class);
+        $keywordBlacklistHelper = $this->createStub(KeywordBlacklistHelper::class);
+        $domainBlacklistHelper  = $this->createStub(DomainBlacklistHelper::class);
+        $pathsHelper            = $this->createStub(PathsHelper::class);
+        $logger                 = $this->createStub(LoggerInterface::class);
 
         $domainUtility = new DomainUtility($whoisService, $keywordBlacklistHelper, $domainBlacklistHelper, $pathsHelper, $logger);
         $this->assertTrue($domainUtility->hasMoreThanFourNumbers('123.23'));

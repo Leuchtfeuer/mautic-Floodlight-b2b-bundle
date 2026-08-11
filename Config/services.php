@@ -22,6 +22,9 @@ return function (ContainerConfigurator $configurator): void {
     $services->alias('mautic.leuchtfeuerfloodlightb2b.factory.floodlightdto', MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory::class);
     $services->alias('mautic.leuchtfeuerfloodlightb2b.status200strategy', MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status200Strategy::class);
     $services->alias('mautic.leuchtfeuerfloodlightb2b.status429strategy', MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status429Strategy::class);
+    $services->alias('mautic.integration.leuchtfeuerfloodlightb2b', MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration::class);
+    $services->alias('mautic.integration.leuchtfeuerfloodlightb2b.configuration', MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Support\ConfigSupport::class);
+    $services->alias('mautic.integration.leuchtfeuerfloodlightb2b.config', MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class);
 
     // %...% argument can't be autowired, so it needs to be set explicitly.
     $services->get(MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService::class)

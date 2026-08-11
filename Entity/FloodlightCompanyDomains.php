@@ -53,9 +53,7 @@ class FloodlightCompanyDomains
         $metadata->addPropertyConstraint(
             'domain',
             new Assert\NotBlank(
-                [
-                    'message' => 'mautic.core.name.required',
-                ]
+                message: 'mautic.core.name.required'
             )
         );
     }

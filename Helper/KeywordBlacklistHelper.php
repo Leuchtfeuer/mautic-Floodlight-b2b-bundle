@@ -14,7 +14,7 @@ class KeywordBlacklistHelper
     private array $blacklist = [];
 
     public function __construct(
-        private PathsHelper $pathsHelper,
+        private readonly PathsHelper $pathsHelper,
     ) {
     }
 

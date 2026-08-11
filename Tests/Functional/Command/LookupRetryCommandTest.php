@@ -14,7 +14,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 
-class LookupRetryCommandTest extends MauticMysqlTestCase
+final class LookupRetryCommandTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
 
@@ -30,69 +30,68 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
     {
         $this->fixtureHelper->createAndEnablePlugin(false);
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
-        $this->assertEquals('', $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
-        $this->assertEquals(1, $newLeadDomains[0]->getCount());
+        $this->assertNull($newLeadDomains[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
+        $this->assertSame(1, $newLeadDomains[0]->getCount());
     }
 
     public function testEnrichWhenApiKeyNotSet(): void
     {
         $this->fixtureHelper->createAndEnablePlugin(true, null, null);
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
-        $this->assertEquals('', $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
-        $this->assertEquals(1, $newLeadDomains[0]->getCount());
+        $this->assertNull($newLeadDomains[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
+        $this->assertSame(1, $newLeadDomains[0]->getCount());
     }
 
     public function testEnrichIfInvalidApiKey(): void
     {
         $this->fixtureHelper->createAndEnablePlugin(true, 'invalidAccessKeyId', 'invalidSecretKey');
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
-        $this->assertEquals('', $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
-        $this->assertEquals(1, $newLeadDomains[0]->getCount());
+        $this->assertNull($newLeadDomains[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
+        $this->assertSame(1, $newLeadDomains[0]->getCount());
     }
 
     public function testEnrichRetryEntryToSuccessEntry(): void
     {
         $this->fixtureHelper->createAndEnablePlugin();
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
-        $this->assertEquals('leuchtfeuer.com', $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_SUCCESS, $newLeadDomains[0]->getStatus());
-        $this->assertEquals(1, $newLeadDomains[0]->getCount());
-        $this->assertEquals(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
+        $this->assertSame('leuchtfeuer.com', $newLeadDomains[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $newLeadDomains[0]->getStatus());
+        $this->assertSame(1, $newLeadDomains[0]->getCount());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
 
         $newCompanies = $this->em->getRepository(Company::class)->findAll();
         $this->assertCount(1, $newCompanies);
-        $this->assertInstanceOf(Company::class, $newCompanies[0]);
         $this->assertSame('Leuchtfeuer Digital Marketing GmbH', $newCompanies[0]->getName());
 
         $newLeadCompaniesDomains = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
@@ -105,49 +104,49 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
     {
         $this->fixtureHelper->createAndEnablePlugin();
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
         $this->assertEquals(null, $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $newLeadDomains[0]->getStatus());
-        $this->assertEquals(1, $newLeadDomains[0]->getCount());
+        $this->assertSame(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $newLeadDomains[0]->getStatus());
+        $this->assertSame(1, $newLeadDomains[0]->getCount());
     }
 
     public function testEnrichRetryEntryWhenFloodlightGivesAnother202Response(): void
     {
         $this->fixtureHelper->createAndEnablePlugin();
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryIpHash', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->addNewLeadDomain($lead, 'retryIpHash', 1, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
         $this->assertEquals(null, $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
-        $this->assertEquals(2, $newLeadDomains[0]->getCount());
-        $this->assertEquals(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
+        $this->assertSame(FloodlightLeadDomains::STATUS_RETRY, $newLeadDomains[0]->getStatus());
+        $this->assertSame(2, $newLeadDomains[0]->getCount());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
     }
 
     public function testEnrichRetryEntryAndExceedRetryLimit(): void
     {
         $this->fixtureHelper->createAndEnablePlugin();
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, 'retryIpHash', 2, FloodlightLeadDomains::STATUS_RETRY);
+        $this->addNewLeadDomain($lead, 'retryIpHash', 2, FloodlightLeadDomains::STATUS_RETRY);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
         $this->assertEquals(null, $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED, $newLeadDomains[0]->getStatus());
-        $this->assertEquals(3, $newLeadDomains[0]->getCount());
+        $this->assertSame(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED, $newLeadDomains[0]->getStatus());
+        $this->assertSame(3, $newLeadDomains[0]->getCount());
     }
 
     /**
@@ -158,21 +157,21 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
     {
         $this->fixtureHelper->createAndEnablePlugin();
         $lead              = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain   = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_RETRY);
         $successLeadDomain = $this->addNewLeadDomain($lead, '70d96c1eae48442fe5fc5a7f234f3d0f13d3da42', 1, FloodlightLeadDomains::STATUS_SUCCESS);
         $successLeadDomain->setDomain('leuchtfeuer.com');
         $this->em->persist($successLeadDomain);
         $this->em->flush();
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
-        $this->assertEquals('leuchtfeuer.com', $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_SUCCESS, $newLeadDomains[0]->getStatus());
-        $this->assertEquals(2, $newLeadDomains[0]->getCount());
-        $this->assertEquals(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
+        $this->assertSame('leuchtfeuer.com', $newLeadDomains[0]->getDomain());
+        $this->assertSame(FloodlightLeadDomains::STATUS_SUCCESS, $newLeadDomains[0]->getStatus());
+        $this->assertSame(2, $newLeadDomains[0]->getCount());
+        $this->assertSame(FloodlightLeadDomains::LOOKUP_TYPE_API, $newLeadDomains[0]->getLookupType());
     }
 
     /**
@@ -183,17 +182,17 @@ class LookupRetryCommandTest extends MauticMysqlTestCase
     {
         $this->fixtureHelper->createAndEnablePlugin();
         $lead            = $this->addLead('Test Lead', 'test11@example.com');
-        $retryLeadDomain = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
-        $LeadDomain404   = $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
+        $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_RETRY);
+        $this->addNewLeadDomain($lead, '404hash', 1, FloodlightLeadDomains::STATUS_NO_DATA_FOUND);
 
-        $commandTester = $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
+        $this->testSymfonyCommand('leuchtfeuer:floodlight:lookup-retries');
 
         $newLeadDomains = $this->em->getRepository(FloodlightLeadDomains::class)->findAll();
         $this->assertCount(1, $newLeadDomains);
         $this->assertInstanceOf(FloodlightLeadDomains::class, $newLeadDomains[0]);
         $this->assertEquals(null, $newLeadDomains[0]->getDomain());
-        $this->assertEquals(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $newLeadDomains[0]->getStatus());
-        $this->assertEquals(2, $newLeadDomains[0]->getCount());
+        $this->assertSame(FloodlightLeadDomains::STATUS_NO_DATA_FOUND, $newLeadDomains[0]->getStatus());
+        $this->assertSame(2, $newLeadDomains[0]->getCount());
     }
 
     private function addNewLeadDomain(Lead $lead, string $ipHash, int $count, string $status): FloodlightLeadDomains

@@ -9,18 +9,16 @@ use Mautic\LeadBundle\Entity\Company;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 
-class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
+final class FloodlightCompanyDomainsModelTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
-
-    private FixtureHelper $fixtureHelper;
 
     public function setUp(): void
     {
         parent::setUp();
-        $this->fixtureHelper = new FixtureHelper($this->em, $this->client);
-        $this->fixtureHelper->createAndEnablePlugin();
-        $this->fixtureHelper->copyBlacklistConfig();
+        $fixtureHelper = new FixtureHelper($this->em, $this->client);
+        $fixtureHelper->createAndEnablePlugin();
+        $fixtureHelper->copyBlacklistConfig();
     }
 
     public function testSuccessCheckIsNewIp(): void

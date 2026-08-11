@@ -12,14 +12,14 @@ use Twig\TwigFunction;
 
 class FloodlightLeadNameHelper extends AbstractExtension
 {
-    public function __construct(private EntityManagerInterface $entityManager)
+    public function __construct(private readonly EntityManagerInterface $entityManager)
     {
     }
 
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('floodlight_lead_name', [$this, 'getFloodlightLeadName']),
+            new TwigFunction('floodlight_lead_name', $this->getFloodlightLeadName(...)),
         ];
     }
 

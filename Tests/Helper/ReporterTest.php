@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ReporterTest extends TestCase
+final class ReporterTest extends TestCase
 {
     public function testMessageFromCommand(): void
     {

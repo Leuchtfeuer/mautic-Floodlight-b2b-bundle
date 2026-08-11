@@ -13,7 +13,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class CustomTemplateSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private FloodlightLeadNameHelper $leadNameHelper
+        private readonly FloodlightLeadNameHelper $leadNameHelper
     ) {
     }
 
@@ -26,7 +26,7 @@ class CustomTemplateSubscriber implements EventSubscriberInterface
 
     public function addLeadNameContent(CustomContentEvent $event): void
     {
-        if (in_array($event->getContext(), ['lead.name.after'])) {
+        if ($event->getContext() == 'lead.name.after') {
             $vars = $event->getVars();
 
             $lead = $vars['item'] ?? $vars['contact'] ?? $vars['lead'] ?? null;

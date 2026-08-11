@@ -12,7 +12,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerInterface;
 
-class FloodlightServiceTest extends TestCase
+final class FloodlightServiceTest extends TestCase
 {
     public function testSuccessTwoStatusCodeOne200(): void
     {
@@ -20,27 +20,27 @@ class FloodlightServiceTest extends TestCase
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $stream            = $this->createMock(StreamInterface::class);
-        $logger            = $this->createMock(LoggerInterface::class);
-        $stream->expects(self::any())
+        $logger            = $this->createStub(LoggerInterface::class);
+        $stream
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
-        $guzzleClient->expects(self::any())
+        $guzzleClient
             ->method('request')
             ->willReturn($responseInterface);
-        $client->expects(self::any())
+        $client
             ->method('getClient')
             ->willReturn($guzzleClient);
-        $responseInterface->expects(self::any())
+        $responseInterface
             ->method('getStatusCode')
-            ->willReturnOnConsecutiveCalls(200);
-        $responseInterface->expects(self::any())
+            ->willReturn(200);
+        $responseInterface
             ->method('getBody')
             ->willReturn($stream);
 
         $service = new FloodlightService($client, $logger);
         $result  = $service->get('1.2.3.4');
-        self::assertSame([['foo' => 'bar'], 'statusRequestCode' => 200], $result);
-        self::assertIsArray($result);
+        $this->assertSame([['foo' => 'bar'], 'statusRequestCode' => 200], $result);
+        $this->assertIsArray($result);
     }
 
     public function testFailThree202Response(): void
@@ -48,21 +48,21 @@ class FloodlightServiceTest extends TestCase
         $client            = $this->createMock(ApiClient::class);
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
-        $logger            = $this->createMock(LoggerInterface::class);
+        $logger            = $this->createStub(LoggerInterface::class);
         $stream            = $this->createMock(StreamInterface::class);
-        $stream->expects(self::any())
+        $stream
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
-        $guzzleClient->expects(self::any())
+        $guzzleClient
             ->method('request')
             ->willReturn($responseInterface);
-        $client->expects(self::any())
+        $client
             ->method('getClient')
             ->willReturn($guzzleClient);
-        $responseInterface->expects(self::any())
+        $responseInterface
             ->method('getStatusCode')
-            ->willReturnOnConsecutiveCalls(202);
-        $responseInterface->expects(self::any())
+            ->willReturn(202);
+        $responseInterface
             ->method('getBody')
             ->willReturn($stream);
 
@@ -70,7 +70,7 @@ class FloodlightServiceTest extends TestCase
         $result  = $service->get('12.1.1.3');
         $this->assertIsArray($result);
         $this->assertIsNotBool($result['statusRequestCode']);
-        self::assertSame(202, $result['statusRequestCode']);
+        $this->assertSame(202, $result['statusRequestCode']);
     }
 
     public function testFailStatusCode404(): void
@@ -78,22 +78,22 @@ class FloodlightServiceTest extends TestCase
         $client            = $this->createMock(ApiClient::class);
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
-        $logger            = $this->createMock(LoggerInterface::class);
+        $logger            = $this->createStub(LoggerInterface::class);
         $stream            = $this->createMock(StreamInterface::class);
 
-        $guzzleClient->expects(self::any())
+        $guzzleClient
             ->method('request')
             ->willReturn($responseInterface);
-        $client->expects(self::any())
+        $client
             ->method('getClient')
             ->willReturn($guzzleClient);
-        $responseInterface->expects(self::any())
+        $responseInterface
             ->method('getStatusCode')
             ->willReturn(404);
-        $responseInterface->expects(self::any())
+        $responseInterface
             ->method('getBody')
             ->willReturn($stream);
-        $stream->expects(self::any())
+        $stream
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
 
@@ -102,7 +102,7 @@ class FloodlightServiceTest extends TestCase
         $result  = $service->get('1.2.3.4');
         $this->assertIsArray($result);
         $this->assertIsNotBool($result['statusRequestCode']);
-        self::assertSame([['foo' => 'bar'], 'statusRequestCode' => 404], $result);
+        $this->assertSame([['foo' => 'bar'], 'statusRequestCode' => 404], $result);
     }
 
     public function testSuccess200FirstTry(): void
@@ -111,27 +111,27 @@ class FloodlightServiceTest extends TestCase
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $stream            = $this->createMock(StreamInterface::class);
-        $logger            = $this->createMock(LoggerInterface::class);
-        $stream->expects(self::any())
+        $logger            = $this->createStub(LoggerInterface::class);
+        $stream
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
-        $guzzleClient->expects(self::any())
+        $guzzleClient
             ->method('request')
             ->willReturn($responseInterface);
-        $client->expects(self::any())
+        $client
             ->method('getClient')
             ->willReturn($guzzleClient);
-        $responseInterface->expects(self::any())
+        $responseInterface
             ->method('getStatusCode')
             ->willReturn(200);
-        $responseInterface->expects(self::any())
+        $responseInterface
             ->method('getBody')
             ->willReturn($stream);
 
         $service = new FloodlightService($client, $logger);
         $result  = $service->get('1.2.3.4');
-        self::assertSame([['foo' => 'bar'], 'statusRequestCode' => 200], $result);
-        self::assertIsArray($result);
+        $this->assertSame([['foo' => 'bar'], 'statusRequestCode' => 200], $result);
+        $this->assertIsArray($result);
     }
 
     /*

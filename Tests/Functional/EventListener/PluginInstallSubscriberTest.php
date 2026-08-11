@@ -7,7 +7,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventList
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\LeadField;
 
-class PluginInstallSubscriberTest extends MauticMysqlTestCase
+final class PluginInstallSubscriberTest extends MauticMysqlTestCase
 {
     public function testOnPluginInstall(): void
     {

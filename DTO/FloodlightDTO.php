@@ -121,7 +121,7 @@ class FloodlightDTO implements DTOInterface
      * @param array<string, mixed> $pureData
      */
     public function __construct(
-        private array $pureData,
+        private readonly array $pureData,
     ) {
     }
 

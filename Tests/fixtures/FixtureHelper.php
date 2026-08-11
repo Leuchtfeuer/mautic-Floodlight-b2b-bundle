@@ -11,11 +11,11 @@ use Mautic\PluginBundle\Entity\Plugin;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 
-final class FixtureHelper
+final readonly class FixtureHelper
 {
     public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly KernelBrowser $client,
+        private EntityManagerInterface $em,
+        private KernelBrowser $client,
     ) {
     }
 

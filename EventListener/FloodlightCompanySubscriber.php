@@ -16,10 +16,10 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class FloodlightCompanySubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private IpLookupHelper $ipLookupHelper,
-        private AuditLogModel $auditLogModel,
-        private CoreParametersHelper $coreParametersHelper,
-        private EntityManagerInterface $em
+        private readonly IpLookupHelper $ipLookupHelper,
+        private readonly CoreParametersHelper $coreParametersHelper,
+        private readonly EntityManagerInterface $em,
+        private readonly \Mautic\CoreBundle\Entity\AuditLogRepository $auditLogRepository
     ) {
     }
 
@@ -79,12 +79,12 @@ class FloodlightCompanySubscriber implements EventSubscriberInterface
         assert(is_array($logData['details']));
         $auditLog->setDetails($logData['details']);
         assert(is_string($ipAddress));
-        $auditLog->setIpAddress((string) $ipAddress);
+        $auditLog->setIpAddress($ipAddress);
         $auditLog->setDateAdded(new \DateTime());
         $auditLog->setUserId(0);
         $auditLog->setUserName('Floodlight B2B');
 
-        $this->auditLogModel->getRepository()->saveEntity($auditLog);
+        $this->auditLogRepository->saveEntity($auditLog);
 
         $this->em->detach($auditLog);
     }

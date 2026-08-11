@@ -17,7 +17,7 @@ class FloodlightDtoHydrator
     private ?array $listFieldCache = null;
 
     public function __construct(
-        private FieldModel $fieldModel,
+        private readonly FieldModel $fieldModel, private readonly \Mautic\LeadBundle\Entity\LeadFieldRepository $leadFieldRepository,
     ) {
     }
 
@@ -196,12 +196,12 @@ class FloodlightDtoHydrator
     {
         $value = $this->extractArrayForField($data, $def);
 
-        if (empty($value)) {
+        if ($value === []) {
             return [];
         }
 
         if ($this->isListField($def->dbAlias)) {
-            $value = array_map(fn ($item) => str_replace([' '], ['-'], $item), $value);
+            $value = array_map(fn ($item): string => str_replace([' '], ['-'], $item), $value);
         }
 
         return $value;
@@ -283,7 +283,7 @@ class FloodlightDtoHydrator
      */
     private function truncateArray(array $values, string $dbAlias): array
     {
-        if (empty($values)) {
+        if ($values === []) {
             return $values;
         }
 
@@ -333,7 +333,7 @@ class FloodlightDtoHydrator
     {
         if (null === $this->listFieldCache) {
             $this->listFieldCache = [];
-            foreach ($this->fieldModel->getRepository()->findBy(['object' => 'company']) as $field) {
+            foreach ($this->leadFieldRepository->findBy(['object' => 'company']) as $field) {
                 $properties                               = $field->getProperties();
                 $this->listFieldCache[$field->getAlias()] = is_array($properties)
                     && isset($properties['list'])

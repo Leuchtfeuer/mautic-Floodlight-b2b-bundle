@@ -289,11 +289,11 @@ class PluginInstallSubscriber implements EventSubscriberInterface
             ],
         ];
 
-    public function __construct(private InstallHelper $installHelper, private PathsHelper $pathsHelper, private FilePathResolver $filePathResolver)
+    public function __construct(private readonly InstallHelper $installHelper, private readonly PathsHelper $pathsHelper, private readonly FilePathResolver $filePathResolver)
     {
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             PluginEvents::ON_PLUGIN_INSTALL                    => ['onPluginInstall', 0],

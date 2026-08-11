@@ -56,11 +56,11 @@ class FieldDefinitionMigrator
         'f4b_companydescription_long',
     ];
 
-    private string $companiesTable;
-    private string $leadFieldsTable;
+    private readonly string $companiesTable;
+    private readonly string $leadFieldsTable;
 
     public function __construct(
-        private Connection $connection,
+        private readonly Connection $connection,
     ) {
         $prefix = defined('MAUTIC_TABLE_PREFIX') && is_string(MAUTIC_TABLE_PREFIX) ? MAUTIC_TABLE_PREFIX : '';
         $this->companiesTable  = $prefix.'companies';
@@ -117,15 +117,11 @@ class FieldDefinitionMigrator
 
     private function hasFieldsWithWrongLimit(): bool
     {
-        if (empty(self::LIMIT_TO_191_FIELDS)) {
-            return false;
-        }
-
         $placeholders = implode(',', array_fill(0, count(self::LIMIT_TO_191_FIELDS), '?'));
 
         return (int) $this->connection->fetchOne(
             "SELECT COUNT(*) FROM `{$this->leadFieldsTable}` WHERE `alias` IN ({$placeholders}) AND `object` = 'company' AND (`char_length_limit` IS NULL OR `char_length_limit` != 191)",
-            array_values(self::LIMIT_TO_191_FIELDS)
+            self::LIMIT_TO_191_FIELDS
         ) > 0;
     }
 
@@ -211,7 +207,7 @@ class FieldDefinitionMigrator
         $placeholders = implode(',', array_fill(0, count(self::DROP_INDEX_FIELDS), '?'));
         $this->connection->executeStatement(
             "UPDATE `{$this->leadFieldsTable}` SET `is_index` = 0 WHERE `alias` IN ({$placeholders}) AND `object` = 'company' AND `is_index` = 1",
-            array_values(self::DROP_INDEX_FIELDS)
+            self::DROP_INDEX_FIELDS
         );
 
         return $dropped;
@@ -219,15 +215,11 @@ class FieldDefinitionMigrator
 
     private function updateCharLengthLimits(): int
     {
-        if (empty(self::LIMIT_TO_191_FIELDS)) {
-            return 0;
-        }
-
         $placeholders = implode(',', array_fill(0, count(self::LIMIT_TO_191_FIELDS), '?'));
 
         return $this->connection->executeStatement(
             "UPDATE `{$this->leadFieldsTable}` SET `char_length_limit` = 191 WHERE `alias` IN ({$placeholders}) AND `object` = 'company' AND (`char_length_limit` IS NULL OR `char_length_limit` != 191)",
-            array_values(self::LIMIT_TO_191_FIELDS)
+            self::LIMIT_TO_191_FIELDS
         );
     }
 

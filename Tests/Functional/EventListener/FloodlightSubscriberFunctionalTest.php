@@ -23,8 +23,9 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
+use Psr\Log\LoggerInterface;
 
-class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
+final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
 
@@ -46,7 +47,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
         $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
-        $this->assertEquals(0, count($totalItemsAfterRequest));
+        $this->assertCount(0, $totalItemsAfterRequest);
     }
 
     public function testPagehitWhenApiKeyNotSet(): void
@@ -55,7 +56,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
         $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
-        $this->assertEquals(0, count($totalItemsAfterRequest));
+        $this->assertCount(0, $totalItemsAfterRequest);
     }
 
     public function testPagehitWhenInvalidApiKey(): void
@@ -65,7 +66,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
         $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
-        $this->assertEquals(0, count($totalItemsAfterRequest));
+        $this->assertCount(0, $totalItemsAfterRequest);
     }
 
     public function testJustOnePagehit(): void
@@ -74,7 +75,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->updateApikey();
         $this->client->request('GET', '/mtracking.gif');
         $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
-        $this->assertEquals(0, count($totalItemsAfterRequest));
+        $this->assertCount(0, $totalItemsAfterRequest);
     }
 
     public function testNoLookupForKnownLeads(): void
@@ -85,7 +86,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('217.91.35.16', $lead);
         $this->processHit('217.91.35.16', $lead);
         $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
-        $this->assertEquals(0, count($totalItemsAfterRequest));
+        $this->assertCount(0, $totalItemsAfterRequest);
     }
 
     public function testSuccessPagehit(): void
@@ -108,7 +109,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
         $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
 
         $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
         $this->assertCount(1, $companyDomainsHit);
@@ -174,7 +174,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit('retryip', $lead);
         $this->assertNotEmpty($leadDomainsHit);
         $this->assertCount(1, $leadDomainsHit);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainsHit[0]);
         $this->assertSame(FloodlightLeadDomains::STATUS_RETRY_LIMIT_EXCEEDED, $leadDomainsHit[0]->getStatus());
     }
 
@@ -222,7 +221,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
         $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
 
         $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findBy(['domain' => $leadDomainsHit[0]->getDomain()]);
         $this->assertCount(1, $companyDomainsHit);
@@ -331,7 +329,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $companies           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($companies);
         $this->assertCount(1, $companies);
-        $this->assertInstanceOf(Company::class, $companies[0]);
         $company = $companies[0];
         $company->setCity('testcity');
         $company->setName('Leuchtfeuer');
@@ -345,7 +342,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
         $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
         $this->assertEquals('testcity', $company[0]->getCity());
         $this->assertEquals('Leuchtfeuer', $company[0]->getName());
     }
@@ -371,7 +367,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $pathsHelper  = self::getContainer()->get(PathsHelper::class);
         $logoFilePath = $pathsHelper->getMediaPath().'/logos/'.$logoFileName;
         $this->assertFileExists($logoFilePath);
-        $this->assertTrue(in_array(pathinfo($logoFilePath, PATHINFO_EXTENSION), ['png', 'jpg']));
+        $this->assertContains(pathinfo($logoFilePath, PATHINFO_EXTENSION), ['png', 'jpg']);
     }
 
     public function testCompanyLogoNotProcessedWhenAlreadySetManually(): void
@@ -494,7 +490,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         $this->activePlugin();
         $this->updateApikey();
-        $company = $this->createCompany('Digicel Pacific');
+        $this->createCompany('Digicel Pacific');
         $lead    = $this->createAnonymousLead();
         $this->processHit('45.117.246.240', $lead);
         $this->processHit('45.117.246.240', $lead);
@@ -524,7 +520,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
         $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
         $this->assertSame('nephronpharm.com', $company[0]->getName());
 
         $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
@@ -556,7 +551,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $company           = $this->em->getRepository(Company::class)->findAll();
         $this->assertNotEmpty($company);
         $this->assertCount(1, $company);
-        $this->assertInstanceOf(Company::class, $company[0]);
         $this->assertSame('bbisp.co.za', $company[0]->getName());
 
         $companyDomainsHit = $this->em->getRepository(FloodlightCompanyDomains::class)->findAll();
@@ -644,7 +638,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->processHit($ip, $lead);
         $this->processHit($ip, $lead);
 
-        $config = self::getContainer()->get('MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config');
+        $config = self::getContainer()->get(\MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config::class);
         $this->assertTrue($config->checkIfLookupReturned429ResponseInLast60Minutes());
     }
 
@@ -712,7 +706,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertInstanceOf(\Symfony\Component\DomCrawler\Field\InputFormField::class, $form['integration_config[apiKeys][api_secret_key]']);
         $form['integration_config[apiKeys][api_access_key_id]']->setValue($accessKeyId);
         $form['integration_config[apiKeys][api_secret_key]']->setValue($secretKey);
-        $crawler = $this->client->submit($form);
+        $this->client->submit($form);
         $this->assertEquals(200, $this->client->getResponse()->getStatusCode());
     }
 
@@ -751,8 +745,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
         $hit              = $this->createHit($lead, $remoteAddress);
         $pageHitEventMock = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock->expects($this->any())->method('getHit')->willReturn($hit);
-        $pageHitEventMock->expects($this->any())->method('getRequest')->willReturn($request);
+        $pageHitEventMock->method('getHit')->willReturn($hit);
+        $pageHitEventMock->method('getRequest')->willReturn($request);
         $floodlightSubscriber->onPageHit($pageHitEventMock);
     }
 
@@ -764,7 +758,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->persist($ip);
         $this->em->flush();
 
-        $rand = rand(1, 1000000000);
+        $rand = random_int(1, 1000000000);
         $hit  = new Hit();
         $hit->setLead($lead);
         $hit->setDateHit(new \DateTime());
@@ -893,6 +887,12 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
     }
 
+    private function mockExternalLookupsDependingOnIp(): void
+    {
+        $this->mockWhoisResultDependingOnIp();
+        $this->mockDnsLookupResultDependingOnIp();
+    }
+
     private function mockDnsLookupResultDependingOnIp(): void
     {
         $hostnames = [
@@ -912,8 +912,8 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
                 $container->get(WhoisService::class),
                 $container->get(KeywordBlacklistHelper::class),
                 $container->get(DomainBlacklistHelper::class),
-                $container->get('mautic.helper.paths'),
-                $container->get('monolog.logger.mautic'),
+                $container->get(PathsHelper::class),
+                $container->get(LoggerInterface::class),
             ])
             ->onlyMethods(['lookupHostname'])
             ->getMock();
@@ -923,11 +923,6 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         );
 
         $container->set(DomainUtility::class, $domainUtility);
-    }
-
-    private function mockExternalLookupsDependingOnIp(): void
-    {
-        $this->mockExternalLookupsDependingOnIp();
     }
 
     private function mockWhoisResultDependingOnIp(): void
@@ -944,7 +939,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $failIps = ['86.101.230.58', '86.101.230.61', '127.0.0.1'];
 
         $whoisService = $this->getMockBuilder(WhoisService::class)
-            ->setConstructorArgs([self::getContainer()->get('monolog.logger.mautic')])
+            ->setConstructorArgs([self::getContainer()->get(LoggerInterface::class)])
             ->onlyMethods(['fetchRdap'])
             ->getMock();
 
@@ -962,10 +957,10 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     /**
      * Test that client IP is correctly extracted from various proxy headers.
      *
-     * @dataProvider proxyHeaderDataProvider
      *
      * @param array<string, string> $headers
      */
+    #[\PHPUnit\Framework\Attributes\DataProvider('proxyHeaderDataProvider')]
     public function testClientIpExtractedFromProxyHeaders(
         string $remoteAddr,
         array $headers,

@@ -29,9 +29,9 @@ class FloodlightLeadDomains
 
     private ?string $domain = null;
 
-    private ?string $lookupType;
+    private ?string $lookupType = null;
 
-    private ?string $ipHash;
+    private ?string $ipHash = null;
 
     private int $count;
 
@@ -39,7 +39,7 @@ class FloodlightLeadDomains
 
     private ?\DateTime $dateModified = null;
 
-    private ?Lead $contact;
+    private ?Lead $contact = null;
 
     private ?string $status = null;
 
@@ -90,18 +90,14 @@ class FloodlightLeadDomains
         $metadata->addPropertyConstraint(
             'domain',
             new \Symfony\Component\Validator\Constraints\NotBlank(
-                [
-                    'message' => 'mautic.core.name.required',
-                ]
+                message: 'mautic.core.name.required'
             )
         );
 
         $metadata->addPropertyConstraint(
             'type',
             new \Symfony\Component\Validator\Constraints\NotBlank(
-                [
-                    'message' => 'mautic.core.name.required',
-                ]
+                message: 'mautic.core.name.required'
             )
         );
     }

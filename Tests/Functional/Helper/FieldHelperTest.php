@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Helper;
 
+use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\LeadField;
+use Mautic\LeadBundle\Model\CompanyModel;
+use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
 
-class FieldHelperTest extends MauticMysqlTestCase
+final class FieldHelperTest extends MauticMysqlTestCase
 {
     public function setUp(): void
     {
@@ -20,8 +23,8 @@ class FieldHelperTest extends MauticMysqlTestCase
 
         $this->client->request('GET', '/s/plugins/reload');
 
-        $configPathTo   = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
-        $pluginPathFrom = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
+        $configPathTo   = self::getContainer()->get(PathsHelper::class)->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
+        $pluginPathFrom = self::getContainer()->get(PathsHelper::class)->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
         if (!file_exists($configPathTo)) {
             copy($pluginPathFrom, $configPathTo);
         }
@@ -34,9 +37,9 @@ class FieldHelperTest extends MauticMysqlTestCase
     {
         $dtoFactory    = self::getContainer()->get(FloodlightDtoFactory::class);
         $companyMapper = self::getContainer()->get(CompanyMapper::class);
-        $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
+        $fieldModel    = self::getContainer()->get(FieldModel::class);
         $fieldHelper   = self::getContainer()->get(FieldHelper::class);
-        $companyModel  = self::getContainer()->get('mautic.lead.model.company');
+        $companyModel  = self::getContainer()->get(CompanyModel::class);
 
         // Step 1: Create first company with new field value containing ampersand
         $floodlightData1 = [
@@ -76,8 +79,8 @@ class FieldHelperTest extends MauticMysqlTestCase
         }
 
         $this->assertNotNull($softwareProperty, 'Software & Computer Services property should exist');
-        $this->assertStringContainsString('Software', $softwareProperty['label']);
-        $this->assertStringContainsString('Computer Services', $softwareProperty['label']);
+        $this->assertStringContainsString('Software', (string) $softwareProperty['label']);
+        $this->assertStringContainsString('Computer Services', (string) $softwareProperty['label']);
 
         // Count how many &#38; sequences exist - should be 1 (or 0 if properly decoded)
         $ampersandCount1 = substr_count($softwareProperty['label'], '&#38;');
@@ -122,7 +125,7 @@ class FieldHelperTest extends MauticMysqlTestCase
 
         $ampersandCount2 = substr_count($softwarePropertyAfter['label'], '&#38;');
 
-        $this->assertEquals(
+        $this->assertSame(
             $ampersandCount1,
             $ampersandCount2,
             'Ampersand encoding count should not increase after adding second company. '.
@@ -132,7 +135,7 @@ class FieldHelperTest extends MauticMysqlTestCase
 
         $this->assertStringNotContainsString(
             '&#38;#38;',
-            $softwarePropertyAfter['label'],
+            (string) $softwarePropertyAfter['label'],
             'Field property should not contain double-encoded ampersands (&#38;#38;)'
         );
 
@@ -145,12 +148,12 @@ class FieldHelperTest extends MauticMysqlTestCase
         }
 
         $this->assertNotNull($travelProperty, 'Travel & Leisure property should exist');
-        $this->assertStringNotContainsString('&#38;#38;', $travelProperty['label'], 'New property should not have double-encoded ampersands');
+        $this->assertStringNotContainsString('&#38;#38;', (string) $travelProperty['label'], 'New property should not have double-encoded ampersands');
     }
 
     public function testFieldPropertiesAreDecodedWhenLoaded(): void
     {
-        $fieldModel  = self::getContainer()->get('mautic.lead.model.field');
+        $fieldModel  = self::getContainer()->get(FieldModel::class);
         $fieldHelper = self::getContainer()->get(FieldHelper::class);
 
         $field = $fieldModel->getRepository()->findOneBy(['alias' => 'f4b_companyindustry_list']);
@@ -189,6 +192,6 @@ class FieldHelperTest extends MauticMysqlTestCase
         }
 
         $this->assertNotNull($energyPropertyAfter, 'Energy & Power property should still exist');
-        $this->assertStringNotContainsString('&#38;#38;', $energyPropertyAfter['label'], 'Should not have double-encoded ampersand');
+        $this->assertStringNotContainsString('&#38;#38;', (string) $energyPropertyAfter['label'], 'Should not have double-encoded ampersand');
     }
 }

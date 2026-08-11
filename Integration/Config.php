@@ -11,7 +11,7 @@ use Mautic\PluginBundle\Entity\Integration;
 class Config
 {
     public function __construct(
-        private IntegrationsHelper $integrationsHelper,
+        private readonly IntegrationsHelper $integrationsHelper,
     ) {
     }
 
@@ -56,7 +56,7 @@ class Config
         try {
             $apiKeys = $this->getApiKeys();
 
-            return !empty($apiKeys) && isset($apiKeys['api_access_key_id']) && isset($apiKeys['api_secret_key']);
+            return $apiKeys !== [] && isset($apiKeys['api_access_key_id']) && isset($apiKeys['api_secret_key']);
         } catch (IntegrationNotFoundException) {
             return false;
         }

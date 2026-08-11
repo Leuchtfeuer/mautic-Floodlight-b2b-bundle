@@ -23,10 +23,10 @@ class Status429Strategy
         private readonly DomainUtility $domainUtility,
         private readonly FloodlightLeadDomainsModel $leadDomainsModel,
         private readonly CompanyRepository $companyRepository,
-        private CompanyModel $companyModel,
+        private readonly CompanyModel $companyModel,
         private readonly LeadModel $leadModel,
-        private FloodlightCompanyDomainsModel $companyDomainsModel,
-        private CompanyMapper $companyMapper,
+        private readonly FloodlightCompanyDomainsModel $companyDomainsModel,
+        private readonly CompanyMapper $companyMapper,
     ) {
     }
 
@@ -69,7 +69,7 @@ class Status429Strategy
      */
     public function process(array $processedData, Lead $lead): void
     {
-        if (empty($processedData)) {
+        if ($processedData === []) {
             // $this->reporter->notify('quota exceeded and also no data found via DNS and Whois lookup');
             return;
         }

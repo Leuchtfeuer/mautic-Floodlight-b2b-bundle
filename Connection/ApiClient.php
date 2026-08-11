@@ -16,17 +16,12 @@ class ApiClient
     ) {
     }
 
-    private function getCredentials(): HeaderCredentialsInterface
-    {
-        return $this->credentials;
-    }
-
     /**
      * @throws PluginNotConfiguredException
      */
     public function getClient(): ClientInterface
     {
-        return (new HttpFactory())->getClient($this->getCredentials());
+        return (new HttpFactory())->getClient($this->credentials);
     }
 
     public function setCredentials(Credentials $credentials): void

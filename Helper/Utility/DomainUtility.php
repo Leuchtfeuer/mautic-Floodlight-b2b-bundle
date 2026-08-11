@@ -18,10 +18,10 @@ class DomainUtility
     private ?Rules $rules = null;
 
     public function __construct(
-        private WhoisService $whoisService,
-        private KeywordBlacklistHelper $keywordBlacklistHelper,
-        private DomainBlacklistHelper $domainBlacklistHelper,
-        private PathsHelper $pathsHelper,
+        private readonly WhoisService $whoisService,
+        private readonly KeywordBlacklistHelper $keywordBlacklistHelper,
+        private readonly DomainBlacklistHelper $domainBlacklistHelper,
+        private readonly PathsHelper $pathsHelper,
         protected LoggerInterface $mauticLogger
     ) {
     }
@@ -85,11 +85,7 @@ class DomainUtility
 
     public function hasMoreThanFourNumbers(string $domain): bool
     {
-        if (preg_match_all('/\d/', $domain) > 4) {
-            return true;
-        }
-
-        return false;
+        return preg_match_all('/\d/', $domain) > 4;
     }
 
     protected function lookupHostname(string $remoteAddr): string|false
@@ -133,7 +129,7 @@ class DomainUtility
         $details     = [];
         $status      = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
 
-        if (!empty($domainWhois) && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
+        if ($domainWhois !== [] && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
             $domain      = $domainWhois['company_domain'];
             $cleanDomain = $this->cleanDomain($domain);
             if (!is_null($cleanDomain)) {
@@ -155,11 +151,7 @@ class DomainUtility
         $domain             = strtolower($domain);
         $inKeywordBlacklist = $this->checkIfInKeywordBlacklist($domain);
         $inDomainBlacklist  = $this->checkIfInDomainBlacklist($domain);
-        if (true === $inKeywordBlacklist || true === $inDomainBlacklist) {
-            return true;
-        }
-
-        return false;
+        return $inKeywordBlacklist || $inDomainBlacklist;
     }
 
     private function checkIfInKeywordBlacklist(string $domain): bool

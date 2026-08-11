@@ -11,10 +11,10 @@ use Symfony\Component\Form\FormBuilderInterface;
 
 class FloodlightB2BFeatureSettingsType extends AbstractType
 {
-    private ?bool $ignoreSingleClickVisits = null;
-    private ?bool $ignoreTelcos            = null;
+    private readonly bool $ignoreSingleClickVisits;
+    private readonly bool $ignoreTelcos;
 
-    public function __construct(private Config $config)
+    public function __construct(private readonly Config $config)
     {
         $this->ignoreSingleClickVisits = $this->config->getIgnoreSingleClickSettings();
         $this->ignoreTelcos            = $this->config->getIgnoreTelcosSettings();

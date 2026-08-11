@@ -8,7 +8,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\ClientIpHelper;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
-class ClientIpHelperTest extends TestCase
+final class ClientIpHelperTest extends TestCase
 {
     private ClientIpHelper $helper;
 

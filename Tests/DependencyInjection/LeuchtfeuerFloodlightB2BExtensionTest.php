@@ -6,7 +6,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\DependencyInjection;
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 
-class LeuchtfeuerFloodlightB2BExtensionTest extends MauticMysqlTestCase
+final class LeuchtfeuerFloodlightB2BExtensionTest extends MauticMysqlTestCase
 {
     public function testLoad(): void
     {

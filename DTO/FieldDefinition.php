@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO;
 
-final class FieldDefinition
+final readonly class FieldDefinition
 {
     public function __construct(
-        public readonly string $apiKey,
-        public readonly string $dbAlias,
-        public readonly string $dtoProperty,
-        public readonly FieldType $type,
-        public readonly CompanyMappingType $companyMapping,
-        public readonly ?string $companySetter = null,
-        public readonly bool $truncate = true,
+        public string $apiKey,
+        public string $dbAlias,
+        public string $dtoProperty,
+        public FieldType $type,
+        public CompanyMappingType $companyMapping,
+        public ?string $companySetter = null,
+        public bool $truncate = true,
     ) {
     }
 }

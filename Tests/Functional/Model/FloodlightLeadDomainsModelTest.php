@@ -7,6 +7,7 @@ namespace LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Model;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Model\LeadModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
@@ -15,38 +16,33 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 
-class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
+final class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
-
-    private FixtureHelper $fixtureHelper;
 
     public function setUp(): void
     {
         parent::setUp();
-        $this->fixtureHelper = new FixtureHelper($this->em, $this->client);
-        $this->fixtureHelper->createAndEnablePlugin();
-        $this->fixtureHelper->copyBlacklistConfig();
+        $fixtureHelper = new FixtureHelper($this->em, $this->client);
+        $fixtureHelper->createAndEnablePlugin();
+        $fixtureHelper->copyBlacklistConfig();
     }
 
     public function testGetEntity(): void
     {
-        $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
-        assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
+        $floodlightLeadDomainsModel = self::getContainer()->get(FloodlightLeadDomainsModel::class);
         $leadDomain       = $this->addNewLeadDomainModel();
         $leadDomainId     = $leadDomain->getId();
         $leadDomainEntity = $floodlightLeadDomainsModel->getEntity($leadDomainId);
-        $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomainEntity);
-        $this->assertEquals($leadDomainId, $leadDomainEntity->getId());
+        $this->assertSame($leadDomainId, $leadDomainEntity->getId());
         $this->assertInstanceOf(Lead::class, $leadDomainEntity->getContact());
     }
 
     public function disabledtestAddNewLeadDomainOrCountPlusOneInLeadDomainLeadFloodlightDetailsWithLeadDomainExisted(): void
     {
-        $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
+        $floodlightLeadDomainsModel = self::getContainer()->get(FloodlightLeadDomainsModel::class);
         $dtoFactory                 = self::getContainer()->get(FloodlightDtoFactory::class);
-        assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
-        $lead          = new Lead();
+        new Lead();
         $domain        = 'leuchtfeuer.com';
         $leadDomain    = $this->addNewLeadDomainModel($domain);
         $domain        = $leadDomain->getDomain();
@@ -66,7 +62,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
             ],
         ];
         $this->assertNotSame('local', $floodlightDTO->getIpHash());
-        $this->assertNotNull($leadDomain->getContact());
+        $this->assertInstanceOf(\Mautic\LeadBundle\Entity\Lead::class, $leadDomain->getContact());
         $result = $floodlightLeadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($leadDomain->getContact(), $dataDomain);
         $this->assertSame('local', $result->getIpHash());
         $this->assertSame(1, $result->getCount());
@@ -74,9 +70,8 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
 
     public function testAddNewLeadDomainOrCountPlusOneInLeadDomainLeadFloodlightDetailsWithLeadDomainNotExist(): void
     {
-        $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
+        $floodlightLeadDomainsModel = self::getContainer()->get(FloodlightLeadDomainsModel::class);
         $dtoFactory                 = self::getContainer()->get(FloodlightDtoFactory::class);
-        assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
         $domain        = 'lfexample.com';
         $lead          = $this->addLead();
         $fileContent   = file_get_contents(__DIR__.'/../../fixtures/floodlight.json');
@@ -111,7 +106,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
         $this->assertFalse($domainUtility->isBlackListed($domain));
 
         $domainBalcklistHelper = self::getContainer()->get(DomainBlacklistHelper::class);
-        assert($domainBalcklistHelper instanceof DomainBlacklistHelper);
+        $this->assertInstanceOf(DomainBlacklistHelper::class, $domainBalcklistHelper);
         $domainBalcklistHelper->add($domain);
         $this->assertTrue($domainUtility->isBlackListed($domain));
 
@@ -125,8 +120,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
 
     public function testRecauculatLeadPrimaryCompany(): void
     {
-        $floodlightLeadDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightleaddomains');
-        assert($floodlightLeadDomainsModel instanceof FloodlightLeadDomainsModel);
+        $floodlightLeadDomainsModel = self::getContainer()->get(FloodlightLeadDomainsModel::class);
         $company = $this->addNewCompany();
         $lead    = $this->addLead();
         // Set primary company
@@ -174,8 +168,7 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
 
         $floodlightLeadDomainsModel->recalculateLeadPrimaryCompany($lead);
 
-        $leadModel = self::getContainer()->get('mautic.lead.model.lead');
-        assert($leadModel instanceof \Mautic\LeadBundle\Model\LeadModel);
+        $leadModel = self::getContainer()->get(LeadModel::class);
         $newLead   = $leadModel->getEntity($lead->getId());
         $this->assertInstanceOf(Lead::class, $newLead);
         $this->assertInstanceOf(Company::class, $newLead->getPrimaryCompany());

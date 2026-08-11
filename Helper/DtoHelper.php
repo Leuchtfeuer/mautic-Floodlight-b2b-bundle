@@ -11,7 +11,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightFieldRegistry;
 class DtoHelper
 {
     public function __construct(
-        private AuditLogHelper $auditLogHelper,
+        private readonly AuditLogHelper $auditLogHelper,
     ) {
     }
 
@@ -53,7 +53,7 @@ class DtoHelper
                     default  => null
                 };
             }
-        } catch (\ReflectionException $e) {
+        } catch (\ReflectionException) {
         }
 
         return '';

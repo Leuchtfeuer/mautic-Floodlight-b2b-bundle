@@ -17,7 +17,7 @@ class FloodlightB2BAuthType extends AbstractType
 {
     private ?string $currentApiSecretKey = null;
 
-    public function __construct(private Config $config)
+    public function __construct(private readonly Config $config)
     {
         $this->loadCurrentApiSecretKey();
     }

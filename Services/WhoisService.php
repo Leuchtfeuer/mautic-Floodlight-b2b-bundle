@@ -12,7 +12,7 @@ class WhoisService
 
     private const ISP_KEYWORDS = ['isp', 'internet service provider', 'tele', 'telecom', 'telecommunication', 'telnet', 'mobile', 'wireless'];
 
-    public function __construct(private LoggerInterface $mauticLogger)
+    public function __construct(private readonly LoggerInterface $mauticLogger)
     {
     }
 
