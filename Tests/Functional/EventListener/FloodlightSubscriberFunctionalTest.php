@@ -17,7 +17,11 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
@@ -503,8 +507,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         // Use ip 86.101.230.57 because Mockoon will return 429 floodlight response for this IP, mock dns lookup will fail for this IP and Whois will be success for this ip
         $ip = '86.101.230.57';
 
-        $this->mockDnsLookupResultDependingOnIp();
-        $this->mockWhoisResultDependingOnIp();
+        $this->mockExternalLookupsDependingOnIp();
 
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
@@ -535,8 +538,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         // Use ip 86.101.230.58 because Mockoon will return 429 floodlight response for this IP and mock DNS lookup will be successful for this IP (returns bbisp.co.za domain)
         $ip = '86.101.230.58';
 
-        $this->mockDnsLookupResultDependingOnIp();
-        $this->mockWhoisResultDependingOnIp();
+        $this->mockExternalLookupsDependingOnIp();
 
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
@@ -567,8 +569,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         // Use ip 86.101.230.59 because Mockoon will return 429 floodlight response for this IP, mock dns lookup will fail for this IP and Whois will return result with blacklisted keyword in domain
         $ip = '86.101.230.59';
-        $this->mockDnsLookupResultDependingOnIp();
-        $this->mockWhoisResultDependingOnIp();
+        $this->mockExternalLookupsDependingOnIp();
 
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
@@ -590,8 +591,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         // Use ip 86.101.230.60 because Mockoon will return 429 floodlight response for this IP, mock dns lookup will fail for this IP and Whois will return result with blacklisted domain
         $ip = '86.101.230.60';
-        $this->mockDnsLookupResultDependingOnIp();
-        $this->mockWhoisResultDependingOnIp();
+        $this->mockExternalLookupsDependingOnIp();
 
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
@@ -613,8 +613,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         // Use ip 86.101.230.61 because Mockoon will return 429 floodlight response for this IP, mock dns lookup will fail for this IP and Whois will return an error
         $ip = '86.101.230.61';
-        $this->mockDnsLookupResultDependingOnIp();
-        $this->mockWhoisResultDependingOnIp();
+        $this->mockExternalLookupsDependingOnIp();
 
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
@@ -636,8 +635,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         $ip = '86.101.230.58';
 
-        $this->mockDnsLookupResultDependingOnIp();
-        $this->mockWhoisResultDependingOnIp();
+        $this->mockExternalLookupsDependingOnIp();
 
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
@@ -655,8 +653,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $ip1 = '86.101.230.58';
         $ip2 = '217.91.35.16';
 
-        $this->mockDnsLookupResultDependingOnIp();
-        $this->mockWhoisResultDependingOnIp();
+        $this->mockExternalLookupsDependingOnIp();
 
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
@@ -684,8 +681,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     {
         $ip = '217.91.35.16';
 
-        $this->mockDnsLookupResultDependingOnIp();
-        $this->mockWhoisResultDependingOnIp();
+        $this->mockExternalLookupsDependingOnIp();
 
         $lead = $this->createAnonymousLead();
 
@@ -899,87 +895,68 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 
     private function mockDnsLookupResultDependingOnIp(): void
     {
-        // Check if already defined
-        if (function_exists('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Helper\\Utility\\gethostbyaddr')) {
-            return;
-        }
+        $hostnames = [
+            '217.91.35.16'  => 'mail.leuchtfeuer.com',
+            '86.101.230.57' => '11.11.11.11',
+            '86.101.230.58' => '102-220-105-89.dna.tri.bbisp.co.za',
+            '86.101.230.59' => '11.11.11.11',
+            '86.101.230.60' => '11.11.11.11',
+            '86.101.230.61' => '11.11.11.11',
+            '11.11.11.11'   => '11.11.11.11',
+        ];
 
-        // Define all cases once
-        $mockCode = "
-        namespace MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Helper\\Utility {
-            function gethostbyaddr(\$ip) {
-                switch (\$ip) {
-                    case '217.91.35.16':
-                        return 'mail.leuchtfeuer.com';
-                    case '86.101.230.57':
-                        return '11.11.11.11';
-                    case '86.101.230.58':
-                        return '102-220-105-89.dna.tri.bbisp.co.za';
-                    case '86.101.230.59':
-                    case '86.101.230.60':
-                    case '86.101.230.61':
-                    case '11.11.11.11':
-                        return '11.11.11.11';
-                    default:
-                        return \\gethostbyaddr(\$ip);
-                }
-            }
-        }";
+        $container = self::getContainer();
 
-        eval($mockCode);
+        $domainUtility = $this->getMockBuilder(DomainUtility::class)
+            ->setConstructorArgs([
+                $container->get(WhoisService::class),
+                $container->get(KeywordBlacklistHelper::class),
+                $container->get(DomainBlacklistHelper::class),
+                $container->get('mautic.helper.paths'),
+                $container->get('monolog.logger.mautic'),
+            ])
+            ->onlyMethods(['lookupHostname'])
+            ->getMock();
+
+        $domainUtility->method('lookupHostname')->willReturnCallback(
+            fn (string $ip) => $hostnames[$ip] ?? gethostbyaddr($ip)
+        );
+
+        $container->set(DomainUtility::class, $domainUtility);
+    }
+
+    private function mockExternalLookupsDependingOnIp(): void
+    {
+        $this->mockExternalLookupsDependingOnIp();
     }
 
     private function mockWhoisResultDependingOnIp(): void
     {
-        if (function_exists('MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Services\\curl_init')) {
-            return;
-        }
+        $rdap57 = ['name' => 'NET', 'entities' => [['vcardArray' => ['vcard', [['fn', new \stdClass(), 'text', 'AT&T Enterprises, LLC'], ['email', new \stdClass(), 'text', 'contact@NEPHRONPHARM.COM']]]]]];
+        $rdap59 = ['name' => 'NET', 'entities' => [['vcardArray' => ['vcard', [['fn', new \stdClass(), 'text', 'AT&T Enterprises, LLC'], ['email', new \stdClass(), 'text', 'contact@floodlightblacklistkeyword.com']]]]]];
+        $rdap60 = ['name' => 'NET', 'entities' => [['vcardArray' => ['vcard', [['fn', new \stdClass(), 'text', 'AT&T Enterprises, LLC'], ['email', new \stdClass(), 'text', 'contact@floodlightblacklistdomain.com']]]]]];
 
-        $rdap57 = json_encode(['name' => 'NET', 'entities' => [['vcardArray' => ['vcard', [['fn', new \stdClass(), 'text', 'AT&T Enterprises, LLC'], ['email', new \stdClass(), 'text', 'contact@NEPHRONPHARM.COM']]]]]]);
-        $rdap59 = json_encode(['name' => 'NET', 'entities' => [['vcardArray' => ['vcard', [['fn', new \stdClass(), 'text', 'AT&T Enterprises, LLC'], ['email', new \stdClass(), 'text', 'contact@floodlightblacklistkeyword.com']]]]]]);
-        $rdap60 = json_encode(['name' => 'NET', 'entities' => [['vcardArray' => ['vcard', [['fn', new \stdClass(), 'text', 'AT&T Enterprises, LLC'], ['email', new \stdClass(), 'text', 'contact@floodlightblacklistdomain.com']]]]]]);
-
-        $GLOBALS['__whois_mock_responses'] = [
+        $responses = [
             '86.101.230.57' => $rdap57,
             '86.101.230.59' => $rdap59,
             '86.101.230.60' => $rdap60,
         ];
+        $failIps = ['86.101.230.58', '86.101.230.61', '127.0.0.1'];
 
-        $mockCode = "
-        namespace MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Services {
-            function curl_init(\$url = null) {
-                \$GLOBALS['__whois_mock_current_url'] = \$url;
-                return 'mock_handle';
+        $whoisService = $this->getMockBuilder(WhoisService::class)
+            ->setConstructorArgs([self::getContainer()->get('monolog.logger.mautic')])
+            ->onlyMethods(['fetchRdap'])
+            ->getMock();
+
+        $whoisService->method('fetchRdap')->willReturnCallback(function (string $ip) use ($responses, $failIps) {
+            if (in_array($ip, $failIps, true)) {
+                return null;
             }
 
-            function curl_setopt_array(\$handle, \$options) {
-                return true;
-            }
+            return $responses[$ip] ?? null;
+        });
 
-            function curl_exec(\$handle) {
-                \$url = \$GLOBALS['__whois_mock_current_url'] ?? '';
-                foreach (\$GLOBALS['__whois_mock_responses'] as \$ip => \$json) {
-                    if (strpos(\$url, \$ip) !== false) {
-                        return \$json;
-                    }
-                }
-                return false;
-            }
-
-            function curl_getinfo(\$handle, \$opt = null) {
-                \$url = \$GLOBALS['__whois_mock_current_url'] ?? '';
-                \$failIps = ['86.101.230.58', '86.101.230.61', '127.0.0.1'];
-                foreach (\$failIps as \$ip) {
-                    if (strpos(\$url, \$ip) !== false) {
-                        return 500;
-                    }
-                }
-                return 200;
-            }
-
-        }";
-
-        eval($mockCode);
+        self::getContainer()->set(WhoisService::class, $whoisService);
     }
 
     /**

@@ -12,7 +12,7 @@ class WhoisService
 
     private const ISP_KEYWORDS = ['isp', 'internet service provider', 'tele', 'telecom', 'telecommunication', 'telnet', 'mobile', 'wireless'];
 
-    public function __construct(private LoggerInterface $logger)
+    public function __construct(private LoggerInterface $mauticLogger)
     {
     }
 
@@ -44,7 +44,7 @@ class WhoisService
     /**
      * @return array<mixed>|null
      */
-    private function fetchRdap(string $ip): ?array
+    protected function fetchRdap(string $ip): ?array
     {
         $ch = curl_init(self::RDAP_URL.rawurlencode($ip));
         curl_setopt_array($ch, [
@@ -58,14 +58,14 @@ class WhoisService
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if (false === $response || 200 !== $httpCode) {
-            $this->logger->error('WhoisService RDAP request failed for IP: '.$ip);
+            $this->mauticLogger->error('WhoisService RDAP request failed for IP: '.$ip);
 
             return null;
         }
 
         $data = json_decode((string) $response, true);
         if (!is_array($data)) {
-            $this->logger->error('WhoisService RDAP invalid JSON for IP: '.$ip);
+            $this->mauticLogger->error('WhoisService RDAP invalid JSON for IP: '.$ip);
 
             return null;
         }

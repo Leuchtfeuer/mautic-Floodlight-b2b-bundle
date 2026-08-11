@@ -9,6 +9,7 @@ use Mautic\LeadBundle\Entity\Company;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyDomainMapper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
@@ -327,7 +328,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
             'companyindustry_list' => ['Software & Computer Services', 'Travel & Leisure'],
         ];
 
-        $fieldHelper  = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.field');
+        $fieldHelper  = self::getContainer()->get(FieldHelper::class);
         $companyModel = self::getContainer()->get('mautic.lead.model.company');
 
         // Step 1: Create first company

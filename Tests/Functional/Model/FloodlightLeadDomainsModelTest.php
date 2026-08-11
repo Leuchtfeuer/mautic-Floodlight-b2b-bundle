@@ -11,6 +11,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 
@@ -102,14 +103,14 @@ class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
 
     public function disabledtestIsBlackListed(): void
     {
-        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility = self::getContainer()->get(DomainUtility::class);
         $domain        = 'lfexample.com';
         $leadDomain    = $this->addNewLeadDomainModel($domain);
         $domain        = $leadDomain->getDomain();
         $this->assertNotNull($domain);
         $this->assertFalse($domainUtility->isBlackListed($domain));
 
-        $domainBalcklistHelper = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.domainblacklist');
+        $domainBalcklistHelper = self::getContainer()->get(DomainBlacklistHelper::class);
         assert($domainBalcklistHelper instanceof DomainBlacklistHelper);
         $domainBalcklistHelper->add($domain);
         $this->assertTrue($domainUtility->isBlackListed($domain));

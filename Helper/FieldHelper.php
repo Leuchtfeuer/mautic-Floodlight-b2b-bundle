@@ -26,7 +26,7 @@ class FieldHelper
         'is_index'               => false,
     ];
 
-    public function __construct(private FieldModel $fieldModel, protected FormFactoryInterface $formFactory, protected LoggerInterface $logger)
+    public function __construct(private FieldModel $fieldModel, protected FormFactoryInterface $formFactory, protected LoggerInterface $mauticLogger)
     {
     }
 
@@ -50,7 +50,7 @@ class FieldHelper
                     try {
                         $this->fieldModel->saveEntity($existingField);
                     } catch (\Exception $e) {
-                        $this->logger->error('Field character length limit could not be updated: '.$e->getMessage());
+                        $this->mauticLogger->error('Field character length limit could not be updated: '.$e->getMessage());
                     }
                 }
             }
@@ -90,7 +90,7 @@ class FieldHelper
         try {
             $this->fieldModel->saveEntity($field);
         } catch (\Exception $e) {
-            $this->logger->error('Field could not be saved : '.$e->getMessage());
+            $this->mauticLogger->error('Field could not be saved : '.$e->getMessage());
         }
     }
 
@@ -266,7 +266,7 @@ class FieldHelper
                 // Safe to ignore since we only changed list properties, not the column.
             }
         } else {
-            $this->logger->error('Field properties could not be saved');
+            $this->mauticLogger->error('Field properties could not be saved');
         }
     }
 

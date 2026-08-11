@@ -16,18 +16,24 @@ The Floodlight for B2B is one plugin of ABM solution, it is responsible to detec
 
 REQUIREMENTS
 ------------
-- Mautic 5.x
-- PHP 8.0 or higher
+- Mautic 5.2 or higher
+- PHP 8.1 or higher
+- jeremykendall/php-domain-parser ^6.3
 
 INSTALLATION
 ------------
 1. Add `LeuchtfeuerFloodlightB2BBundle` in the `plugins` directory.
-2. Go to `Plugins` page
-3. Click on the `Install/Upgrade Plugins` or if you have access to the shell, execute `php bin\console mautic:plugins:reload` to install the plugins.
-4. Click button to install `LeuchtfeuerFloodlightB2BBundle`.
-5. Enable the plugin and configure the plugin with the API key.
-6. Install the patch which enables you to name the leads identified by floodlight according to the following logic: 'anonymous {timestamp} {domain}' --> https://github.com/mautic/mautic/pull/15153
-7. If required, install the patch which makes sure that when lead name (firstname and lastname) ist not available, displaying email will be preferred over displaying company name --> https://github.com/mautic/mautic/pull/15320
+
+2. Install the required php-domain-parser dependency:
+
+   `composer require jeremykendall/php-domain-parser:^6.3`
+
+3. Go to `Plugins` page
+4. Click on the `Install/Upgrade Plugins` or if you have access to the shell, execute `php bin\console mautic:plugins:reload` to install the plugins.
+5. Click button to install `LeuchtfeuerFloodlightB2BBundle`.
+6. Enable the plugin and configure the plugin with the API key.
+7. Install the patch which enables you to name the leads identified by floodlight according to the following logic: 'anonymous {timestamp} {domain}' --> https://github.com/mautic/mautic/pull/15153
+8. If required, install the patch which makes sure that when lead name (firstname and lastname) ist not available, displaying email will be preferred over displaying company name --> https://github.com/mautic/mautic/pull/15320
 
 CONFIGURATION
 -------------

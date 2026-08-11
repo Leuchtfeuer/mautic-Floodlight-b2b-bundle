@@ -30,9 +30,6 @@ class WhoisServiceTest extends TestCase
         $this->assertArrayHasKey('is_dialup', $result);
         $this->assertIsBool($result['is_isp']);
         $this->assertFalse($result['is_dialup']);
-
-        // Dump result for inspection
-        fwrite(STDERR, PHP_EOL.'RDAP result for 217.91.35.16: '.print_r($result, true));
     }
 
     public function testGetWhoisDataReturnsEmptyArrayForInvalidIp(): void
