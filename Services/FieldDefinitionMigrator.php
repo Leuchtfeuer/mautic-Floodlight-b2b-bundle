@@ -236,7 +236,7 @@ class FieldDefinitionMigrator
     private function getColumnDataType(string $column): ?string
     {
         $result = $this->connection->fetchOne(
-            "SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?",
+            'SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?',
             [$this->companiesTable, $column]
         );
 
@@ -246,7 +246,7 @@ class FieldDefinitionMigrator
     private function indexExists(string $indexName): bool
     {
         return (int) $this->connection->fetchOne(
-            "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?",
+            'SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?',
             [$this->companiesTable, $indexName]
         ) > 0;
     }

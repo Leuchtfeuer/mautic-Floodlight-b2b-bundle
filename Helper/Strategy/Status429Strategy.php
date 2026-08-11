@@ -69,7 +69,7 @@ class Status429Strategy
      */
     public function process(array $processedData, Lead $lead): void
     {
-        if ($processedData === []) {
+        if ([] === $processedData) {
             // $this->reporter->notify('quota exceeded and also no data found via DNS and Whois lookup');
             return;
         }

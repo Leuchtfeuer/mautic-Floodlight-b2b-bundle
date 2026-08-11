@@ -27,14 +27,14 @@ final class InstallHelperTest extends MauticMysqlTestCase
     public function testCompaniesNoNewFields(): void
     {
         $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'f4b_iplookup_whois_json']);
-        $this->assertNotInstanceOf(\Mautic\LeadBundle\Entity\LeadField::class, $field);
+        $this->assertNotInstanceOf(LeadField::class, $field);
         $configPathTo = $this->getContainer()->get(PathsHelper::class)->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
         $this->assertFileDoesNotExist($configPathTo);
         $this->client->request('GET', '/s/plugins/reload');
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
         $field = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => 'f4b_iplookup_whois_json']);
-        $this->assertInstanceOf(\Mautic\LeadBundle\Entity\LeadField::class, $field);
+        $this->assertInstanceOf(LeadField::class, $field);
         $this->assertSame('f4b_iplookup_whois_json', $field->getAlias());
         $this->assertFileExists($configPathTo);
     }

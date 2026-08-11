@@ -23,7 +23,6 @@ final class ReporterTest extends TestCase
         $reporter->setChannel($channel);
 
         $reporter->notify('someText');
-
     }
 
     public function testMessageFromCommandWithVerbosity(): void
@@ -42,7 +41,6 @@ final class ReporterTest extends TestCase
         $reporter->setChannel($channel);
 
         $reporter->notify('someText', OutputInterface::VERBOSITY_VERBOSE);
-
     }
 
     public function testLoggingWithLogger(): void
@@ -57,6 +55,5 @@ final class ReporterTest extends TestCase
         $reporter->setChannel($channel);
 
         $reporter->notify('someText');
-
     }
 }

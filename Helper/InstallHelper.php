@@ -10,7 +10,7 @@ class InstallHelper
 {
     public function __construct(
         private readonly PathsHelper $pathsHelper,
-        private readonly FieldHelper $fieldHelper
+        private readonly FieldHelper $fieldHelper,
     ) {
     }
 

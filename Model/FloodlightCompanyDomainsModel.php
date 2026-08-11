@@ -76,6 +76,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         if (empty($companyIds)) {
             return [];
         }
+
         // Schritt 2: Nutze die Doctrine-Repository-Methode mit IN-Abfrage
         return $this->getRepository()->createQueryBuilder('cd')
             ->where('cd.company IN (:companyIds)')
@@ -158,7 +159,7 @@ class FloodlightCompanyDomainsModel extends FormModel
     {
         $companiesDomains = $this->companyDomainMapper->mapToCompanyDomains($floodlightDTO, $this, $company);
 
-        if ($companiesDomains !== []) {
+        if ([] !== $companiesDomains) {
             foreach ($companiesDomains as $companiesDomain) {
                 $domain = $this->domainUtility->cleanDomain($companiesDomain->getDomain());
                 if (null === $domain) {

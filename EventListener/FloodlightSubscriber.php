@@ -60,7 +60,6 @@ class FloodlightSubscriber implements EventSubscriberInterface
     {
         $request = $event->getRequest();
         /** @var Request $request */
-
         $clientIp = $this->clientIpHelper->getClientIp($request);
 
         if (null === $clientIp || empty($clientIp)) {

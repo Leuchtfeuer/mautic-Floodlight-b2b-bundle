@@ -62,7 +62,7 @@ final class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
             ],
         ];
         $this->assertNotSame('local', $floodlightDTO->getIpHash());
-        $this->assertInstanceOf(\Mautic\LeadBundle\Entity\Lead::class, $leadDomain->getContact());
+        $this->assertInstanceOf(Lead::class, $leadDomain->getContact());
         $result = $floodlightLeadDomainsModel->addNewLeadDomainOrCountPlusOneInLeadDomain($leadDomain->getContact(), $dataDomain);
         $this->assertSame('local', $result->getIpHash());
         $this->assertSame(1, $result->getCount());

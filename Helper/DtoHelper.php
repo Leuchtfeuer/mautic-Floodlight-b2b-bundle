@@ -50,7 +50,7 @@ class DtoHelper
                     'string' => '',
                     'int'    => null,
                     'array'  => [],
-                    default  => null
+                    default  => null,
                 };
             }
         } catch (\ReflectionException) {

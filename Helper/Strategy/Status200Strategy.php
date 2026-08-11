@@ -262,6 +262,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         if (null === $logoFileName || empty($logoFileName)) {
             return false;
         }
+
         return !is_string($logoFileName) || !str_starts_with($logoFileName, 'f4b_');
     }
 

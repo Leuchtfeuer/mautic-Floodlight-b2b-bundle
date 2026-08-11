@@ -9,7 +9,6 @@ use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\IpLookupRulesHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
@@ -55,7 +54,7 @@ class LookupRetryCommand extends ModeratedCommand
 
         $leadDomains = $this->floodlightLeadDomainsModel->getLeadDomainToEnrichement();
 
-        if ($leadDomains === []) {
+        if ([] === $leadDomains) {
             $output->writeln('<info>No lookups to retry found</info>');
 
             return \Symfony\Component\Console\Command\Command::SUCCESS;

@@ -196,7 +196,7 @@ class FloodlightDtoHydrator
     {
         $value = $this->extractArrayForField($data, $def);
 
-        if ($value === []) {
+        if ([] === $value) {
             return [];
         }
 
@@ -283,7 +283,7 @@ class FloodlightDtoHydrator
      */
     private function truncateArray(array $values, string $dbAlias): array
     {
-        if ($values === []) {
+        if ([] === $values) {
             return $values;
         }
 

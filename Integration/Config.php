@@ -56,7 +56,7 @@ class Config
         try {
             $apiKeys = $this->getApiKeys();
 
-            return $apiKeys !== [] && isset($apiKeys['api_access_key_id']) && isset($apiKeys['api_secret_key']);
+            return [] !== $apiKeys && isset($apiKeys['api_access_key_id']) && isset($apiKeys['api_secret_key']);
         } catch (IntegrationNotFoundException) {
             return false;
         }

@@ -22,7 +22,7 @@ class DomainUtility
         private readonly KeywordBlacklistHelper $keywordBlacklistHelper,
         private readonly DomainBlacklistHelper $domainBlacklistHelper,
         private readonly PathsHelper $pathsHelper,
-        protected LoggerInterface $mauticLogger
+        protected LoggerInterface $mauticLogger,
     ) {
     }
 
@@ -129,7 +129,7 @@ class DomainUtility
         $details     = [];
         $status      = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
 
-        if ($domainWhois !== [] && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
+        if ([] !== $domainWhois && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
             $domain      = $domainWhois['company_domain'];
             $cleanDomain = $this->cleanDomain($domain);
             if (!is_null($cleanDomain)) {
@@ -151,6 +151,7 @@ class DomainUtility
         $domain             = strtolower($domain);
         $inKeywordBlacklist = $this->checkIfInKeywordBlacklist($domain);
         $inDomainBlacklist  = $this->checkIfInDomainBlacklist($domain);
+
         return $inKeywordBlacklist || $inDomainBlacklist;
     }
 

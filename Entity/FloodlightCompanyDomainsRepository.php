@@ -40,6 +40,7 @@ class FloodlightCompanyDomainsRepository extends CommonRepository
             ->setParameter('domain', $domain)
             ->setParameter('date', new \DateTime('-30 day'));
         $result = $qb->getQuery()->getResult();
+
         return empty($result);
     }
 }

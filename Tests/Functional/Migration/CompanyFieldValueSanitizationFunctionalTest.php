@@ -9,7 +9,6 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\LeadField;
 use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\CompanyFieldValueSanitizer;
-use PHPUnit\Framework\Assert;
 
 final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestCase
 {

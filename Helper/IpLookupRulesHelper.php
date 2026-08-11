@@ -14,7 +14,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status202Strateg
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status404Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Strategy\Status429Strategy;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -42,6 +41,7 @@ class IpLookupRulesHelper
         if ($ignoreSingleClicks && !$this->checkLeadHasMoreThanOnePagehit($hit->getLead()->getId())) {
             return false;
         }
+
         return $this->checkIfWasRecent($hit->getLead()->getId());
     }
 
@@ -56,6 +56,7 @@ class IpLookupRulesHelper
         assert($result instanceof FloodlightLeadDomains);
 
         $hour = $this->parameterLoader->getParameterBag()->get('minimum_hour_to_new_entry', 2);
+
         return $result->getDateModified() <= (new \DateTime())->modify('-'.$hour.' hour');
     }
 
@@ -75,6 +76,7 @@ class IpLookupRulesHelper
             '429',
             '401',
         ];
+
         return in_array($data['statusRequestCode'], $validStatusRequest);
     }
 

@@ -20,7 +20,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscrib
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 use Psr\Log\LoggerInterface;
@@ -957,7 +956,6 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
     /**
      * Test that client IP is correctly extracted from various proxy headers.
      *
-     *
      * @param array<string, string> $headers
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('proxyHeaderDataProvider')]
@@ -965,7 +963,7 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         string $remoteAddr,
         array $headers,
         string $expectedDomain,
-        string $testDescription
+        string $testDescription,
     ): void {
         $lead = $this->createAnonymousLead();
         $this->activePlugin();

@@ -8,7 +8,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Mautic\CoreBundle\Entity\AuditLog;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\IpLookupHelper;
-use Mautic\CoreBundle\Model\AuditLogModel;
 use Mautic\LeadBundle\Event\CompanyEvent;
 use Mautic\LeadBundle\LeadEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -19,7 +18,7 @@ class FloodlightCompanySubscriber implements EventSubscriberInterface
         private readonly IpLookupHelper $ipLookupHelper,
         private readonly CoreParametersHelper $coreParametersHelper,
         private readonly EntityManagerInterface $em,
-        private readonly \Mautic\CoreBundle\Entity\AuditLogRepository $auditLogRepository
+        private readonly \Mautic\CoreBundle\Entity\AuditLogRepository $auditLogRepository,
     ) {
     }
 

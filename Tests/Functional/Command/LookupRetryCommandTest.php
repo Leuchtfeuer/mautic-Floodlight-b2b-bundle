@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Command;
 
-use Doctrine\ORM\Exception\NotSupported;
-use Doctrine\ORM\Exception\ORMException;
-use Doctrine\ORM\OptimisticLockException;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\Lead;
@@ -208,7 +205,6 @@ final class LookupRetryCommandTest extends MauticMysqlTestCase
 
         return $floodlightLeadDomain;
     }
-
 
     private function addLead(string $name='Test Lead', string $email='test@example.com'): Lead
     {

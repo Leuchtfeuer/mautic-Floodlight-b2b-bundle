@@ -179,7 +179,7 @@ class FieldHelper
             }
         }
 
-        if ($result === []) {
+        if ([] === $result) {
             return false;
         }
 

@@ -225,7 +225,6 @@ final class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $this->assertSame($telcoValue, $companyDomainsHit[0]->getIsTelco());
     }
 
-
     private function addCompany(string $name='Test Company', string $website = 'https://leuchtfeuer.com/marketing-technologie/'): Company
     {
         $company = new Company();

@@ -20,7 +20,7 @@ class AuditLogHelper
         $result = $this->auditLogRepository->findBy(
             ['object' => 'company', 'objectId' => $id],
         );
-        $nonFloodlightAuditLogEntries = array_filter($result, fn(AuditLog $item): bool => 'Floodlight B2B' !== $item->getUserName());
+        $nonFloodlightAuditLogEntries = array_filter($result, fn (AuditLog $item): bool => 'Floodlight B2B' !== $item->getUserName());
 
         $fieldsNotUpdatableByFloodlight = [];
 
