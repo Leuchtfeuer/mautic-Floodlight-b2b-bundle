@@ -61,6 +61,11 @@ Note:
 * Be carefull with the `f4b_domain_keyword_blacklist.php` file. If you add a keyword like `apple`, the domains `pineapple.com`, `applepie.com`, etc. will also be blacklisted.
 
 
+FUTURE IMPROVEMENTS
+-------------------
+* periodic renewal request, from Plugin to API Service
+* better handling of “try again” status (would be ok to try 10 times or so, but we currently don’t have such a counter - we merely set 1970 at first try, current date at second try)
+
 AUTHOR
 ------
 Leuchtfeuer Digital Marketing GmbH
