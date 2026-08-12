@@ -1,18 +1,12 @@
 # Floodlight for B2B by Leuchtfeuer
 
-CONTENTS OF THIS FILE
----------------------
 
-* Introduction
-* Requirements
-* Installation
-* Configuration
-* Usage
-* Author
 
 INTRODUCTION
 ------------
-The Floodlight for B2B is one plugin of ABM solution, it is responsible to detect and qualify companies from anonymous leads in Mautic, using the Floodlight for B2B service.
+The Floodlight for B2B is an add-on to Mautic's "account based marketing" capabilities (which is itself a Leuchtfeuer plugin set as of Mautic 5 and 6; intended to be part of the Mautic 7 core).
+It is responsible for enriching company properties, and optionally for detecting companies from anonymous leads in Mautic - which empowers company qualification and segmentation.
+This plugin requires the Floodlight for B2B API service.
 
 REQUIREMENTS
 ------------
