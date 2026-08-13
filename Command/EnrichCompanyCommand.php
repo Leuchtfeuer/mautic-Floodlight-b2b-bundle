@@ -76,6 +76,7 @@ class EnrichCompanyCommand extends ModeratedCommand
             return 0;
         }
 
+        $pendingCompanyIds = [];
         foreach ($companyDomains as $companyDomain) {
             assert($companyDomain instanceof FloodlightCompanyDomains);
             $domain                = $companyDomain->getDomain();
@@ -113,6 +114,7 @@ class EnrichCompanyCommand extends ModeratedCommand
             }
 
             if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && empty($companyEnrichmentDate)) {
+                $pendingCompanyIds[$company->getId()] = true;
                 $company->addUpdatedField('f4b_enrichment_date', (new \DateTime(self::DATE_DEFAULT))->format('Y-m-d H:i:s'));
                 $this->companyModel->saveEntity($company);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
@@ -122,6 +124,7 @@ class EnrichCompanyCommand extends ModeratedCommand
             }
 
             if (Response::HTTP_ACCEPTED === $result['statusRequestCode'] && (new \DateTime(self::DATE_DEFAULT))->format('Y-m-d H:i:s') == $companyEnrichmentDate) {
+                $pendingCompanyIds[$company->getId()] = true;
                 $company->addUpdatedField('f4b_enrichment_date', (new \DateTime())->format('Y-m-d H:i:s'));
                 $this->companyModel->saveEntity($company);
                 if ($output->getVerbosity() >= OutputInterface::VERBOSITY_VERBOSE) {
@@ -167,6 +170,11 @@ class EnrichCompanyCommand extends ModeratedCommand
             $output->writeln('<info>Company data updated '.$company->getName().'</info>');
             $output->writeln('<info>CompanyDomain '.$companyDomain->getDomain().' data updated</info>');
             $output->writeln(PHP_EOL);
+        }
+
+        $pendingCount = count($pendingCompanyIds);
+        if ($pendingCount > 0) {
+            $output->writeln('<info>'.$pendingCount.' '.(1 === $pendingCount ? 'company' : 'companies').' still pending enrichment results.</info>');
         }
 
         $output->writeln('<info>Enriching company data DONE!</info>');
