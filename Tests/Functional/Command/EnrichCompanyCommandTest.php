@@ -133,10 +133,12 @@ final class EnrichCompanyCommandTest extends MauticMysqlTestCase
         $commandTester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERY_VERBOSE]);
 
         $this->assertStringContainsString('Company domain 202domain.com with request 202, enrichment date set to default date', $commandTester->getDisplay());
+        $this->assertStringContainsString('1 company still pending enrichment results.', $commandTester->getDisplay());
 
         // Second 202 command, enrichment date should be set to current date
         $commandTester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERY_VERBOSE]);
         $this->assertStringContainsString('Lead domain 202domain.com with request 202, enrichment date set to current date', $commandTester->getDisplay());
+        $this->assertStringContainsString('1 company still pending enrichment results.', $commandTester->getDisplay());
 
         // Third 202 command, there shouldn't be found a company to enrich
         $commandTester->execute([], ['verbosity' => OutputInterface::VERBOSITY_VERY_VERBOSE]);
