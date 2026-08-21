@@ -91,9 +91,9 @@ class UsageProvider
     private function buildUsageData(array $data): UsageData
     {
         $remaining    = $this->readNonNegativeInt($data, 'remaining');
-        $monthlyLimit = $this->readPositiveInt($data, 'limit');
+        $monthlyLimit = $this->readPositiveInt($data, 'monthlyLimit');
         $buffer       = $this->readNonNegativeInt($data, 'buffer');
-        $nextRenewal  = $this->readDate($data, 'next_renewal');
+        $nextRenewal  = $this->readDate($data, 'nextRenewal');
 
         return new UsageData($remaining, $monthlyLimit, $buffer, $nextRenewal);
     }

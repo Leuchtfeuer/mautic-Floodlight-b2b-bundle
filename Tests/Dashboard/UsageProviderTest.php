@@ -58,9 +58,9 @@ class UsageProviderTest extends TestCase
         $this->configureAsReady();
         $body = json_encode([
             'remaining'    => 134,
-            'limit'        => 500,
+            'monthlyLimit' => 500,
             'buffer'       => 200,
-            'next_renewal' => 'Thu, 14 Aug 2025 22:00:00 GMT',
+            'nextRenewal'  => 'Thu, 14 Aug 2025 22:00:00 GMT',
         ]);
         $this->guzzle->method('request')->willReturn(new Response(200, [], $body));
 
@@ -77,8 +77,8 @@ class UsageProviderTest extends TestCase
         $this->configureAsReady();
         $body = json_encode([
             'remaining'    => 1000,
-            'limit'        => 1000,
-            'next_renewal' => 'Sat, 31 May 2025 22:00:00 GMT',
+            'monthlyLimit' => 1000,
+            'nextRenewal'  => 'Sat, 31 May 2025 22:00:00 GMT',
         ]);
         $this->guzzle->method('request')->willReturn(new Response(200, [], $body));
 
@@ -116,7 +116,7 @@ class UsageProviderTest extends TestCase
     public function testRejectsMissingField(): void
     {
         $this->configureAsReady();
-        $body = json_encode(['limit' => 500, 'next_renewal' => 'Thu, 14 Aug 2025 22:00:00 GMT']);
+        $body = json_encode(['monthlyLimit' => 500, 'nextRenewal' => 'Thu, 14 Aug 2025 22:00:00 GMT']);
         $this->guzzle->method('request')->willReturn(new Response(200, [], $body));
 
         $this->assertUsageCategory(UsageException::UNAVAILABLE);
@@ -125,7 +125,7 @@ class UsageProviderTest extends TestCase
     public function testRejectsNegativeRemaining(): void
     {
         $this->configureAsReady();
-        $body = json_encode(['remaining' => -1, 'limit' => 500, 'next_renewal' => 'Thu, 14 Aug 2025 22:00:00 GMT']);
+        $body = json_encode(['remaining' => -1, 'monthlyLimit' => 500, 'nextRenewal' => 'Thu, 14 Aug 2025 22:00:00 GMT']);
         $this->guzzle->method('request')->willReturn(new Response(200, [], $body));
 
         $this->assertUsageCategory(UsageException::UNAVAILABLE);
@@ -134,7 +134,7 @@ class UsageProviderTest extends TestCase
     public function testRejectsNonPositiveLimit(): void
     {
         $this->configureAsReady();
-        $body = json_encode(['remaining' => 10, 'limit' => 0, 'next_renewal' => 'Thu, 14 Aug 2025 22:00:00 GMT']);
+        $body = json_encode(['remaining' => 10, 'monthlyLimit' => 0, 'nextRenewal' => 'Thu, 14 Aug 2025 22:00:00 GMT']);
         $this->guzzle->method('request')->willReturn(new Response(200, [], $body));
 
         $this->assertUsageCategory(UsageException::UNAVAILABLE);
@@ -143,7 +143,7 @@ class UsageProviderTest extends TestCase
     public function testRejectsInvalidRenewalDate(): void
     {
         $this->configureAsReady();
-        $body = json_encode(['remaining' => 10, 'limit' => 500, 'next_renewal' => 'not-a-date']);
+        $body = json_encode(['remaining' => 10, 'monthlyLimit' => 500, 'nextRenewal' => 'not-a-date']);
         $this->guzzle->method('request')->willReturn(new Response(200, [], $body));
 
         $this->assertUsageCategory(UsageException::UNAVAILABLE);
