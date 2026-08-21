@@ -12,8 +12,11 @@ use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 class LeuchtfeuerFloodlightB2BExtension extends Extension
 {
     private const DEFAULT_FLOODLIGHT_API_URL = 'https://api.floodlight-b2b.com';
+
     private const ENV_FLOODLIGHT_API_URL     = 'FLOODLIGHT_API_URL'; // Environment variable name
+
     private const PARAM_FLOODLIGHT_API_URL   = 'mautic.leuchtfeuerfloodlightb2b.floodlight_api_url';
+
     // Suffix for the key Mautic uses to store bundle parameters
     private const MAUTIC_BUNDLE_PARAMS_SUFFIX = '.parameters';
 
@@ -24,9 +27,11 @@ class LeuchtfeuerFloodlightB2BExtension extends Extension
 
         $apiUrl = self::DEFAULT_FLOODLIGHT_API_URL;
 
-        // 1. Check environment variable
-        $envUrl = getenv(self::ENV_FLOODLIGHT_API_URL);
-        if (false !== $envUrl && '' !== trim($envUrl)) { // Ensure it's not just an empty string
+        // 1. Check environment variables loaded by Symfony Dotenv or the process.
+        $envUrl = $_SERVER[self::ENV_FLOODLIGHT_API_URL]
+            ?? $_ENV[self::ENV_FLOODLIGHT_API_URL]
+            ?? getenv(self::ENV_FLOODLIGHT_API_URL);
+        if (is_string($envUrl) && '' !== trim($envUrl)) { // Ensure it's not just an empty string
             $apiUrl = trim($envUrl);
         } else {
             // 2. If no env var, check parameters defined in config.php (Mautic convention)
