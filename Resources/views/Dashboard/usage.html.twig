@@ -1,0 +1,47 @@
+<div class="pt-md pr-md pb-md pl-md">
+    {% if state == 'success' %}
+        <ul class="list-group mb-md bdr-w-0">
+            <li class="box-layout mb-sm">
+                <span class="col-xs-8 va-m dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.plan'|trans }}</span>
+                <span class="col-xs-4 va-m text-right fw-sb">{{ plan }}</span>
+            </li>
+            <li class="box-layout mb-sm">
+                <span class="col-xs-8 va-m dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.monthly_limit'|trans }}</span>
+                <span class="col-xs-4 va-m text-right fw-sb">{{ monthlyLimit }}</span>
+            </li>
+            <li class="box-layout mb-sm">
+                <span class="col-xs-8 va-m dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.remaining'|trans }}</span>
+                <span class="col-xs-4 va-m text-right fw-sb">{{ remaining }}</span>
+            </li>
+            <li class="box-layout mb-sm">
+                <span class="col-xs-8 va-m dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.buffer'|trans }}</span>
+                <span class="col-xs-4 va-m text-right fw-sb">{{ buffer }}</span>
+            </li>
+            <li class="box-layout mb-sm">
+                <span class="col-xs-8 va-m dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.next_renewal'|trans }}</span>
+                <span class="col-xs-4 va-m text-right fw-sb">{{ dateToFull(nextRenewal) }}</span>
+            </li>
+            <li class="box-layout">
+                <span class="col-xs-8 va-m dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.days_left'|trans }}</span>
+                <span class="col-xs-4 va-m text-right fw-sb">{{ daysLeft }}</span>
+            </li>
+        </ul>
+    {% elseif state == 'setup' %}
+        <div class="alert alert-warning" role="alert">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.setup_required'|trans }}</div>
+    {% elseif state == 'invalid_credentials' %}
+        <div class="alert alert-danger" role="alert">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.invalid_credentials'|trans }}</div>
+    {% elseif state == 'rate_limited' %}
+        <div class="alert alert-warning" role="alert">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.rate_limited'|trans }}</div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.unavailable'|trans }}</div>
+    {% endif %}
+
+    <div class="mt-md">
+        <a href="{{ portalUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-default mr-sm">
+            {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.customer_portal'|trans }}
+        </a>
+        <a href="{{ shopUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+            {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.upgrade_plan'|trans }}
+        </a>
+    </div>
+</div>
