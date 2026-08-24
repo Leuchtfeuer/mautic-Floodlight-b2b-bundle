@@ -31,9 +31,9 @@ class FloodlightCompanyDomainsModel extends FormModel
         CompanyDomainMapper $companyDomainMapper,
         FloodlightCompanyDomainsRepository $floodlightCompanyDomainsRepository,
     ): void {
-        $this->domainUtility                     = $domainUtility;
-        $this->companyModel                      = $companyModel;
-        $this->companyDomainMapper               = $companyDomainMapper;
+        $this->domainUtility                      = $domainUtility;
+        $this->companyModel                       = $companyModel;
+        $this->companyDomainMapper                = $companyDomainMapper;
         $this->floodlightCompanyDomainsRepository = $floodlightCompanyDomainsRepository;
     }
 

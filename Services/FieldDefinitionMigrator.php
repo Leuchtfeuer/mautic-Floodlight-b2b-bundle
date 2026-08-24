@@ -62,7 +62,7 @@ class FieldDefinitionMigrator
     public function __construct(
         private readonly Connection $connection,
     ) {
-        $prefix = defined('MAUTIC_TABLE_PREFIX') && is_string(MAUTIC_TABLE_PREFIX) ? MAUTIC_TABLE_PREFIX : '';
+        $prefix                = defined('MAUTIC_TABLE_PREFIX') && is_string(MAUTIC_TABLE_PREFIX) ? MAUTIC_TABLE_PREFIX : '';
         $this->companiesTable  = $prefix.'companies';
         $this->leadFieldsTable = $prefix.'lead_fields';
     }
@@ -89,9 +89,9 @@ class FieldDefinitionMigrator
         ];
 
         [$stats['varchar_shrunk'], $stats['rows_truncated']] = $this->truncateAndShrinkVarcharFields();
-        $stats['description_converted'] = $this->convertDescriptionToTextarea();
-        $stats['indexes_dropped'] = $this->dropIndexes();
-        $stats['limits_updated'] = $this->updateCharLengthLimits();
+        $stats['description_converted']                      = $this->convertDescriptionToTextarea();
+        $stats['indexes_dropped']                            = $this->dropIndexes();
+        $stats['limits_updated']                             = $this->updateCharLengthLimits();
 
         return $stats;
     }

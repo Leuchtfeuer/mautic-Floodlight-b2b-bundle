@@ -36,11 +36,11 @@ final class FloodlightDTOTest extends MauticMysqlTestCase
             copy($pluginPathFrom, $configPathTo);
         }
 
-        $this->dtoFactory         = self::getContainer()->get(FloodlightDtoFactory::class);
-        $this->companyMapper      = self::getContainer()->get(CompanyMapper::class);
+        $this->dtoFactory          = self::getContainer()->get(FloodlightDtoFactory::class);
+        $this->companyMapper       = self::getContainer()->get(CompanyMapper::class);
         $this->companyDomainMapper = self::getContainer()->get(CompanyDomainMapper::class);
 
-        $this->floodlightDTO = $this->dtoFactory->create($this->fakeData());
+        $this->floodlightDTO      = $this->dtoFactory->create($this->fakeData());
         $this->useCleanupRollback = false;
         $this->setUpSymfony($this->configParams);
     }

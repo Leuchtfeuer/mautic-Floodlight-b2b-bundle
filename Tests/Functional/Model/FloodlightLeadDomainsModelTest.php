@@ -33,9 +33,9 @@ final class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
     public function testGetEntity(): void
     {
         $floodlightLeadDomainsModel = self::getContainer()->get(FloodlightLeadDomainsModel::class);
-        $leadDomain       = $this->addNewLeadDomainModel();
-        $leadDomainId     = $leadDomain->getId();
-        $leadDomainEntity = $floodlightLeadDomainsModel->getEntity($leadDomainId);
+        $leadDomain                 = $this->addNewLeadDomainModel();
+        $leadDomainId               = $leadDomain->getId();
+        $leadDomainEntity           = $floodlightLeadDomainsModel->getEntity($leadDomainId);
         $this->assertSame($leadDomainId, $leadDomainEntity->getId());
         $this->assertInstanceOf(Lead::class, $leadDomainEntity->getContact());
     }
@@ -74,9 +74,9 @@ final class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
     {
         $floodlightLeadDomainsModel = self::getContainer()->get(FloodlightLeadDomainsModel::class);
         $dtoFactory                 = self::getContainer()->get(FloodlightDtoFactory::class);
-        $domain        = 'lfexample.com';
-        $lead          = $this->addLead();
-        $fileContent   = file_get_contents(__DIR__.'/../../fixtures/floodlight.json');
+        $domain                     = 'lfexample.com';
+        $lead                       = $this->addLead();
+        $fileContent                = file_get_contents(__DIR__.'/../../fixtures/floodlight.json');
         $this->assertNotFalse($fileContent);
         $dataJson      = json_decode($fileContent, true);
         $this->assertIsArray($dataJson);
@@ -123,8 +123,8 @@ final class FloodlightLeadDomainsModelTest extends MauticMysqlTestCase
     public function testRecauculatLeadPrimaryCompany(): void
     {
         $floodlightLeadDomainsModel = self::getContainer()->get(FloodlightLeadDomainsModel::class);
-        $company = $this->addNewCompany();
-        $lead    = $this->addLead();
+        $company                    = $this->addNewCompany();
+        $lead                       = $this->addLead();
         // Set primary company
         $lead->setPrimaryCompany($company);
         $this->em->persist($lead);
