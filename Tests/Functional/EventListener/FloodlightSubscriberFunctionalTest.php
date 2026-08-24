@@ -733,6 +733,9 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->em->flush();
     }
 
+    /**
+     * @param array<string, string> $headers
+     */
     private function processHit(string $remoteAddress, Lead $lead, array $headers = []): void
     {
         $floodlightSubscriber = self::getContainer()->get(FloodlightSubscriber::class);

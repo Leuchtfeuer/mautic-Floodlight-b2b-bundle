@@ -67,6 +67,9 @@ class IpLookupRulesHelper
         return count($result) > 1;
     }
 
+    /**
+     * @param array<mixed> $data
+     */
     private function checkIfInListOfValidRequestStatuses(array $data): bool
     {
         $validStatusRequest = [
