@@ -10,7 +10,9 @@ use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
+use PHPUnit\Framework\Attributes\Group;
 
+#[Group('no-ci')]
 final class LookupRetryCommandTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;

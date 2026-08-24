@@ -14,11 +14,13 @@ use Mautic\PluginBundle\Entity\Integration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Command\LookupRetryCommand;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
+use PHPUnit\Framework\Attributes\Group;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\HttpKernel\KernelInterface;
 
+#[Group('no-ci')]
 final class EnrichCompanyCommandTest extends MauticMysqlTestCase
 {
     protected $useCleanupRollback = false;
