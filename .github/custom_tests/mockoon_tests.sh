@@ -1,4 +1,7 @@
 #!/bin/bash
+ls -la
+ls -la plugins
+ls -la plugins/LeuchtfeuerFloodlightB2BBundle
 cd plugins/LeuchtfeuerFloodlightB2BBundle/Tests/Mockoon
 npm install
 npx mockoon-cli start --data ./floodlight_mockoon.json
