@@ -8,7 +8,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Mautic\IntegrationsBundle\Migration\AbstractMigration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FieldDefinitionMigrator;
 
-class Version_5_9_0 extends AbstractMigration
+class Version_7_0_0 extends AbstractMigration
 {
     protected function isApplicable(Schema $schema): bool
     {
