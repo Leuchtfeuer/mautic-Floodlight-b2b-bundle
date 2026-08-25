@@ -89,8 +89,8 @@ class DashboardSubscriberTest extends TestCase
         self::assertSame(134, $data['remaining']);
         self::assertSame([134, 366], $data['chartData']['datasets'][0]['data']);
         self::assertSame([
-            'leuchtfeuerfloodlightb2b.dashboard.usage.remaining; 134x, 26.8%',
-            'leuchtfeuerfloodlightb2b.dashboard.usage.used; 366x, 73.2%',
+            'leuchtfeuerfloodlightb2b.dashboard.usage.chart.remaining; 134x, 26.8%',
+            'leuchtfeuerfloodlightb2b.dashboard.usage.chart.used; 366x, 73.2%',
         ], $data['chartData']['labels']);
         self::assertSame(200, $data['buffer']);
         self::assertSame('https://floodlight-b2b.com/', $data['portalUrl']);
