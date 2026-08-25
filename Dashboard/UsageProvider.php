@@ -20,6 +20,10 @@ class UsageProvider
 {
     private const USAGE_PATH = '/v1/auth/usage';
 
+    private const CONNECT_TIMEOUT = 2;
+
+    private const REQUEST_TIMEOUT = 5;
+
     public function __construct(
         private ApiClient $apiClient,
         private Config $config,
@@ -47,7 +51,10 @@ class UsageProvider
         $url = rtrim($this->floodlightApiUrl, '/').self::USAGE_PATH;
 
         try {
-            return $this->apiClient->getClient()->request('GET', $url);
+            return $this->apiClient->getClient()->request('GET', $url, [
+                'connect_timeout' => self::CONNECT_TIMEOUT,
+                'timeout'         => self::REQUEST_TIMEOUT,
+            ]);
         } catch (BadResponseException $e) {
             // 4xx/5xx responses are available and mapped to a category.
             throw $this->mapStatusCode($e->getResponse()->getStatusCode());

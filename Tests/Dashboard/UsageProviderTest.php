@@ -62,7 +62,13 @@ class UsageProviderTest extends TestCase
             'buffer'       => 200,
             'nextRenewal'  => 'Thu, 14 Aug 2025 22:00:00 GMT',
         ]);
-        $this->guzzle->method('request')->willReturn(new Response(200, [], $body));
+        $this->guzzle->expects(self::once())
+            ->method('request')
+            ->with('GET', 'https://api.example.com/v1/auth/usage', [
+                'connect_timeout' => 2,
+                'timeout'         => 5,
+            ])
+            ->willReturn(new Response(200, [], $body));
 
         $usage = $this->provider->getUsage();
 
