@@ -16,9 +16,12 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodligh
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyDomainMapper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterCustomFieldCleanup;
 
 final class FloodlightDTOTest extends MauticMysqlTestCase
 {
+    use RebuildsCompanyTableAfterCustomFieldCleanup;
+
     private FloodlightDTO $floodlightDTO;
     private CompanyMapper $companyMapper;
     private CompanyDomainMapper $companyDomainMapper;
