@@ -6,6 +6,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventList
 
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Helper\PathsHelper;
+use Mautic\CoreBundle\Test\Container\TestContainer;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyLead;
@@ -929,7 +930,7 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
             fn (string $ip): string|false => $hostnames[$ip] ?? gethostbyaddr($ip)
         );
 
-        $container->set(DomainUtility::class, $domainUtility);
+        $this->mockService(DomainUtility::class, $domainUtility);
     }
 
     private function mockWhoisResultDependingOnIp(): void
@@ -958,7 +959,20 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
             return $responses[$ip] ?? null;
         });
 
-        self::getContainer()->set(WhoisService::class, $whoisService);
+        $this->mockService(WhoisService::class, $whoisService);
+    }
+
+    /**
+     * Re-syncs the TestContainer instead of self::getContainer()->set(), which can hit an
+     * uninitialized container after KernelBrowser reboots the kernel on a client request.
+     */
+    private function mockService(string $id, object $service): void
+    {
+        $rawContainer  = self::$kernel->getContainer();
+        $testContainer = self::getContainer();
+        $this->assertInstanceOf(TestContainer::class, $testContainer);
+        $testContainer->setPublicContainer($rawContainer);
+        $testContainer->set($id, $service);
     }
 
     /**
