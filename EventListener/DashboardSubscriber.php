@@ -105,11 +105,11 @@ class DashboardSubscriber implements EventSubscriberInterface
         $chart              = new PieChart();
         $remainingForChart  = min($usage->getRemaining(), $usage->getMonthlyLimit());
         $chart->setDataset(
-            $this->translator->trans('leuchtfeuerfloodlightb2b.dashboard.usage.remaining'),
+            $this->translator->trans('leuchtfeuerfloodlightb2b.dashboard.usage.chart.remaining'),
             $remainingForChart
         );
         $chart->setDataset(
-            $this->translator->trans('leuchtfeuerfloodlightb2b.dashboard.usage.used'),
+            $this->translator->trans('leuchtfeuerfloodlightb2b.dashboard.usage.chart.used'),
             $usage->getMonthlyLimit() - $remainingForChart
         );
 

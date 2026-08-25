@@ -1,8 +1,8 @@
-<div class="pt-md pr-md pb-md pl-md">
+<div class="pt-sm pb-sm">
     {% if state == 'success' %}
         <div class="row">
             <div class="{{ chartData is defined ? 'col-xs-7' : 'col-xs-12' }}">
-                <ul class="list-group mb-md bdr-w-0">
+                <ul class="list-group mb-0 bdr-w-0">
                     <li class="box-layout mb-sm">
                         <span class="col-xs-8 va-m dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.plan'|trans }}</span>
                         <span class="col-xs-4 va-m text-right fw-sb">{{ plan }}</span>
@@ -20,33 +20,30 @@
                         <span class="col-xs-4 va-m text-right fw-sb">{{ buffer }}</span>
                     </li>
                     <li class="box-layout mb-sm">
-                        <span class="col-xs-8 va-m dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.next_renewal'|trans }}</span>
-                        <span class="col-xs-4 va-m text-right fw-sb">{{ dateToFull(nextRenewal) }}</span>
-                    </li>
-                    <li class="box-layout">
-                        <span class="col-xs-8 va-m dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.days_left'|trans }}</span>
-                        <span class="col-xs-4 va-m text-right fw-sb">{{ daysLeft }}</span>
+                        <span class="col-xs-8 va-t dark-sm">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.next_renewal'|trans }}</span>
+                        <span class="col-xs-4 va-t text-right fw-sb">
+                            <span class="text-nowrap">{{ dateToDate(nextRenewal) }}</span><br>({{ 'leuchtfeuerfloodlightb2b.dashboard.usage.days_left'|trans({'%count%': daysLeft}) }})
+                        </span>
                     </li>
                 </ul>
-
-                <div class="mt-md">
-                    <a href="{{ portalUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-default mr-sm">
-                        {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.customer_portal'|trans }}
-                    </a>
-                    <a href="{{ shopUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
-                        {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.upgrade_plan'|trans }}
-                    </a>
-                </div>
             </div>
             {% if chartData is defined %}
                 <div class="col-xs-5">
                     {{ include('@MauticCore/Helper/chart.html.twig', {
                         chartData: chartData,
                         chartType: 'pie',
-                        chartHeight: 210
+                        chartHeight: 140
                     }) }}
                 </div>
             {% endif %}
+            <div class="col-xs-12 fd-row">
+                <a href="{{ portalUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-secondary mr-sm floodlight-b2b-widget-button pr-16">
+                    {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.customer_portal'|trans }}
+                </a>
+                <a href="{{ shopUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary floodlight-b2b-widget-button pr-16">
+                    {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.upgrade_plan'|trans }}
+                </a>
+            </div>
         </div>
     {% elseif state == 'setup' %}
         <div class="alert alert-warning" role="alert">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.setup_required'|trans }}</div>
@@ -59,11 +56,11 @@
     {% endif %}
 
     {% if state != 'success' %}
-        <div class="mt-md">
-            <a href="{{ portalUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-default mr-sm">
+        <div class="mt-sm">
+            <a href="{{ portalUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-secondary mr-sm floodlight-b2b-widget-button pr-16">
                 {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.customer_portal'|trans }}
             </a>
-            <a href="{{ shopUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+            <a href="{{ shopUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary floodlight-b2b-widget-button pr-16">
                 {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.upgrade_plan'|trans }}
             </a>
         </div>
