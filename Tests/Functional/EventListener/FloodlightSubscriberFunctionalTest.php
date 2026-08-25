@@ -22,12 +22,15 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterCustomFieldCleanup;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
 
 #[Group('no-ci')]
 final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
+    use RebuildsCompanyTableAfterCustomFieldCleanup;
+
     protected $useCleanupRollback = false;
 
     private FloodlightLeadDomainsRepository $leadDomainRepo;
