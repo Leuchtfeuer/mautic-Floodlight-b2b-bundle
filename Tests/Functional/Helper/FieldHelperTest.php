@@ -14,9 +14,12 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDtoFactory;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterCustomFieldCleanup;
 
 final class FieldHelperTest extends MauticMysqlTestCase
 {
+    use RebuildsCompanyTableAfterCustomFieldCleanup;
+
     public function setUp(): void
     {
         parent::setUp();
