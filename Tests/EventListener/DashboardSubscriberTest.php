@@ -98,6 +98,19 @@ class DashboardSubscriberTest extends TestCase
         self::assertGreaterThanOrEqual(0, $data['daysLeft']);
     }
 
+    public function testAlwaysFetchesCurrentUsage(): void
+    {
+        $usage = new UsageData(134, 500, 200, new \DateTimeImmutable('+1 day'));
+        $this->usageProvider->expects(self::once())->method('getUsage')->willReturn($usage);
+
+        $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
+        $event->expects(self::never())->method('isCached');
+
+        $this->subscriber->onWidgetDetailGenerate($event);
+
+        self::assertSame('success', $this->capturedData['state']);
+    }
+
     public function testPastRenewalReturnsZeroDaysLeft(): void
     {
         $usage = new UsageData(10, 500, 0, new \DateTimeImmutable('2000-01-01 00:00:00', new \DateTimeZone('UTC')));

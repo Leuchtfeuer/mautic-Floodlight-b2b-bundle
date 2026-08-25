@@ -60,9 +60,7 @@ class DashboardSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if (!$event->isCached()) {
-            $event->setTemplateData($this->buildTemplateData());
-        }
+        $event->setTemplateData($this->buildTemplateData(), true);
 
         $event->setTemplate(self::TEMPLATE);
         $event->stopPropagation();
