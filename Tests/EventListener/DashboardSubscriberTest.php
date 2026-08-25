@@ -16,6 +16,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\WidgetPlacement;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\DashboardSubscriber;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class DashboardSubscriberTest extends TestCase
 {
@@ -25,6 +26,8 @@ class DashboardSubscriberTest extends TestCase
 
     private CoreParametersHelper&MockObject $coreParametersHelper;
 
+    private TranslatorInterface&MockObject $translator;
+
     private DashboardSubscriber $subscriber;
 
     protected function setUp(): void
@@ -32,6 +35,8 @@ class DashboardSubscriberTest extends TestCase
         $this->usageProvider        = $this->createMock(UsageProvider::class);
         $this->userHelper           = $this->createMock(UserHelper::class);
         $this->coreParametersHelper = $this->createMock(CoreParametersHelper::class);
+        $this->translator           = $this->createMock(TranslatorInterface::class);
+        $this->translator->method('trans')->willReturnArgument(0);
 
         $user = $this->createMock(User::class);
         $user->method('getTimezone')->willReturn('UTC');
@@ -41,6 +46,7 @@ class DashboardSubscriberTest extends TestCase
             $this->usageProvider,
             $this->userHelper,
             $this->coreParametersHelper,
+            $this->translator,
         );
     }
 
@@ -81,6 +87,11 @@ class DashboardSubscriberTest extends TestCase
         self::assertSame('Free', $data['plan']);
         self::assertSame(500, $data['monthlyLimit']);
         self::assertSame(134, $data['remaining']);
+        self::assertSame([134, 366], $data['chartData']['datasets'][0]['data']);
+        self::assertSame([
+            'leuchtfeuerfloodlightb2b.dashboard.usage.remaining; 134x, 26.8%',
+            'leuchtfeuerfloodlightb2b.dashboard.usage.used; 366x, 73.2%',
+        ], $data['chartData']['labels']);
         self::assertSame(200, $data['buffer']);
         self::assertSame('https://floodlight-b2b.com/', $data['portalUrl']);
         self::assertSame('https://floodlight-b2b.com/', $data['shopUrl']);
@@ -96,6 +107,17 @@ class DashboardSubscriberTest extends TestCase
         $this->subscriber->onWidgetDetailGenerate($event);
 
         self::assertSame(0, $this->capturedData['daysLeft']);
+    }
+
+    public function testChartSlicesDoNotExceedMonthlyLimit(): void
+    {
+        $usage = new UsageData(600, 500, 200, new \DateTimeImmutable('+1 day'));
+        $this->usageProvider->method('getUsage')->willReturn($usage);
+
+        $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
+        $this->subscriber->onWidgetDetailGenerate($event);
+
+        self::assertSame([500, 0], $this->capturedData['chartData']['datasets'][0]['data']);
     }
 
     /**

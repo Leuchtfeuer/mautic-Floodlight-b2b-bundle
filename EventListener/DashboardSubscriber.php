@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener;
 
+use Mautic\CoreBundle\Helper\Chart\PieChart;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\DashboardBundle\DashboardEvents;
@@ -14,6 +15,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageException;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageProvider;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\WidgetPlacement;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Registers the fixed Floodlight usage widget type and renders it. It handles
@@ -35,6 +37,7 @@ class DashboardSubscriber implements EventSubscriberInterface
         private UsageProvider $usageProvider,
         private UserHelper $userHelper,
         private CoreParametersHelper $coreParametersHelper,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -87,10 +90,30 @@ class DashboardSubscriber implements EventSubscriberInterface
             'state'        => 'success',
             'monthlyLimit' => $usage->getMonthlyLimit(),
             'remaining'    => $usage->getRemaining(),
+            'chartData'    => $this->buildChartData($usage),
             'buffer'       => $usage->getBuffer(),
             'nextRenewal'  => $usage->getNextRenewal(),
             'daysLeft'     => $this->calculateDaysLeft($usage),
         ]);
+    }
+
+    /**
+     * @return array{labels: mixed[], datasets: mixed[]}
+     */
+    private function buildChartData(UsageData $usage): array
+    {
+        $chart              = new PieChart();
+        $remainingForChart  = min($usage->getRemaining(), $usage->getMonthlyLimit());
+        $chart->setDataset(
+            $this->translator->trans('leuchtfeuerfloodlightb2b.dashboard.usage.remaining'),
+            $remainingForChart
+        );
+        $chart->setDataset(
+            $this->translator->trans('leuchtfeuerfloodlightb2b.dashboard.usage.used'),
+            $usage->getMonthlyLimit() - $remainingForChart
+        );
+
+        return $chart->render();
     }
 
     private function stateForCategory(string $category): string
