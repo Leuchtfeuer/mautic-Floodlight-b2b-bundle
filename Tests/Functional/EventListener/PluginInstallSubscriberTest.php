@@ -11,6 +11,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterC
 final class PluginInstallSubscriberTest extends MauticMysqlTestCase
 {
     use RebuildsCompanyTableAfterCustomFieldCleanup;
+
     public function testOnPluginInstall(): void
     {
         $this->client->request('GET', '/s/plugins/reload');
