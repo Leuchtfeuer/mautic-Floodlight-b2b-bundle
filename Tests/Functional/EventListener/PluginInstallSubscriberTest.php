@@ -21,7 +21,7 @@ final class PluginInstallSubscriberTest extends MauticMysqlTestCase
         $this->client->request('GET', '/s/contacts/fields/2');
         $content .= $this->client->getResponse()->getContent();
         $fields = [
-            'f4b_companytimezone',
+            'f4b_ccompanytimezone',
             'f4b_companyticker',
             'f4b_companytype',
             'companylogo_filename',
