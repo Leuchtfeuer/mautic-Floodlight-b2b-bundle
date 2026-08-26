@@ -12,10 +12,10 @@ The Floodlight for B2B is one plugin of the ABM solution. It is responsible for 
 ## Requirements
 > [!TIP]
 > Other releases of this plugin may cover different Mautic versions!
-- Mautic 5.2 or higher
+- Mautic 7.x (min. 7.0)
 
 ## Version Support
-- PHP 8.1 or higher
+- PHP 8.2 or higher
 - jeremykendall/php-domain-parser ^6.3
 
 ## Installation
