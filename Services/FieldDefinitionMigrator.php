@@ -89,8 +89,8 @@ class FieldDefinitionMigrator
         ];
 
         [$stats['varchar_shrunk'], $stats['rows_truncated']] = $this->truncateAndShrinkVarcharFields();
-        $stats['description_converted']                      = $this->convertDescriptionToTextarea();
         $stats['indexes_dropped']                            = $this->dropIndexes();
+        $stats['description_converted']                      = $this->convertDescriptionToTextarea();
         $stats['limits_updated']                             = $this->updateCharLengthLimits();
 
         return $stats;
