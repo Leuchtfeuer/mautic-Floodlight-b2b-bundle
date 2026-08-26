@@ -10,16 +10,46 @@ use Psr\Log\LoggerInterface;
 
 final class WhoisServiceTest extends TestCase
 {
-    private WhoisService $service;
-
-    protected function setUp(): void
+    /**
+     * @param array<mixed>|null $rdapFixture
+     */
+    private function createService(?array $rdapFixture): WhoisService
     {
-        $this->service = new WhoisService($this->createStub(LoggerInterface::class));
+        return new class($this->createStub(LoggerInterface::class), $rdapFixture) extends WhoisService {
+            /**
+             * @param array<mixed>|null $rdapFixture
+             */
+            public function __construct(LoggerInterface $mauticLogger, private readonly ?array $rdapFixture)
+            {
+                parent::__construct($mauticLogger);
+            }
+
+            protected function fetchRdap(string $ip): ?array
+            {
+                return $this->rdapFixture;
+            }
+        };
     }
 
     public function testGetWhoisDataReturnsExpectedStructure(): void
     {
-        $result = $this->service->getWhoisData('17.17.17.17');
+        $rdapFixture = [
+            'name'     => 'Apple Inc.',
+            'entities' => [
+                [
+                    'vcardArray' => [
+                        'vcard',
+                        [
+                            ['version', [], 'text', '4.0'],
+                            ['fn', [], 'text', 'Apple Inc.'],
+                            ['email', [], 'text', 'admin@group.apple.com'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $result = $this->createService($rdapFixture)->getWhoisData('17.17.17.17');
 
         $this->assertNotEmpty($result);
         $this->assertArrayHasKey('company_domain', $result);
@@ -34,7 +64,13 @@ final class WhoisServiceTest extends TestCase
 
     public function testGetWhoisDataReturnsEmptyArrayForInvalidIp(): void
     {
-        $result = $this->service->getWhoisData('not-an-ip');
+        $result = $this->createService(null)->getWhoisData('not-an-ip');
+        $this->assertSame([], $result);
+    }
+
+    public function testGetWhoisDataReturnsEmptyArrayWhenRdapLookupFails(): void
+    {
+        $result = $this->createService(null)->getWhoisData('17.17.17.17');
         $this->assertSame([], $result);
     }
 }
