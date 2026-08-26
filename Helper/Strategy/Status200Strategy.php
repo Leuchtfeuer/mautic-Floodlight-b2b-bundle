@@ -22,7 +22,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
-use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class Status200Strategy implements StatusCodeStrategyInterface
 {
@@ -41,6 +41,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         private readonly PathsHelper $pathsHelper,
         private readonly CompanyMapper $companyMapper,
         private readonly \Mautic\LeadBundle\Entity\LeadRepository $leadRepository,
+        private readonly HttpClientInterface $httpClient,
     ) {
     }
 
@@ -283,8 +284,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $timestamp    = (new \DateTime())->format('Y-m-d-H-i-s');
         $logoFileName = 'f4b_'.md5($company->getName().$timestamp);
 
-        $httpClient = HttpClient::create();
-        $response   = $httpClient->request('GET', $companyLogoUrl);
+        $response = $this->httpClient->request('GET', $companyLogoUrl);
         if (200 !== $response->getStatusCode()) {
             return null;
         }

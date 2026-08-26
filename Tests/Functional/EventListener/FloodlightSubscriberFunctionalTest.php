@@ -26,6 +26,8 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterCustomFieldCleanup;
 use PHPUnit\Framework\Attributes\Group;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 #[Group('no-ci')]
 final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
@@ -356,6 +358,7 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
+        $this->mockLogoHttpClient();
 
         $this->processHit('12.138.157.209', $lead);
         $this->processHit('12.138.157.209', $lead);
@@ -380,6 +383,7 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
+        $this->mockLogoHttpClient();
 
         $this->processHit('12.138.157.209', $lead);
         $this->processHit('12.138.157.209', $lead);
@@ -973,6 +977,15 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->assertInstanceOf(TestContainer::class, $testContainer);
         $testContainer->setPublicContainer($rawContainer);
         $testContainer->set($id, $service);
+    }
+
+    private function mockLogoHttpClient(): void
+    {
+        $mockClient = new MockHttpClient(
+            static fn (): MockResponse => new MockResponse('fake-png-bytes', ['response_headers' => ['content-type' => 'image/png']])
+        );
+
+        $this->mockService(MockHttpClient::class, $mockClient);
     }
 
     /**
