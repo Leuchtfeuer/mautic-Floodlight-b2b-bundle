@@ -260,10 +260,10 @@ class FieldHelper
         if ($result) {
             try {
                 $this->fieldModel->saveEntity($field);
-            } catch (\Exception) {
-                // Mautic 7's updateColumnLength() rejects charLengthLimit > 191,
-                // but the entity metadata (properties) is already persisted at this point.
-                // Safe to ignore since we only changed list properties, not the column.
+            } catch (\OutOfRangeException $e) { // @phpstan-ignore catch.neverThrown (thrown by ColumnSchemaHelper::updateColumnLength() via saveEntity() -> updateLeadColumn(), PHPStan can't see through the call chain)
+                // saveLeadFieldEntity() inside saveEntity() already persisted the properties
+                // before updateLeadColumn() throws, so the properties change is not lost.
+                $this->mauticLogger->warning('Field column length update rejected: '.$e->getMessage());
             }
         } else {
             $this->mauticLogger->error('Field properties could not be saved');
