@@ -19,15 +19,9 @@ The Floodlight for B2B is one plugin of the ABM solution. It is responsible for 
 - jeremykendall/php-domain-parser ^6.3
 
 ## Installation
-### Composer
-This plugin can be installed through composer. It also requires the `jeremykendall/php-domain-parser` dependency:
-
-```
-composer require jeremykendall/php-domain-parser:^6.3
-```
 
 ### Manual Installation
-Alternatively, it can be installed manually, following the usual steps:
+The plugin can be installed manually, following the usual steps:
 - Download the plugin
 - Unzip to the Mautic `plugins` directory
 - Rename folder to `LeuchtfeuerFloodlightB2BBundle`
