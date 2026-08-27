@@ -19,6 +19,8 @@ The Floodlight for B2B is one plugin of the ABM solution. It is responsible for 
 - jeremykendall/php-domain-parser ^6.3
 
 ## Installation
+### Composer
+This plugin is currently private and can't be installed via composer.
 
 ### Manual Installation
 The plugin can be installed manually, following the usual steps:
