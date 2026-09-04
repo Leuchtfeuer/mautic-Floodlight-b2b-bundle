@@ -20,7 +20,7 @@ class AuditLogHelper
         $result = $this->auditLogModel->getRepository()->findBy(
             ['object' => 'company', 'objectId' => $id],
         );
-        $nonFloodlightAuditLogEntries = array_filter($result, function ($item) {
+        $nonFloodlightAuditLogEntries = array_filter($result, function ($item): bool {
             return 'Floodlight B2B' !== $item->getUserName();
         });
 
