@@ -59,7 +59,7 @@ DISALLOW FREEMAILERS ON FORM EMAIL FIELDS
 -----------
 Email fields in the Mautic Form Builder get an additional "Disallow freemailers" option (independent of the "Required" option). When enabled, submissions with an email address from a common free/consumer email provider (e.g. Gmail, Yahoo) are rejected the same way as submissions with no email or an invalid email syntax.
 
-The list of free email providers is bundled with the plugin (`Config/f4b_free_email_domains.json`, based on https://github.com/Kikobeats/free-email-domains) and updated with each plugin release. It is not editable at runtime.
+The list of free email providers is bundled with the plugin (`Config/f4b_free_email_domains.json`, based on https://github.com/Kikobeats/free-email-domains) and updated with each plugin release. It is not editable at runtime. This list is MIT-licensed; see `THIRD_PARTY_LICENSES.md` for the license text.
 
 FUTURE IMPROVEMENTS
 -------------------
