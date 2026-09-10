@@ -6,7 +6,7 @@ on:
 jobs:
   ci-workflow:
     name: CI
-    uses: Leuchtfeuer/mautic-ci-runner/.github/workflows/complete-ci.yaml@mtc-11409-custom-tests
+    uses: Leuchtfeuer/mautic-ci-runner/.github/workflows/complete-ci.yaml@main
     with:
       additionalRequirements: "jeremykendall/php-domain-parser:^6.3"
     secrets:
