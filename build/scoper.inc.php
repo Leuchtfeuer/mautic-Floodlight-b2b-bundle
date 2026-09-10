@@ -2,12 +2,6 @@
 
 declare(strict_types=1);
 
-/*
- * Scoped to Vendor/Pdp only, not the whole plugin: scoping the whole tree
- * previously broke a real install because the exclude-namespaces blacklist
- * missed Twig (used by Helper/FloodlightLeadNameHelper.php).
- */
-
 use Isolated\Symfony\Component\Finder\Finder;
 
 return [

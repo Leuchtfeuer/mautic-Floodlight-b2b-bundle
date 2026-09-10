@@ -18,9 +18,6 @@
     "mautic/core-lib": "^7.0",
     "jeremykendall/php-domain-parser": "^6.3"
   },
-  "require-dev": {
-    "phpunit/phpunit": "^9.5"
-  },
   "extra": {
     "install-directory-name": "LeuchtfeuerFloodlightB2BBundle"
   },
