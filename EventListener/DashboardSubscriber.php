@@ -27,8 +27,6 @@ class DashboardSubscriber implements EventSubscriberInterface
 
     private const BUNDLE     = 'others';
 
-    private const PLAN       = 'Free';
-
     private const PORTAL_URL = 'https://floodlight-b2b.com/';
 
     private const SHOP_URL   = 'https://floodlight-b2b.com/';
@@ -72,7 +70,6 @@ class DashboardSubscriber implements EventSubscriberInterface
     private function buildTemplateData(): array
     {
         $base = [
-            'plan'      => self::PLAN,
             'portalUrl' => self::PORTAL_URL,
             'shopUrl'   => self::SHOP_URL,
             'state'     => 'error',
@@ -86,6 +83,7 @@ class DashboardSubscriber implements EventSubscriberInterface
 
         return array_merge($base, [
             'state'        => 'success',
+            'plan'         => $usage->getPlan(),
             'monthlyLimit' => $usage->getMonthlyLimit(),
             'remaining'    => $usage->getRemaining(),
             'chartData'    => $this->buildChartData($usage),

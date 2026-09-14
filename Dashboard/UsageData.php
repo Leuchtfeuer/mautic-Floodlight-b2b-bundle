@@ -6,10 +6,6 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard;
 
 /**
  * Immutable value object representing a validated Floodlight usage response.
- *
- * The plan is deliberately absent. The dashboard presentation supplies the
- * static value "Free", allowing a future plan endpoint to evolve independently
- * from usage retrieval.
  */
 final class UsageData
 {
@@ -18,6 +14,7 @@ final class UsageData
         private int $monthlyLimit,
         private int $buffer,
         private \DateTimeImmutable $nextRenewal,
+        private string $plan,
     ) {
     }
 
@@ -39,5 +36,10 @@ final class UsageData
     public function getNextRenewal(): \DateTimeImmutable
     {
         return $this->nextRenewal;
+    }
+
+    public function getPlan(): string
+    {
+        return $this->plan;
     }
 }

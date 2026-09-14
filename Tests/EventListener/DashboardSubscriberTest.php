@@ -73,7 +73,7 @@ class DashboardSubscriberTest extends TestCase
 
     public function testRendersSuccessfulState(): void
     {
-        $usage = new UsageData(134, 500, 200, new \DateTimeImmutable('2025-08-14 22:00:00', new \DateTimeZone('UTC')));
+        $usage = new UsageData(134, 500, 200, new \DateTimeImmutable('2025-08-14 22:00:00', new \DateTimeZone('UTC')), 'Professional');
         $this->usageProvider->method('getUsage')->willReturn($usage);
 
         $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
@@ -84,7 +84,7 @@ class DashboardSubscriberTest extends TestCase
 
         $data = $this->capturedData;
         self::assertSame('success', $data['state']);
-        self::assertSame('Free', $data['plan']);
+        self::assertSame('Professional', $data['plan']);
         self::assertSame(500, $data['monthlyLimit']);
         self::assertSame(134, $data['remaining']);
         self::assertSame([134, 366], $data['chartData']['datasets'][0]['data']);
@@ -100,7 +100,7 @@ class DashboardSubscriberTest extends TestCase
 
     public function testAlwaysFetchesCurrentUsage(): void
     {
-        $usage = new UsageData(134, 500, 200, new \DateTimeImmutable('+1 day'));
+        $usage = new UsageData(134, 500, 200, new \DateTimeImmutable('+1 day'), 'Free');
         $this->usageProvider->expects(self::once())->method('getUsage')->willReturn($usage);
 
         $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
@@ -113,7 +113,7 @@ class DashboardSubscriberTest extends TestCase
 
     public function testPastRenewalReturnsZeroDaysLeft(): void
     {
-        $usage = new UsageData(10, 500, 0, new \DateTimeImmutable('2000-01-01 00:00:00', new \DateTimeZone('UTC')));
+        $usage = new UsageData(10, 500, 0, new \DateTimeImmutable('2000-01-01 00:00:00', new \DateTimeZone('UTC')), 'Free');
         $this->usageProvider->method('getUsage')->willReturn($usage);
 
         $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
@@ -124,7 +124,7 @@ class DashboardSubscriberTest extends TestCase
 
     public function testChartSlicesDoNotExceedMonthlyLimit(): void
     {
-        $usage = new UsageData(600, 500, 200, new \DateTimeImmutable('+1 day'));
+        $usage = new UsageData(600, 500, 200, new \DateTimeImmutable('+1 day'), 'Free');
         $this->usageProvider->method('getUsage')->willReturn($usage);
 
         $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
@@ -148,7 +148,7 @@ class DashboardSubscriberTest extends TestCase
         // Links remain available in every error state.
         self::assertSame('https://floodlight-b2b.com/', $data['portalUrl']);
         self::assertSame('https://floodlight-b2b.com/', $data['shopUrl']);
-        self::assertSame('Free', $data['plan']);
+        self::assertArrayNotHasKey('plan', $data);
     }
 
     /**

@@ -101,8 +101,9 @@ class UsageProvider
         $monthlyLimit = $this->readPositiveInt($data, 'monthlyLimit');
         $buffer       = $this->readNonNegativeInt($data, 'buffer');
         $nextRenewal  = $this->readDate($data, 'nextRenewal');
+        $plan         = $this->readString($data, 'plan');
 
-        return new UsageData($remaining, $monthlyLimit, $buffer, $nextRenewal);
+        return new UsageData($remaining, $monthlyLimit, $buffer, $nextRenewal, $plan);
     }
 
     /**
@@ -161,6 +162,18 @@ class UsageProvider
 
             throw UsageException::unavailable('Invalid Floodlight renewal date.');
         }
+    }
+
+    /**
+     * @param array<mixed> $data
+     */
+    private function readString(array $data, string $key): string
+    {
+        if (!array_key_exists($key, $data) || !is_string($data[$key]) || '' === $data[$key]) {
+            throw $this->invalidField($key);
+        }
+
+        return $data[$key];
     }
 
     private function invalidField(string $key): UsageException

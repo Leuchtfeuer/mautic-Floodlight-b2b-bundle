@@ -61,6 +61,7 @@ class UsageProviderTest extends TestCase
             'monthlyLimit' => 500,
             'buffer'       => 200,
             'nextRenewal'  => 'Thu, 14 Aug 2025 22:00:00 GMT',
+            'plan'         => 'Professional',
         ]);
         $this->guzzle->expects(self::once())
             ->method('request')
@@ -76,6 +77,21 @@ class UsageProviderTest extends TestCase
         self::assertSame(500, $usage->getMonthlyLimit());
         self::assertSame(200, $usage->getBuffer());
         self::assertSame('2025-08-14', $usage->getNextRenewal()->format('Y-m-d'));
+        self::assertSame('Professional', $usage->getPlan());
+    }
+
+    public function testRejectsMissingPlan(): void
+    {
+        $this->configureAsReady();
+        $body = json_encode([
+            'remaining'    => 134,
+            'monthlyLimit' => 500,
+            'buffer'       => 200,
+            'nextRenewal'  => 'Thu, 14 Aug 2025 22:00:00 GMT',
+        ]);
+        $this->guzzle->method('request')->willReturn(new Response(200, [], $body));
+
+        $this->assertUsageCategory(UsageException::UNAVAILABLE);
     }
 
     public function testRejectsMissingBuffer(): void
