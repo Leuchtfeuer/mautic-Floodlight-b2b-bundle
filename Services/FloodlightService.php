@@ -87,6 +87,29 @@ class FloodlightService implements FloodlightServiceInterface
         return false;
     }
 
+    /**
+     * @return array{content: string, contentType: string}|null
+     */
+    public function getLogo(string $logoUrl): ?array
+    {
+        try {
+            $response = $this->client->getClient()->request('GET', $logoUrl);
+
+            if (200 !== $response->getStatusCode()) {
+                return null;
+            }
+
+            return [
+                'content'     => $response->getBody()->getContents(),
+                'contentType' => $response->getHeaderLine('Content-Type'),
+            ];
+        } catch (\Throwable $e) {
+            $this->logger->error('FloodlightService getLogo failed: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
     private function getCompanyByIp(string $ip): ResponseInterface|false
     {
         $url = sprintf('%s/%s/companies/ip/%s', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION, $ip);

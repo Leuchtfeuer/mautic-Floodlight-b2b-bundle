@@ -134,81 +134,73 @@ class FloodlightServiceTest extends TestCase
         self::assertIsArray($result);
     }
 
-    /*
-    public function testGetFloodlightKeyValidationStatusUnauthorized(): void
+    public function testGetLogoSuccess(): void
+    {
+        $client            = $this->createMock(ApiClient::class);
+        $responseInterface = $this->createMock(ResponseInterface::class);
+        $guzzleClient      = $this->createMock(Client::class);
+        $stream            = $this->createMock(StreamInterface::class);
+        $logger            = $this->createMock(LoggerInterface::class);
+        $stream->expects(self::any())
+            ->method('getContents')
+            ->willReturn('binary-image-data');
+        $guzzleClient->expects(self::any())
+            ->method('request')
+            ->willReturn($responseInterface);
+        $client->expects(self::any())
+            ->method('getClient')
+            ->willReturn($guzzleClient);
+        $responseInterface->expects(self::any())
+            ->method('getStatusCode')
+            ->willReturn(200);
+        $responseInterface->expects(self::any())
+            ->method('getBody')
+            ->willReturn($stream);
+        $responseInterface->expects(self::any())
+            ->method('getHeaderLine')
+            ->with('Content-Type')
+            ->willReturn('image/png');
+
+        $service = new FloodlightService($client, $logger);
+        $result  = $service->getLogo('https://api.floodlight-b2b.com/v1/companies/logos/abc');
+        self::assertSame(['content' => 'binary-image-data', 'contentType' => 'image/png'], $result);
+    }
+
+    public function testGetLogoReturnsNullOnNon200(): void
     {
         $client            = $this->createMock(ApiClient::class);
         $responseInterface = $this->createMock(ResponseInterface::class);
         $guzzleClient      = $this->createMock(Client::class);
         $logger            = $this->createMock(LoggerInterface::class);
-        $stream            = $this->createMock(StreamInterface::class);
-
-        // Mock für den Stream, um die JSON-Antwort zu liefern
-        $stream->expects(self::any())
-            ->method('getContents')
-            ->willReturn('{"statusCode": 401, "timestamp": "2025-04-04T06:46:53.840Z", "message": "Unauthorized", "path": "/v1/auth/usage"}');
-
         $guzzleClient->expects(self::any())
             ->method('request')
             ->willReturn($responseInterface);
-
         $client->expects(self::any())
             ->method('getClient')
             ->willReturn($guzzleClient);
-
         $responseInterface->expects(self::any())
             ->method('getStatusCode')
-            ->willReturn(401);
+            ->willReturn(404);
 
-        $responseInterface->expects(self::any())
-            ->method('getBody')
-            ->willReturn($stream);
-
-        // Erstelle einen teilweisen Mock vom FloodlightService, der nur die handleResult-Methode überschreibt
-        $service = $this->getMockBuilder(FloodlightService::class)
-            ->setConstructorArgs([$client, $logger])
-            ->onlyMethods(['handleResult'])
-            ->getMock();
-
-        // Konfiguriere den Mock, um das erwartete Array zurückzugeben
-        $expectedResult = [
-            'statusCode' => 401,
-            'timestamp' => '2025-04-04T06:46:53.840Z',
-            'message' => 'Unauthorized',
-            'path' => '/v1/auth/usage',
-            'statusRequestCode' => 401
-        ];
-
-        $service->expects(self::once())
-            ->method('handleResult')
-            ->willReturn($expectedResult);
-
-        $result = $service->getAuthorizationStatus();
-
-        self::assertSame($expectedResult, $result);
+        $service = new FloodlightService($client, $logger);
+        self::assertNull($service->getLogo('https://api.floodlight-b2b.com/v1/companies/logos/abc'));
     }
-        */
 
-    /*
-     * {
-    "statusCode": 401,
-    "timestamp": "2025-04-04T06:46:53.840Z",
-    "message": "Unauthorized",
-    "path": "/v1/auth/usage"
-    }
-    Valid:
+    public function testGetLogoReturnsNullAndLogsOnException(): void
     {
-        "remaining": 996,
-        "limit": 1000,
-        "free": false,
-        "next_renewal": "2025-04-30T22:00:00.000Z"
+        $client       = $this->createMock(ApiClient::class);
+        $guzzleClient = $this->createMock(Client::class);
+        $logger       = $this->createMock(LoggerInterface::class);
+        $guzzleClient->expects(self::any())
+            ->method('request')
+            ->willThrowException(new \RuntimeException('401 Unauthorized'));
+        $client->expects(self::any())
+            ->method('getClient')
+            ->willReturn($guzzleClient);
+        $logger->expects(self::once())
+            ->method('error');
+
+        $service = new FloodlightService($client, $logger);
+        self::assertNull($service->getLogo('https://api.floodlight-b2b.com/v1/companies/logos/abc'));
     }
-    Exeeded:
-    {
-        "remaining": 0,
-        "limit": 1000,
-        "free": false,
-        "next_renewal": "2025-04-30T22:00:00.000Z"
-    }
-     */
 }

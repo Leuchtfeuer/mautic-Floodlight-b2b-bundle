@@ -230,6 +230,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'           => 'companylogo_filename',
                 'name'            => 'Company Logo Filename',
                 'type'            => 'text',
+                'group'           => 'core',
                 'externalKeyName' => 'companylogo_filename',
             ],
             [
@@ -315,6 +316,10 @@ class PluginInstallSubscriber implements EventSubscriberInterface
             $options['isIndex'] = false;
             if (isset($fieldData['isIndex'])) {
                 $options['isIndex'] = $fieldData['isIndex'];
+            }
+
+            if (isset($fieldData['group'])) {
+                $options['group'] = $fieldData['group'];
             }
 
             $this->installHelper->installFields(
