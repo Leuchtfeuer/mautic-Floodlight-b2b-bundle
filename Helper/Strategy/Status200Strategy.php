@@ -247,6 +247,9 @@ class Status200Strategy implements StatusCodeStrategyInterface
         if ($this->isLogoAlreadySetManually($company) || '' === $companyLogoUrl) {
             return $company;
         }
+        if (!$this->floodlightService->isAllowedLogoOrigin($companyLogoUrl)) {
+            return $company;
+        }
         $this->deleteOldLogoFile($company);
         $fileName = $this->createLogoFile($company, $companyLogoUrl);
         if (null === $fileName) {
