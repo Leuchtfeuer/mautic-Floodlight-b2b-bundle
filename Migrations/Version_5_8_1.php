@@ -40,7 +40,7 @@ class Version_5_8_1 extends AbstractMigration
 
     protected function up(): void
     {
-        $this->addSql(
+        $this->entityManager->getConnection()->executeStatement(
             sprintf('UPDATE %s SET field_group = :newGroup WHERE alias = :alias AND object = :object AND field_group = :oldGroup', $this->concatPrefix('lead_fields')),
             [
                 'newGroup' => self::NEW_GROUP,
