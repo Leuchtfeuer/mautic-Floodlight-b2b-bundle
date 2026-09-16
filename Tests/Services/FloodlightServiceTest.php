@@ -203,4 +203,46 @@ class FloodlightServiceTest extends TestCase
         $service = new FloodlightService($client, $logger);
         self::assertNull($service->getLogo('https://api.floodlight-b2b.com/v1/companies/logos/abc'));
     }
+
+    /**
+     * @return array<string, array{0: string, 1: bool}>
+     */
+    public static function logoOriginProvider(): array
+    {
+        return [
+            'default host'       => ['https://api.floodlight-b2b.com/logo/123.png', true],
+            'dev host'           => ['https://api-dev.floodlight-b2b.com/logo/123.png', true],
+            'configured host'    => ['https://api-staging.floodlight-b2b.com/logo/123.png', true],
+            'no https'           => ['http://api.floodlight-b2b.com/logo/123.png', false],
+            'foreign host'       => ['https://evil.com/logo.png', false],
+            'host suffix attack' => ['https://api.floodlight-b2b.com.evil.com/logo.png', false],
+        ];
+    }
+
+    /**
+     * @dataProvider logoOriginProvider
+     */
+    public function testIsAllowedLogoOrigin(string $url, bool $expected): void
+    {
+        $service = new FloodlightService(
+            $this->createMock(ApiClient::class),
+            $this->createMock(LoggerInterface::class),
+            'https://api-staging.floodlight-b2b.com'
+        );
+
+        self::assertSame($expected, $service->isAllowedLogoOrigin($url));
+    }
+
+    public function testGetLogoSkipsForeignOriginWithoutRequest(): void
+    {
+        $client = $this->createMock(ApiClient::class);
+        $logger = $this->createMock(LoggerInterface::class);
+        $client->expects(self::never())
+            ->method('getClient');
+        $logger->expects(self::once())
+            ->method('warning');
+
+        $service = new FloodlightService($client, $logger);
+        self::assertNull($service->getLogo('https://evil.com/logo.png'));
+    }
 }
