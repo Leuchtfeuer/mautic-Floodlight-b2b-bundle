@@ -26,12 +26,11 @@ class WidgetPlacement
 
     public function __construct(
         private EntityManagerInterface $entityManager
-    )
-    {
+    ) {
     }
 
     /**
-     * Creates the Floodlight widget for the given user if it does not exist yet.
+     * Creates the Floodlight widget at the top for the given user if it does not exist yet.
      *
      * @return bool true when a widget was created, false when one already existed
      */
@@ -52,7 +51,7 @@ class WidgetPlacement
         $widget->setType(self::WIDGET_TYPE);
         $widget->setWidth(self::WIDGET_WIDTH);
         $widget->setHeight(self::WIDGET_HEIGHT);
-        $widget->setOrdering($this->nextOrdering($userId));
+        $widget->setOrdering($this->firstOrdering($userId));
         $widget->setCreatedBy($user);
 
         $repository = $this->getWidgetRepository();
@@ -87,16 +86,16 @@ class WidgetPlacement
         return $count > 0;
     }
 
-    private function nextOrdering(int $userId): int
+    private function firstOrdering(int $userId): int
     {
-        $max = $this->getWidgetRepository()->createQueryBuilder('w')
-            ->select('MAX(w.ordering)')
+        $min = $this->getWidgetRepository()->createQueryBuilder('w')
+            ->select('MIN(w.ordering)')
             ->where('w.createdBy = :userId')
             ->setParameter('userId', $userId)
             ->getQuery()
             ->getSingleScalarResult();
 
-        return null === $max ? 0 : ((int) $max) + 1;
+        return null === $min ? 0 : ((int) $min) - 1;
     }
 
     private function getWidgetRepository(): WidgetRepository
