@@ -80,6 +80,7 @@ return [
                     'mautic.integration.leuchtfeuerfloodlightb2b.config',
                     'mautic.lead.repository.company_lead',
                     'mautic.helper.paths',
+                    'mautic.leuchtfeuerfloodlightb2b.services.floodlight',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status202strategy' => [
