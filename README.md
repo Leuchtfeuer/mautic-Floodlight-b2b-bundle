@@ -22,6 +22,7 @@ INSTALLATION
 5. Enable the plugin and configure the plugin with the API key.
 6. Install the patch which enables you to name the leads identified by floodlight according to the following logic: 'anonymous {timestamp} {domain}' --> https://github.com/mautic/mautic/pull/15153
 7. If required, install the patch which makes sure that when lead name (firstname and lastname) ist not available, displaying email will be preferred over displaying company name --> https://github.com/mautic/mautic/pull/15320
+8. If required, install the patch which displays the company logo on the company detail page --> https://github.com/mautic/mautic/pull/15490
 
 CONFIGURATION
 -------------

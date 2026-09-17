@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventListener;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Promise\FulfilledPromise;
+use GuzzleHttp\Psr7\Response;
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
@@ -15,14 +19,19 @@ use Mautic\PageBundle\Entity\Hit;
 use Mautic\PluginBundle\Entity\Integration;
 use Mautic\PluginBundle\Entity\Plugin;
 use Mautic\PluginBundle\Facade\ReloadFacade;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscriber;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
+use Psr\Http\Message\RequestInterface;
 
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
+    private const FLOODLIGHT_SERVICE_ID = 'mautic.leuchtfeuerfloodlightb2b.services.floodlight';
+
     private FloodlightLeadDomainsRepository $leadDomainRepo;
 
     public function setUp(): void
@@ -350,6 +359,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
+        $this->mockLogoApiClient();
 
         $this->processHit('12.138.157.209', $lead);
         $this->processHit('12.138.157.209', $lead);
@@ -374,6 +384,7 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
+        $this->mockLogoApiClient();
 
         $this->processHit('12.138.157.209', $lead);
         $this->processHit('12.138.157.209', $lead);
@@ -781,6 +792,40 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $pageHitEventMock->expects($this->any())->method('getHit')->willReturn($hit);
         $pageHitEventMock->expects($this->any())->method('getRequest')->willReturn($request);
         $floodlightSubscriber->onPageHit($pageHitEventMock);
+    }
+
+    private function mockLogoApiClient(): void
+    {
+        // The FloodlightService is already built at this point, so replacing the API client in
+        // the container no longer reaches it. Patch the client on the existing instance instead.
+        $floodlightService = self::getContainer()->get(self::FLOODLIGHT_SERVICE_ID);
+        $this->assertInstanceOf(FloodlightService::class, $floodlightService);
+
+        $clientProperty = new \ReflectionProperty(FloodlightService::class, 'client');
+        $clientProperty->setAccessible(true);
+        $realApiClient = $clientProperty->getValue($floodlightService);
+        $this->assertInstanceOf(ApiClient::class, $realApiClient);
+
+        $guzzleClient = new Client([
+            'handler' => static function (RequestInterface $request) use ($realApiClient) {
+                if (str_contains($request->getUri()->getPath(), '/companies/logos/')) {
+                    return new FulfilledPromise(new Response(200, ['Content-Type' => 'image/png'], 'fake-png-bytes'));
+                }
+
+                return $realApiClient->getClient()->sendAsync($request);
+            },
+        ]);
+
+        $clientProperty->setValue($floodlightService, new class($guzzleClient) extends ApiClient {
+            public function __construct(private ClientInterface $mockedClient)
+            {
+            }
+
+            public function getClient(): ClientInterface
+            {
+                return $this->mockedClient;
+            }
+        });
     }
 
     private function createHit(Lead $lead, string $ipAdress = '127.0.0.1'): Hit
