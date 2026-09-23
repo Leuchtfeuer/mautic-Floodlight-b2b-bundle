@@ -5,10 +5,7 @@
     branded header, and the tile height follows the content.
 #}
 <style>
-    .dashboard-widgets .widget:has(.f4b-usage) {
-        height: auto !important;
-    }
-    .dashboard-widgets .tile:has(.f4b-usage) {
+    .dashboard-widgets {
         --f4b-teal: #255156;
         --f4b-ink: #234c50;
         --f4b-muted: #526d70;
@@ -17,6 +14,22 @@
         --f4b-line: #e9eeef;
         --f4b-on-teal: #f2f0eb;
         --f4b-gradient: linear-gradient(90deg, #fbee4f, #c6dd86 50%, #94cdf0);
+    }
+    .f4b-usage {
+        /* Leave room for Mautic's title and card padding at any saved height. */
+        max-height: {{ max(100, (widget.height|default(330)) - 100) }}px;
+        overflow-y: auto;
+        color: var(--f4b-ink);
+    }
+    .f4b-usage > .f4b-usage__logo,
+    .f4b-usage > .f4b-usage__subtitle {
+        display: none;
+    }
+    @supports selector(:has(*)) {
+    .dashboard-widgets .widget:has(.f4b-usage) {
+        height: auto !important;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) {
         container: f4b-usage / inline-size;
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
@@ -44,6 +57,10 @@
     }
     .dashboard-widgets .tile:has(.f4b-usage) > hr {
         display: none;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) .f4b-usage__logo,
+    .dashboard-widgets .tile:has(.f4b-usage) .f4b-usage__subtitle {
+        display: block;
     }
     .dashboard-widgets .tile:has(.f4b-usage) .card-header h4 {
         grid-area: title;
@@ -81,6 +98,7 @@
         font-size: 18px;
         line-height: 1;
     }
+    }
     .f4b-usage__logo {
         grid-area: logo;
         align-self: center;
@@ -106,7 +124,7 @@
     .f4b-usage__body {
         grid-area: body;
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
         gap: 24px 48px;
         padding: 24px 32px;
     }
@@ -231,6 +249,7 @@
         font-size: 20px;
         font-weight: 400;
     }
+    @supports (container-type: inline-size) {
     @container f4b-usage (max-width: 760px) {
         .f4b-usage__body {
             grid-template-columns: minmax(0, 1fr);
@@ -265,6 +284,7 @@
         .f4b-usage__button {
             flex: 1 1 100%;
         }
+    }
     }
 </style>
 {% set actions %}
