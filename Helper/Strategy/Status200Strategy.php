@@ -21,7 +21,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
-use Symfony\Component\HttpClient\HttpClient;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 
 class Status200Strategy implements StatusCodeStrategyInterface
 {
@@ -38,6 +38,7 @@ class Status200Strategy implements StatusCodeStrategyInterface
         private Config $config,
         private CompanyLeadRepository $companyLeadRepository,
         private PathsHelper $pathsHelper,
+        private FloodlightService $floodlightService,
     ) {
     }
 
@@ -246,6 +247,9 @@ class Status200Strategy implements StatusCodeStrategyInterface
         if ($this->isLogoAlreadySetManually($company) || '' === $companyLogoUrl) {
             return $company;
         }
+        if (!$this->floodlightService->isAllowedLogoOrigin($companyLogoUrl)) {
+            return $company;
+        }
         $this->deleteOldLogoFile($company);
         $fileName = $this->createLogoFile($company, $companyLogoUrl);
         if (null === $fileName) {
@@ -285,14 +289,13 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $timestamp    = (new \DateTime())->format('Y-m-d-H-i-s');
         $logoFileName = 'f4b_'.md5($company->getName().$timestamp);
 
-        $httpClient = HttpClient::create();
-        $response   = $httpClient->request('GET', $companyLogoUrl);
-        if (200 !== $response->getStatusCode()) {
+        $logo = $this->floodlightService->getLogo($companyLogoUrl);
+        if (null === $logo) {
             return null;
         }
 
-        $imageData     = $response->getContent();
-        $contentType   = $response->getHeaders()['content-type'][0] ?? '';
+        $imageData     = $logo['content'];
+        $contentType   = $logo['contentType'];
         $fileExtension = '';
         if (str_contains($contentType, 'image/png')) {
             $fileExtension = '.png';

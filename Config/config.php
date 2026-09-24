@@ -3,7 +3,7 @@
 return [
     'name'        => 'Floodlight for B2B',
     'description' => 'Floodlight for B2B plugin: Detect and qualify companies from anonymous leads in Mautic, using the Floodlight for B2B service',
-    'version'     => '5.8.0',
+    'version'     => '5.9.0',
     'author'      => 'Leuchtfeuer Digital Marketing GmbH',
     'services'    => [
         'others' => [
@@ -80,6 +80,7 @@ return [
                     'mautic.integration.leuchtfeuerfloodlightb2b.config',
                     'mautic.lead.repository.company_lead',
                     'mautic.helper.paths',
+                    'mautic.leuchtfeuerfloodlightb2b.services.floodlight',
                 ],
             ],
             'mautic.leuchtfeuerfloodlightb2b.status202strategy' => [
