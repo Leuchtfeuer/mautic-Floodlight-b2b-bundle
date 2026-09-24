@@ -91,7 +91,7 @@ class DashboardSubscriber implements EventSubscriberInterface
      */
     private function calculateCreditsRemaining(UsageData $usage): int
     {
-        return $usage->getRemaining() + $usage->getBuffer();
+        return max(0, $usage->getRemaining() + $usage->getBuffer());
     }
 
     /**
@@ -101,6 +101,10 @@ class DashboardSubscriber implements EventSubscriberInterface
     private function calculateRemainingPercent(UsageData $usage): float
     {
         $totalCredits = $usage->getMonthlyLimit() + $usage->getBuffer();
+
+        if ($totalCredits <= 0) {
+            return 0.0;
+        }
 
         return min(100.0, $this->calculateCreditsRemaining($usage) / $totalCredits * 100);
     }

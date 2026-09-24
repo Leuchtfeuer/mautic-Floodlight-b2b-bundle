@@ -100,6 +100,18 @@ class DashboardSubscriberTest extends TestCase
         self::assertSame(0.0, $this->capturedData['remainingPercent']);
     }
 
+    public function testZeroTotalCreditsReturnZeroPercent(): void
+    {
+        $usage = new UsageData(0, 0, 0, new \DateTimeImmutable('+1 day'), 'Free');
+        $this->usageProvider->method('getUsage')->willReturn($usage);
+
+        $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
+        $this->subscriber->onWidgetDetailGenerate($event);
+
+        self::assertSame(0, $this->capturedData['creditsRemaining']);
+        self::assertSame(0.0, $this->capturedData['remainingPercent']);
+    }
+
     public function testDerivedValuesStayInRangeWhenRemainingExceedsMonthlyLimit(): void
     {
         $usage = new UsageData(600, 500, 200, new \DateTimeImmutable('+1 day'), 'Free');
