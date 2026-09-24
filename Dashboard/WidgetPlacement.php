@@ -20,7 +20,7 @@ class WidgetPlacement
 {
     public const WIDGET_TYPE = 'floodlight.usage';
 
-    private const WIDGET_WIDTH  = 50;
+    private const WIDGET_WIDTH  = 100;
 
     private const WIDGET_HEIGHT = 330;
 
