@@ -99,7 +99,7 @@ class DtoHelper
                     default  => null
                 };
             }
-        } catch (\ReflectionException $e) {
+        } catch (\ReflectionException) {
         }
 
         return '';
