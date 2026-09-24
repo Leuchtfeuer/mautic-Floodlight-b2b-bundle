@@ -202,7 +202,7 @@
         border-radius: 999px;
         background: var(--f4b-gradient);
     }
-    .f4b-usage__bar-used {
+    .f4b-usage__bar-remaining {
         height: 100%;
         border-radius: 999px;
         background: var(--f4b-teal);
@@ -339,7 +339,7 @@
                     <strong class="f4b-usage__percent">{{ remainingPercent|number_format(1) }}%</strong>
                     <span class="f4b-usage__percent-label">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.percent_remaining'|trans }}</span>
                     <div class="f4b-usage__bar" aria-hidden="true">
-                        <div class="f4b-usage__bar-used" style="width: {{ (100 - remainingPercent)|round(2) }}%"></div>
+                        <div class="f4b-usage__bar-remaining" style="width: {{ remainingPercent|round(2) }}%"></div>
                     </div>
                 </div>
                 {{ actions }}
