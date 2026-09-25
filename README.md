@@ -35,6 +35,12 @@ OR
 
 - If you have shell access, execute `php bin/console cache:clear` and `php bin/console mautic:plugins:reload` to install the plugins.
 
+### Installation without Composer
+For Mautic installations without Composer, every GitHub release provides a self-contained ZIP named `LeuchtfeuerFloodlightB2BBundle-<version>.zip` (e.g. `LeuchtfeuerFloodlightB2BBundle-7.1.0.zip`). This ZIP already contains all Composer requirements (php-domain-parser), so no `composer require` step is needed:
+- Download the ZIP from the GitHub release
+- Unzip to the Mautic `plugins` directory (the folder is already named `LeuchtfeuerFloodlightB2BBundle`)
+- In the Mautic backend, go to the `Plugins` page as an administrator and click on the `Install/Upgrade Plugins` button — or, with shell access, execute `php bin/console cache:clear` and `php bin/console mautic:plugins:reload`
+
 Optional patches:
 - Install the patch which enables you to name the leads identified by floodlight according to the following logic: `anonymous {timestamp} {domain}` --> https://github.com/mautic/mautic/pull/15153
 - If required, install the patch which makes sure that when lead name (firstname and lastname) is not available, displaying email will be preferred over displaying company name --> https://github.com/mautic/mautic/pull/15320
