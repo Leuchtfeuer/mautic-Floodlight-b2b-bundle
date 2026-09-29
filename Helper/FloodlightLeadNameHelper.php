@@ -7,13 +7,16 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 use Doctrine\ORM\EntityManagerInterface;
 use Mautic\LeadBundle\Entity\Lead;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 class FloodlightLeadNameHelper extends AbstractExtension
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly Config $config,
+    ) {
     }
 
     public function getFunctions(): array
@@ -25,7 +28,7 @@ class FloodlightLeadNameHelper extends AbstractExtension
 
     public function getFloodlightLeadName(Lead $lead, bool $lastFirst = false): ?string
     {
-        if ($lead->getName($lastFirst)) {
+        if (!$this->config->isPublished() || $lead->getName($lastFirst)) {
             return null;
         }
 
