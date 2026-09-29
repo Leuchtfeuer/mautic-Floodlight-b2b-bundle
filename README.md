@@ -1,66 +1,81 @@
 # Floodlight for B2B by Leuchtfeuer
 
-CONTENTS OF THIS FILE
----------------------
+## Overview
+The Floodlight for B2B is one plugin of the ABM solution. It is responsible for detecting and qualifying companies from anonymous leads in Mautic, using the Floodlight for B2B service.
 
-* Introduction
-* Requirements
-* Installation
-* Configuration
-* Usage
-* Author
+## Features
+- Detects and qualifies companies from anonymous leads using the Floodlight for B2B service.
+- Supports reverse proxy setups, including Cloudflare and others.
+- Provides domain and keyword blacklisting to exclude unwanted companies.
+- Provides commands to enrich companies and retry failed lookups.
 
-INTRODUCTION
-------------
-The Floodlight for B2B is one plugin of ABM solution, it is responsible to detect and qualify companies from anonymous leads in Mautic, using the Floodlight for B2B service.
+## Requirements
+> [!TIP]
+> Other releases of this plugin may cover different Mautic versions!
+- Mautic 7.x (min. 7.0)
 
-REQUIREMENTS
-------------
-- Mautic 5.x
-- PHP 8.0 or higher
+## Version Support
+- PHP 8.2 or higher
+- jeremykendall/php-domain-parser ^6.3
 
-INSTALLATION
-------------
-1. Add `LeuchtfeuerFloodlightB2BBundle` in the `plugins` directory.
-2. Go to `Plugins` page
-3. Click on the `Install/Upgrade Plugins` or if you have access to the shell, execute `php bin\console mautic:plugins:reload` to install the plugins.
-4. Click button to install `LeuchtfeuerFloodlightB2BBundle`.
-5. Enable the plugin and configure the plugin with the API key.
-6. Install the patch which enables you to name the leads identified by floodlight according to the following logic: 'anonymous {timestamp} {domain}' --> https://github.com/mautic/mautic/pull/15153
-7. If required, install the patch which makes sure that when lead name (firstname and lastname) ist not available, displaying email will be preferred over displaying company name --> https://github.com/mautic/mautic/pull/15320
+## Installation
+### Composer
+This plugin is currently private and can't be installed via composer.
 
-CONFIGURATION
--------------
-Enable the plugin and configure the plugin with the `API Access Key ID` and the `API Secret Key`.
+### Manual Installation
+The plugin can be installed manually, following the usual steps:
+- Download the plugin
+- Unzip to the Mautic `plugins` directory
+- Rename folder to `LeuchtfeuerFloodlightB2BBundle`
+- Install the required php-domain-parser dependency: `composer require jeremykendall/php-domain-parser:^6.3`
+- In the Mautic backend, go to the `Plugins` page as an administrator
+- Click on the `Install/Upgrade Plugins` button to install the Plugin.
 
-USAGE
------
+OR
 
+- If you have shell access, execute `php bin/console cache:clear` and `php bin/console mautic:plugins:reload` to install the plugins.
+
+### Installation without Composer
+For Mautic installations without Composer, every GitHub release provides a self-contained ZIP named `LeuchtfeuerFloodlightB2BBundle-<version>.zip` (e.g. `LeuchtfeuerFloodlightB2BBundle-7.1.0.zip`). This ZIP already contains all Composer requirements (php-domain-parser), so no `composer require` step is needed:
+- Download the ZIP from the GitHub release
+- Unzip to the Mautic `plugins` directory (the folder is already named `LeuchtfeuerFloodlightB2BBundle`)
+- In the Mautic backend, go to the `Plugins` page as an administrator and click on the `Install/Upgrade Plugins` button — or, with shell access, execute `php bin/console cache:clear` and `php bin/console mautic:plugins:reload`
+
+Optional patches:
+- If required, install the patch which makes sure that when lead name (firstname and lastname) is not available, displaying email will be preferred over displaying company name --> https://github.com/mautic/mautic/pull/15320
+
+## Configuration
+Enable the plugin and configure it with the `API Access Key ID` and the `API Secret Key`.
+
+## Usage
 Once the plugin is installed and configured, it will automatically start detecting and saving the companies of your anonymous leads whenever they execute a pagehit.
 
 The plugin also allows you to run two commands:
 
-1. leuchtfeuer:floodlight:enrich-companies
+1. `leuchtfeuer:floodlight:enrich-companies`
    - This command enriches companies that have been saved manually (there won't be more than two tries to enrich these companies)
-2. leuchtfeuer:floodlight:lookup-retries
+2. `leuchtfeuer:floodlight:lookup-retries`
    - This command makes sure all the lookups are done again which have the status retry (as Floodlight could not provide the company data on the first try)
 
-The standalone command leuchtfeuer:floodlight:enrich will not work without the `--by-domain` or `--by-address` options.
+The standalone command `leuchtfeuer:floodlight:enrich` will not work without the `--by-domain` or `--by-address` options.
 
 Floodlight also supports reverse proxy setups including Cloudflare and others.
 
-BLACKLISTING DOMAINS
------------
-When installing the plugin the files `f4b_domain_blacklist.php` and `f4b_domain_keyword_blacklist.php` will be copied in the config directory of you Mautic installation.
+### Blacklisting Domains
+When installing the plugin, the files `f4b_domain_blacklist.php` and `f4b_domain_keyword_blacklist.php` will be copied to the config directory of your Mautic installation.
 
 The file `f4b_domain_blacklist.php` is for blocking entire domains, the file `f4b_domain_keyword_blacklist.php` is for blocking domains which contain certain keywords.
 To add your own domains or keywords, just add a new line with your domain/keyword in these files.
 
 Note:
 * Making changes in the blacklist files in the config directory of the plugin will not work, as the blacklist files from the config directory of your Mautic installation will be used.
-* Be carefull with the `f4b_domain_keyword_blacklist.php` file. If you add a keyword like `apple`, the domains `pineapple.com`, `applepie.com`, etc. will also be blacklisted.
+* Be careful with the `f4b_domain_keyword_blacklist.php` file. If you add a keyword like `apple`, the domains `pineapple.com`, `applepie.com`, etc. will also be blacklisted.
 
+## Credits
+- @Leuchtfeuer
 
-AUTHOR
-------
+## Author
 Leuchtfeuer Digital Marketing GmbH
+
+Please raise any issues in GitHub.
+For all other things, please email mautic-plugins@Leuchtfeuer.com

@@ -4,12 +4,7 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model;
 
-use Doctrine\ORM\EntityManagerInterface;
-use Mautic\CoreBundle\Helper\CoreParametersHelper;
-use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\CoreBundle\Model\FormModel;
-use Mautic\CoreBundle\Security\Permissions\CorePermissions;
-use Mautic\CoreBundle\Translation\Translator;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\LeadBundle\Model\LeadModel;
@@ -18,35 +13,39 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomainsRepository;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\Service\Attribute\Required;
 
 class FloodlightLeadDomainsModel extends FormModel
 {
-    public function __construct(
-        EntityManagerInterface $em,
-        CorePermissions $security,
-        EventDispatcherInterface $dispatcher,
-        UrlGeneratorInterface $router,
-        Translator $translator,
-        UserHelper $userHelper,
-        LoggerInterface $logger,
-        CoreParametersHelper $coreParametersHelper,
-        protected CompanyModel $companyModel,
-        protected LeadModel $leadModel,
-    ) {
-        parent::__construct($em, $security, $dispatcher, $router, $translator, $userHelper, $logger, $coreParametersHelper);
+    protected CompanyModel $companyModel;
+
+    protected LeadModel $leadModel;
+
+    private FloodlightLeadDomainsRepository $floodlightLeadDomainsRepository;
+
+    private FloodlightCompanyDomainsRepository $floodlightCompanyDomainsRepository;
+
+    #[Required]
+    public function autowireFloodlightLeadDomainsModel(
+        CompanyModel $companyModel,
+        LeadModel $leadModel,
+        FloodlightLeadDomainsRepository $floodlightLeadDomainsRepository,
+        FloodlightCompanyDomainsRepository $floodlightCompanyDomainsRepository,
+    ): void {
+        $this->companyModel                       = $companyModel;
+        $this->leadModel                          = $leadModel;
+        $this->floodlightLeadDomainsRepository    = $floodlightLeadDomainsRepository;
+        $this->floodlightCompanyDomainsRepository = $floodlightCompanyDomainsRepository;
     }
 
     public function getRepository(): FloodlightLeadDomainsRepository
     {
-        return $this->em->getRepository(FloodlightLeadDomains::class);
+        return $this->floodlightLeadDomainsRepository;
     }
 
     public function getRepositoryFloodlightCompanyDomains(): FloodlightCompanyDomainsRepository
     {
-        return $this->em->getRepository(FloodlightCompanyDomains::class);
+        return $this->floodlightCompanyDomainsRepository;
     }
 
     /**

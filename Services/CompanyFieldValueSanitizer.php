@@ -22,10 +22,10 @@ class CompanyFieldValueSanitizer
         'f4b_companytype',
     ];
 
-    private string $tablePrefix;
+    private readonly string $tablePrefix;
 
     public function __construct(
-        private Connection $connection,
+        private readonly Connection $connection,
     ) {
         $this->tablePrefix = defined('MAUTIC_TABLE_PREFIX') && is_string(MAUTIC_TABLE_PREFIX) ? MAUTIC_TABLE_PREFIX : '';
     }
@@ -44,7 +44,7 @@ class CompanyFieldValueSanitizer
             $row    = $result->fetchAssociative();
 
             if ($row && !empty($row['properties'])) {
-                $properties = unserialize($row['properties']);
+                $properties = \Mautic\CoreBundle\Helper\Serializer::decode($row['properties']);
 
                 if (is_array($properties) && isset($properties['list']) && is_array($properties['list'])) {
                     foreach ($properties['list'] as $item) {
@@ -159,7 +159,7 @@ class CompanyFieldValueSanitizer
             return null;
         }
 
-        $properties = unserialize($row['properties']);
+        $properties = \Mautic\CoreBundle\Helper\Serializer::decode($row['properties']);
 
         if (!is_array($properties) || !isset($properties['list']) || !is_array($properties['list'])) {
             return null;
@@ -270,7 +270,7 @@ class CompanyFieldValueSanitizer
     {
         if (str_contains($value, '|')) {
             $values           = explode('|', $value);
-            $normalizedValues = array_map(fn ($v) => str_replace(' ', '-', $v), $values);
+            $normalizedValues = array_map(fn ($v): string => str_replace(' ', '-', $v), $values);
 
             return implode('|', $normalizedValues);
         }

@@ -17,7 +17,7 @@ class Reporter
             $this->channel->error($message);
         } elseif ($this->channel instanceof OutputInterface) {
             $verbosity =  $this->channel->getVerbosity();
-            if ($verbosity == $level) {
+            if ($verbosity === $level) {
                 $this->channel->writeln($message);
             }
         }

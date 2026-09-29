@@ -1,0 +1,54 @@
+name: Release Build
+
+# Builds the self-contained distributable ZIP for zero-Composer (drop-in /
+# unzip) installs. The regular Composer-based install path is untouched.
+#
+# build/composer.json has no committed lock file on purpose: every run
+# resolves the newest jeremykendall/php-domain-parser satisfying ^6.3.
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version for the built ZIP filename (e.g. 7.1.0). Defaults to the git ref name.'
+        required: false
+
+jobs:
+  build:
+    name: Build self-contained plugin ZIP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout plugin
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Determine version
+        id: version
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="${GITHUB_REF_NAME}"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Build self-contained ZIP
+        run: build/build-zip.sh "${{ steps.version.outputs.version }}"
+
+      - name: Upload to GitHub Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: LeuchtfeuerFloodlightB2BBundle-${{ steps.version.outputs.version }}.zip
+
+      - name: Upload as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LeuchtfeuerFloodlightB2BBundle-${{ steps.version.outputs.version }}
+          path: LeuchtfeuerFloodlightB2BBundle-${{ steps.version.outputs.version }}.zip

@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Helper;
 
+use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
-class DomainBlacklistHelperTest extends MauticMysqlTestCase
+final class DomainBlacklistHelperTest extends MauticMysqlTestCase
 {
     private DomainBlacklistHelper $domainBlackList;
     private string $domain;
@@ -17,14 +18,13 @@ class DomainBlacklistHelperTest extends MauticMysqlTestCase
     {
         parent::setUp();
 
-        $configPathTo    = self::getContainer()->get('mautic.helper.paths')->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
-        $pluginPathFrom  = self::getContainer()->get('mautic.helper.paths')->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
+        $configPathTo    = self::getContainer()->get(PathsHelper::class)->getSystemPath('root', true).'/config/f4b_domain_blacklist.php';
+        $pluginPathFrom  = self::getContainer()->get(PathsHelper::class)->getSystemPath('plugins', true).'/'.LeuchtfeuerFloodlightB2BIntegration::INTEGRATION_NAME.'Bundle/Config/f4b_domain_blacklist.php';
         if (!file_exists($configPathTo)) {
             copy($pluginPathFrom, $configPathTo);
         }
 
-        $pathsHelper = self::getContainer()->get('mautic.helper.paths');
-        \assert($pathsHelper instanceof \Mautic\CoreBundle\Helper\PathsHelper);
+        $pathsHelper           = self::getContainer()->get(PathsHelper::class);
         $this->domainBlackList = new DomainBlacklistHelper($pathsHelper);
         $this->domainBlackList->setBlacklist();
 
@@ -40,17 +40,17 @@ class DomainBlacklistHelperTest extends MauticMysqlTestCase
 
     public function testAddDomain(): void
     {
-        $this->assertFalse(in_array($this->domain, $this->domainBlackList->get()));
+        $this->assertNotContains($this->domain, $this->domainBlackList->get());
         $this->domainBlackList->add($this->domain);
-        $this->assertTrue(in_array($this->domain, $this->domainBlackList->get()));
+        $this->assertContains($this->domain, $this->domainBlackList->get());
         $this->domainBlackList->remove($this->domain);
     }
 
     public function testRemoveDomain(): void
     {
         $this->domainBlackList->add($this->domain);
-        $this->assertTrue(in_array($this->domain, $this->domainBlackList->get()));
+        $this->assertContains($this->domain, $this->domainBlackList->get());
         $this->domainBlackList->remove($this->domain);
-        $this->assertFalse(in_array($this->domain, $this->domainBlackList->get()));
+        $this->assertNotContains($this->domain, $this->domainBlackList->get());
     }
 }

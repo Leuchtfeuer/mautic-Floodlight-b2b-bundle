@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper;
 
-use Mautic\CoreBundle\Model\AuditLogModel;
+use Mautic\CoreBundle\Entity\AuditLog;
 
 class AuditLogHelper
 {
-    public function __construct(private AuditLogModel $auditLogModel)
+    public function __construct(private readonly \Mautic\CoreBundle\Entity\AuditLogRepository $auditLogRepository)
     {
     }
 
@@ -17,12 +17,10 @@ class AuditLogHelper
      */
     public function getNonFloodlightUpdatableFields(int $id): array
     {
-        $result = $this->auditLogModel->getRepository()->findBy(
+        $result = $this->auditLogRepository->findBy(
             ['object' => 'company', 'objectId' => $id],
         );
-        $nonFloodlightAuditLogEntries = array_filter($result, function ($item) {
-            return 'Floodlight B2B' !== $item->getUserName();
-        });
+        $nonFloodlightAuditLogEntries = array_filter($result, fn (AuditLog $item): bool => 'Floodlight B2B' !== $item->getUserName());
 
         $fieldsNotUpdatableByFloodlight = [];
 

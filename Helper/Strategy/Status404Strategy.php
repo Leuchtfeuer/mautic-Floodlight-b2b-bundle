@@ -12,8 +12,8 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel
 class Status404Strategy
 {
     public function __construct(
-        private FloodlightLeadDomainsModel $leadDomainsModel,
-        private FloodlightDtoFactory $dtoFactory,
+        private readonly FloodlightLeadDomainsModel $leadDomainsModel,
+        private readonly FloodlightDtoFactory $dtoFactory,
     ) {
     }
 

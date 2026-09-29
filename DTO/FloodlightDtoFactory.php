@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO;
 
-use Mautic\LeadBundle\Model\FieldModel;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Hydration\FloodlightDtoHydrator;
 
 class FloodlightDtoFactory
 {
     public function __construct(
-        private FieldModel $fieldModel,
-        private DomainUtility $domainUtility,
+        private readonly FloodlightDtoHydrator $hydrator,
     ) {
     }
 
@@ -20,6 +18,9 @@ class FloodlightDtoFactory
      */
     public function create(array $data): FloodlightDTO
     {
-        return new FloodlightDTO($data, $this->fieldModel, $this->domainUtility);
+        $dto = new FloodlightDTO($data);
+        $this->hydrator->hydrate($data, $dto);
+
+        return $dto;
     }
 }

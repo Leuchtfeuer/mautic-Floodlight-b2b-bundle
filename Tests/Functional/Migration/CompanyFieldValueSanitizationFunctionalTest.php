@@ -9,16 +9,17 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\LeadField;
 use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\CompanyFieldValueSanitizer;
-use PHPUnit\Framework\Assert;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterCustomFieldCleanup;
 
 final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestCase
 {
+    use RebuildsCompanyTableAfterCustomFieldCleanup;
     protected $useCleanupRollback = false;
 
     private function createSanitizer(): CompanyFieldValueSanitizer
     {
         /** @var Connection $connection */
-        $connection = self::$container->get('doctrine.dbal.default_connection');
+        $connection = self::getContainer()->get(Connection::class);
 
         return new CompanyFieldValueSanitizer($connection);
     }
@@ -29,7 +30,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
     private function createOrUpdateField(string $alias, string $name, string $type, array $properties): LeadField
     {
         /** @var FieldModel $fieldModel */
-        $fieldModel = self::$container->get('mautic.lead.model.field');
+        $fieldModel = self::getContainer()->get(FieldModel::class);
 
         // Check if field exists
         $existingField = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => $alias]);
@@ -78,33 +79,33 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $this->em->clear();
 
         $sanitizer = $this->createSanitizer();
-        Assert::assertTrue($sanitizer->hasPendingSanitization());
+        $this->assertTrue($sanitizer->hasPendingSanitization());
 
         $stats = $sanitizer->sanitize();
 
-        Assert::assertGreaterThan(0, $stats['fields_updated'], 'At least 1 field should be updated');
-        Assert::assertSame(2, $stats['duplicates_removed'], '2 duplicates should be removed');
-        Assert::assertFalse($sanitizer->hasPendingSanitization());
+        $this->assertGreaterThan(0, $stats['fields_updated'], 'At least 1 field should be updated');
+        $this->assertSame(2, $stats['duplicates_removed'], '2 duplicates should be removed');
+        $this->assertFalse($sanitizer->hasPendingSanitization());
 
         $this->em->clear();
         $reloadedField = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => $testAlias]);
-        Assert::assertInstanceOf(LeadField::class, $reloadedField);
+        $this->assertInstanceOf(LeadField::class, $reloadedField);
 
         $properties = $reloadedField->getProperties();
         $actualList = $properties['list'];
 
-        Assert::assertCount(3, $actualList, 'Should have 3 unique values after deduplication');
+        $this->assertCount(3, $actualList, 'Should have 3 unique values after deduplication');
 
         foreach ($actualList as $item) {
-            Assert::assertStringNotContainsString('&#38;', $item['label'], 'Labels should be clean');
-            Assert::assertStringNotContainsString('&#38;', $item['value'], 'Values should be clean');
+            $this->assertStringNotContainsString('&#38;', (string) $item['label'], 'Labels should be clean');
+            $this->assertStringNotContainsString('&#38;', (string) $item['value'], 'Values should be clean');
         }
 
         $actualValues = array_column($actualList, 'value');
 
-        Assert::assertContains('Software-&-Computer-Services', $actualValues);
-        Assert::assertContains('Travel-&-Tourism', $actualValues);
-        Assert::assertContains('Government', $actualValues);
+        $this->assertContains('Software-&-Computer-Services', $actualValues);
+        $this->assertContains('Travel-&-Tourism', $actualValues);
+        $this->assertContains('Government', $actualValues);
     }
 
     public function testSanitizerHandlesMultiselectValues(): void
@@ -122,25 +123,25 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $this->em->clear();
 
         $sanitizer = $this->createSanitizer();
-        Assert::assertTrue($sanitizer->hasPendingSanitization());
+        $this->assertTrue($sanitizer->hasPendingSanitization());
 
         $stats = $sanitizer->sanitize();
 
-        Assert::assertSame(1, $stats['duplicates_removed'], '1 duplicate should be removed');
+        $this->assertSame(1, $stats['duplicates_removed'], '1 duplicate should be removed');
 
         $this->em->clear();
         $reloadedField = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => $testAlias]);
-        Assert::assertInstanceOf(LeadField::class, $reloadedField);
+        $this->assertInstanceOf(LeadField::class, $reloadedField);
 
         $properties = $reloadedField->getProperties();
         $list       = $properties['list'];
 
-        Assert::assertCount(2, $list, 'Should have 2 unique values');
+        $this->assertCount(2, $list, 'Should have 2 unique values');
 
         foreach ($list as $item) {
-            Assert::assertStringNotContainsString('&#38;', $item['label']);
-            Assert::assertStringNotContainsString('&#38;', $item['value']);
-            Assert::assertStringContainsString('&', $item['label'], 'Should contain real ampersand');
+            $this->assertStringNotContainsString('&#38;', (string) $item['label']);
+            $this->assertStringNotContainsString('&#38;', (string) $item['value']);
+            $this->assertStringContainsString('&', (string) $item['label'], 'Should contain real ampersand');
         }
     }
 
@@ -160,13 +161,13 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
 
         $sanitizer = $this->createSanitizer();
 
-        Assert::assertFalse($sanitizer->hasPendingSanitization());
+        $this->assertFalse($sanitizer->hasPendingSanitization());
 
         $stats = $sanitizer->sanitize();
 
-        Assert::assertSame(0, $stats['fields_updated']);
-        Assert::assertSame(0, $stats['companies_updated']);
-        Assert::assertSame(0, $stats['duplicates_removed']);
+        $this->assertSame(0, $stats['fields_updated']);
+        $this->assertSame(0, $stats['companies_updated']);
+        $this->assertSame(0, $stats['duplicates_removed']);
     }
 
     public function testSanitizerIgnoresFieldsNotInF4BList(): void
@@ -186,23 +187,23 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $sanitizer = $this->createSanitizer();
 
         // Should NOT detect corruption because field is not in F4B list
-        Assert::assertFalse($sanitizer->hasPendingSanitization(), 'Non-F4B fields should be ignored');
+        $this->assertFalse($sanitizer->hasPendingSanitization(), 'Non-F4B fields should be ignored');
 
         $stats = $sanitizer->sanitize();
 
-        Assert::assertSame(0, $stats['fields_updated'], 'Non-F4B field should not be updated');
-        Assert::assertSame(0, $stats['duplicates_removed']);
+        $this->assertSame(0, $stats['fields_updated'], 'Non-F4B field should not be updated');
+        $this->assertSame(0, $stats['duplicates_removed']);
 
         // Verify field remains unchanged
         $this->em->clear();
         $reloadedField = $this->em->getRepository(LeadField::class)->findOneBy(['alias' => $nonF4BAlias]);
-        Assert::assertInstanceOf(LeadField::class, $reloadedField);
+        $this->assertInstanceOf(LeadField::class, $reloadedField);
 
         $properties = $reloadedField->getProperties();
         $list       = $properties['list'];
 
         // Should still have HTML entities (not sanitized)
-        Assert::assertStringContainsString('&#38;', $list[0]['label'], 'Non-F4B field should remain unchanged');
+        $this->assertStringContainsString('&#38;', (string) $list[0]['label'], 'Non-F4B field should remain unchanged');
     }
 
     public function testSanitizerNormalizesCompanyValuesWithSpaces(): void
@@ -219,7 +220,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $this->createOrUpdateField($testAlias, 'Test Industry', 'select', ['list' => $cleanList]);
 
         /** @var Connection $connection */
-        $connection = self::$container->get('doctrine.dbal.default_connection');
+        $connection = self::getContainer()->get(Connection::class);
 
         // Create test companies with legacy Floodlight values (spaces instead of dashes)
         $connection->executeStatement('
@@ -233,12 +234,12 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $this->em->clear();
 
         $sanitizer = $this->createSanitizer();
-        Assert::assertTrue($sanitizer->hasPendingSanitization(), 'Companies with spaces need normalization');
+        $this->assertTrue($sanitizer->hasPendingSanitization(), 'Companies with spaces need normalization');
 
         $stats = $sanitizer->sanitize();
 
-        Assert::assertSame(0, $stats['fields_updated'], 'Field list should not be updated');
-        Assert::assertSame(2, $stats['companies_updated'], '2 companies should be updated (with spaces)');
+        $this->assertSame(0, $stats['fields_updated'], 'Field list should not be updated');
+        $this->assertSame(2, $stats['companies_updated'], '2 companies should be updated (with spaces)');
 
         $companies = $connection->fetchAllAssociative("
             SELECT {$testAlias} FROM ".MAUTIC_TABLE_PREFIX."companies
@@ -246,12 +247,12 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
             ORDER BY {$testAlias}
         ");
 
-        Assert::assertCount(3, $companies);
+        $this->assertCount(3, $companies);
 
         // All values should now have dashes, not spaces
-        Assert::assertSame('Banks', $companies[0][$testAlias], 'No spaces, should remain unchanged');
-        Assert::assertSame('Software-&-Computer-Services', $companies[1][$testAlias], 'Spaces should be replaced with dashes');
-        Assert::assertSame('Travel-&-Tourism', $companies[2][$testAlias], 'Spaces should be replaced with dashes');
+        $this->assertSame('Banks', $companies[0][$testAlias], 'No spaces, should remain unchanged');
+        $this->assertSame('Software-&-Computer-Services', $companies[1][$testAlias], 'Spaces should be replaced with dashes');
+        $this->assertSame('Travel-&-Tourism', $companies[2][$testAlias], 'Spaces should be replaced with dashes');
     }
 
     public function testSanitizerNormalizesMultiselectCompanyValues(): void
@@ -268,7 +269,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $this->createOrUpdateField($testAlias, 'Test Industry List', 'multiselect', ['list' => $cleanList]);
 
         /** @var Connection $connection */
-        $connection = self::$container->get('doctrine.dbal.default_connection');
+        $connection = self::getContainer()->get(Connection::class);
 
         // Create company with pipe-separated values containing spaces
         $connection->executeStatement('
@@ -282,7 +283,7 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
         $sanitizer = $this->createSanitizer();
         $stats     = $sanitizer->sanitize();
 
-        Assert::assertSame(1, $stats['companies_updated'], '1 company with multiselect should be updated');
+        $this->assertSame(1, $stats['companies_updated'], '1 company with multiselect should be updated');
 
         // Verify multiselect values are normalized
         $company = $connection->fetchAssociative("
@@ -290,6 +291,6 @@ final class CompanyFieldValueSanitizationFunctionalTest extends MauticMysqlTestC
             WHERE {$testAlias} IS NOT NULL
         ");
 
-        Assert::assertSame('Software-&-Computer-Services|Computer-Services', $company[$testAlias]);
+        $this->assertSame('Software-&-Computer-Services|Computer-Services', $company[$testAlias]);
     }
 }

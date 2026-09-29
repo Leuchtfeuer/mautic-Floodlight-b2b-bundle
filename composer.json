@@ -7,9 +7,17 @@
   "authors": [
     {
       "name": "Leuchtfeuer Digital Marketing GmbH",
-      "email": "mautic-plugins@Leuchtfeuer.com"
+      "email": "mautic-plugins@Leuchtfeuer.com",
+      "homepage": "https://Leuchtfeuer.com/mautic/",
+      "role": "Developer"
     }
   ],
+  "keywords": ["mautic", "plugin", "integration"],
+  "require": {
+    "php": "^8.2",
+    "mautic/core-lib": "^7.0",
+    "jeremykendall/php-domain-parser": "^6.3"
+  },
   "extra": {
     "install-directory-name": "LeuchtfeuerFloodlightB2BBundle"
   },
@@ -22,5 +30,8 @@
     "psr-4": {
       "MauticPlugin\\LeuchtfeuerFloodlightB2BBundle\\Tests\\": "Tests"
     }
-  }
+  },
+  "repositories": [
+    {"type": "composer", "url": "https://packages.mautic.org"}
+  ]
 }

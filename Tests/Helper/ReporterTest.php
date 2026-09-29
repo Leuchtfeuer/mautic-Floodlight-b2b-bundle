@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ReporterTest extends TestCase
+final class ReporterTest extends TestCase
 {
     public function testMessageFromCommand(): void
     {
@@ -23,7 +23,6 @@ class ReporterTest extends TestCase
         $reporter->setChannel($channel);
 
         $reporter->notify('someText');
-        $this->assertTrue(true);
     }
 
     public function testMessageFromCommandWithVerbosity(): void
@@ -42,7 +41,6 @@ class ReporterTest extends TestCase
         $reporter->setChannel($channel);
 
         $reporter->notify('someText', OutputInterface::VERBOSITY_VERBOSE);
-        $this->assertTrue(true);
     }
 
     public function testLoggingWithLogger(): void
@@ -57,6 +55,5 @@ class ReporterTest extends TestCase
         $reporter->setChannel($channel);
 
         $reporter->notify('someText');
-        $this->assertTrue(true);
     }
 }

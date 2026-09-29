@@ -10,6 +10,7 @@ use Symfony\Component\Validator\Constraint;
  * @Annotation
  * @Target({"CLASS", "PROPERTY", "METHOD", "ANNOTATION"})
  */
+#[\Attribute]
 class ValidFloodlightCredentials extends Constraint
 {
     public string $message              = 'leuchtfeuer.floodlight.validator.invalid_credentials';
@@ -23,7 +24,7 @@ class ValidFloodlightCredentials extends Constraint
         parent::__construct($options ?? []);
     }
 
-    public function getTargets()
+    public function getTargets(): array|string
     {
         return self::CLASS_CONSTRAINT;
     }

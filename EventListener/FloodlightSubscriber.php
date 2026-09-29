@@ -17,10 +17,10 @@ use Symfony\Component\HttpFoundation\Request;
 class FloodlightSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private IpLookupRulesHelper $ipLookupRulesHelper,
-        private Config $config,
-        private LoggerInterface $logger,
-        private ClientIpHelper $clientIpHelper,
+        private readonly IpLookupRulesHelper $ipLookupRulesHelper,
+        private readonly Config $config,
+        private readonly LoggerInterface $logger,
+        private readonly ClientIpHelper $clientIpHelper,
     ) {
     }
 
@@ -42,7 +42,7 @@ class FloodlightSubscriber implements EventSubscriberInterface
     private function execute(PageHitEvent $event): void
     {
         $lead = $event->getHit()->getLead();
-        if (true === $this->isKnowLead($lead)) {
+        if ($this->isKnowLead($lead)) {
             return;
         }
 
@@ -60,7 +60,6 @@ class FloodlightSubscriber implements EventSubscriberInterface
     {
         $request = $event->getRequest();
         /** @var Request $request */
-        assert($request instanceof Request);
         $clientIp = $this->clientIpHelper->getClientIp($request);
 
         if (null === $clientIp || empty($clientIp)) {

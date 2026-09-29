@@ -26,7 +26,7 @@ class FieldHelper
         'is_index'               => false,
     ];
 
-    public function __construct(private FieldModel $fieldModel, protected FormFactoryInterface $formFactory, protected LoggerInterface $logger)
+    public function __construct(private readonly FieldModel $fieldModel, protected FormFactoryInterface $formFactory, protected LoggerInterface $mauticLogger, private readonly \Mautic\LeadBundle\Entity\LeadFieldRepository $leadFieldRepository)
     {
     }
 
@@ -36,7 +36,7 @@ class FieldHelper
     public function createField(string $alias, string $label, string $type, array $options = []): void
     {
         // Update existing field
-        $existingField = $this->fieldModel->getRepository()->findOneBy([
+        $existingField = $this->leadFieldRepository->findOneBy([
             'alias'  => $alias,
             'object' => self::DEFAULT_VALUES['object'],
         ]);
@@ -50,7 +50,7 @@ class FieldHelper
                     try {
                         $this->fieldModel->saveEntity($existingField);
                     } catch (\Exception $e) {
-                        $this->logger->error('Field character length limit could not be updated: '.$e->getMessage());
+                        $this->mauticLogger->error('Field character length limit could not be updated: '.$e->getMessage());
                     }
                 }
             }
@@ -90,7 +90,7 @@ class FieldHelper
         try {
             $this->fieldModel->saveEntity($field);
         } catch (\Exception $e) {
-            $this->logger->error('Field could not be saved : '.$e->getMessage());
+            $this->mauticLogger->error('Field could not be saved : '.$e->getMessage());
         }
     }
 
@@ -102,7 +102,7 @@ class FieldHelper
             return;
         }
         foreach ($fieldsToUpdate as $key => $values) {
-            $field = $this->fieldModel->getRepository()->findOneBy(['alias' => $key]);
+            $field = $this->leadFieldRepository->findOneBy(['alias' => $key]);
             if (!$field instanceof LeadField) {
                 continue;
             }
@@ -115,7 +115,7 @@ class FieldHelper
      */
     public function updateFieldCharLengthLimit(string $alias, int $newLimit): bool
     {
-        $field = $this->fieldModel->getRepository()->findOneBy(['alias' => $alias]);
+        $field = $this->leadFieldRepository->findOneBy(['alias' => $alias]);
 
         if (!$field instanceof LeadField) {
             return false;
@@ -179,7 +179,7 @@ class FieldHelper
             }
         }
 
-        if (empty($result)) {
+        if ([] === $result) {
             return false;
         }
 
@@ -258,9 +258,15 @@ class FieldHelper
         $result = $this->fieldModel->setFieldProperties($field, $newProperties);
         $field->setIsIndex(false);
         if ($result) {
-            $this->fieldModel->saveEntity($field);
+            try {
+                $this->fieldModel->saveEntity($field);
+            } catch (\OutOfRangeException $e) { // @phpstan-ignore catch.neverThrown (thrown by ColumnSchemaHelper::updateColumnLength() via saveEntity() -> updateLeadColumn(), PHPStan can't see through the call chain)
+                // saveLeadFieldEntity() inside saveEntity() already persisted the properties
+                // before updateLeadColumn() throws, so the properties change is not lost.
+                $this->mauticLogger->warning('Field column length update rejected: '.$e->getMessage());
+            }
         } else {
-            $this->logger->error('Field properties could not be saved');
+            $this->mauticLogger->error('Field properties could not be saved');
         }
     }
 

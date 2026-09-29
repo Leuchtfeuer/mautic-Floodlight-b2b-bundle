@@ -8,8 +8,7 @@ use Mautic\CoreBundle\Helper\PathsHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use Pdp\Domain;
 use Pdp\Rules;
 use Psr\Log\LoggerInterface;
@@ -19,12 +18,11 @@ class DomainUtility
     private ?Rules $rules = null;
 
     public function __construct(
-        private WhoisPyService $whoisPyService,
-        private KeywordBlacklistHelper $keywordBlacklistHelper,
-        private DomainBlacklistHelper $domainBlacklistHelper,
-        private PathsHelper $pathsHelper,
-        private PdpLoader $pdpLoader,
-        protected LoggerInterface $logger
+        private readonly WhoisService $whoisService,
+        private readonly KeywordBlacklistHelper $keywordBlacklistHelper,
+        private readonly DomainBlacklistHelper $domainBlacklistHelper,
+        private readonly PathsHelper $pathsHelper,
+        protected LoggerInterface $mauticLogger,
     ) {
     }
 
@@ -50,8 +48,6 @@ class DomainUtility
      */
     public function cleanDomain(?string $domain): ?string
     {
-        $this->pdpLoader->load();
-
         if (is_null($domain) || empty($domain)) {
             return null;
         }
@@ -89,11 +85,12 @@ class DomainUtility
 
     public function hasMoreThanFourNumbers(string $domain): bool
     {
-        if (preg_match_all('/\d/', $domain) > 4) {
-            return true;
-        }
+        return preg_match_all('/\d/', $domain) > 4;
+    }
 
-        return false;
+    protected function lookupHostname(string $remoteAddr): string|false
+    {
+        return gethostbyaddr($remoteAddr);
     }
 
     /**
@@ -102,7 +99,7 @@ class DomainUtility
     public function getDomainByGetHostByAddr(string $remoteAddr): array
     {
         try {
-            $domain       = gethostbyaddr($remoteAddr);
+            $domain       = $this->lookupHostname($remoteAddr);
         } catch (\Exception) {
             $domain = false;
         }
@@ -125,14 +122,14 @@ class DomainUtility
     /**
      * @return array<string,mixed>
      */
-    public function getDomainByWhoisPyService(string $remoteAddr): array
+    public function getDomainByWhoisService(string $remoteAddr): array
     {
-        $domainWhois = $this->whoisPyService->getWhoisData($remoteAddr);
+        $domainWhois = $this->whoisService->getWhoisData($remoteAddr);
         $cleanDomain = '';
         $details     = [];
         $status      = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
 
-        if (!empty($domainWhois) && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
+        if ([] !== $domainWhois && isset($domainWhois['company_domain']) && is_string($domainWhois['company_domain'])) {
             $domain      = $domainWhois['company_domain'];
             $cleanDomain = $this->cleanDomain($domain);
             if (!is_null($cleanDomain)) {
@@ -154,18 +151,15 @@ class DomainUtility
         $domain             = strtolower($domain);
         $inKeywordBlacklist = $this->checkIfInKeywordBlacklist($domain);
         $inDomainBlacklist  = $this->checkIfInDomainBlacklist($domain);
-        if (true === $inKeywordBlacklist || true === $inDomainBlacklist) {
-            return true;
-        }
 
-        return false;
+        return $inKeywordBlacklist || $inDomainBlacklist;
     }
 
     private function checkIfInKeywordBlacklist(string $domain): bool
     {
         $this->keywordBlacklistHelper->setBlacklist();
         if (false === $this->keywordBlacklistHelper->checkIfBlacklistLoaded()) {
-            $this->logger->warning('Keyword blacklist file not found.');
+            $this->mauticLogger->warning('Keyword blacklist file not found.');
 
             return false;
         }
@@ -188,7 +182,7 @@ class DomainUtility
     {
         $this->domainBlacklistHelper->setBlacklist();
         if (false === $this->domainBlacklistHelper->checkIfBlacklistLoaded()) {
-            $this->logger->warning('Domain blacklist file not found.');
+            $this->mauticLogger->warning('Domain blacklist file not found.');
 
             return false;
         }

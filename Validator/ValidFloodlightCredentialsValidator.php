@@ -10,11 +10,11 @@ use Symfony\Component\Validator\ConstraintValidator;
 
 class ValidFloodlightCredentialsValidator extends ConstraintValidator
 {
-    public function __construct(private FloodlightService $floodlightService)
+    public function __construct(private readonly FloodlightService $floodlightService)
     {
     }
 
-    public function validate($value, Constraint $constraint): void
+    public function validate(mixed $value, Constraint $constraint): void
     {
         assert($constraint instanceof ValidFloodlightCredentials);
 

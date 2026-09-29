@@ -75,7 +75,7 @@ class ClientIpHelper
         }
 
         // Split by comma and get the first IP (original client)
-        $ips = array_map('trim', explode(',', $headerValue));
+        $ips = array_map(trim(...), explode(',', $headerValue));
         $ip  = $ips[0] ?? null;
 
         if (null === $ip || '' === $ip) {
@@ -100,7 +100,7 @@ class ClientIpHelper
             return null;
         }
 
-        $entries = array_map('trim', explode(',', $headerValue));
+        $entries = array_map(trim(...), explode(',', $headerValue));
 
         // Get the first entry (original client)
         $firstEntry = $entries[0] ?? '';
