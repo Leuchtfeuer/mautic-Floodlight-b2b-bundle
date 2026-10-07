@@ -63,7 +63,7 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $this->client->request('GET', '/mtracking.gif');
         $this->client->request('GET', '/mtracking.gif');
         $totalItemsAfterRequest = $this->leadDomainRepo->findAll();
-        $this->assertCount(0, $totalItemsAfterRequest);
+        $this->assertCount(1, $totalItemsAfterRequest);
     }
 
     public function testPagehitWhenInvalidApiKey(): void

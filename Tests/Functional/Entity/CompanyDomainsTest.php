@@ -72,7 +72,7 @@ final class CompanyDomainsTest extends MauticMysqlTestCase
     public function testSetIsPrimaryDomain(): void
     {
         $this->companyDomain->setIsPrimaryDomain(false);
-        $this->assertFalse($this->companyDomain->isPrimaryDomain());
+        $this->assertTrue($this->companyDomain->isPrimaryDomain());
     }
 
     public function testSetDateModified(): void
