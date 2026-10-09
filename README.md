@@ -40,9 +40,6 @@ For Mautic installations without Composer, every GitHub release provides a self-
 - Unzip to the Mautic `plugins` directory (the folder is already named `LeuchtfeuerFloodlightB2BBundle`)
 - In the Mautic backend, go to the `Plugins` page as an administrator and click on the `Install/Upgrade Plugins` button — or, with shell access, execute `php bin/console cache:clear` and `php bin/console mautic:plugins:reload`
 
-Optional patches:
-- If required, install the patch which makes sure that when lead name (firstname and lastname) is not available, displaying email will be preferred over displaying company name --> https://github.com/mautic/mautic/pull/15320
-
 ## Configuration
 Enable the plugin and configure it with the `API Access Key ID` and the `API Secret Key`.
 
