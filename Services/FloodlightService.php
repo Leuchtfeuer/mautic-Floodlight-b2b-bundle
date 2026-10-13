@@ -22,7 +22,6 @@ class FloodlightService implements FloodlightServiceInterface
      */
     private const ALLOWED_LOGO_HOSTS = [
         'api.floodlight-b2b.com',
-        'api-dev.floodlight-b2b.com',
     ];
 
     public function __construct(private ApiClient $client, private LoggerInterface $logger, private string $floodlightApiUrl = 'https://api.floodlight-b2b.com')
