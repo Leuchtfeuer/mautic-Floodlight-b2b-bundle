@@ -8,6 +8,8 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\LeadField;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
 
 class FieldHelperTest extends MauticMysqlTestCase
@@ -31,8 +33,8 @@ class FieldHelperTest extends MauticMysqlTestCase
     public function testFieldPropertiesNotDoubleEncodedWhenAddingMultipleCompanies(): void
     {
         $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
-        $fieldHelper   = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.field');
+        $domainUtility = self::getContainer()->get(DomainUtility::class);
+        $fieldHelper   = self::getContainer()->get(FieldHelper::class);
         $companyModel  = self::getContainer()->get('mautic.lead.model.company');
 
         // Step 1: Create first company with new field value containing ampersand
@@ -148,7 +150,7 @@ class FieldHelperTest extends MauticMysqlTestCase
     public function testFieldPropertiesAreDecodedWhenLoaded(): void
     {
         $fieldModel  = self::getContainer()->get('mautic.lead.model.field');
-        $fieldHelper = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.field');
+        $fieldHelper = self::getContainer()->get(FieldHelper::class);
 
         $field = $fieldModel->getRepository()->findOneBy(['alias' => 'f4b_companyindustry_list']);
         $this->assertInstanceOf(LeadField::class, $field);

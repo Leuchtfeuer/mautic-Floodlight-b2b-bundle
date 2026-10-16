@@ -25,8 +25,7 @@ final class UsageException extends \RuntimeException
     private function __construct(
         private string $category,
         string $message
-    )
-    {
+    ) {
         parent::__construct($message);
     }
 

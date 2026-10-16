@@ -11,11 +11,15 @@ This plugin requires the Floodlight for B2B API service.
 REQUIREMENTS
 ------------
 - Mautic 5.x
-- PHP 8.0 or higher
+- PHP 8.1 or higher
+- jeremykendall/php-domain-parser ^6.3
 
 INSTALLATION
 ------------
-1. Add `LeuchtfeuerFloodlightB2BBundle` in the `plugins` directory.
+1. Add `LeuchtfeuerFloodlightB2BBundle` in the `plugins` directory. The plugin requires `jeremykendall/php-domain-parser`. Depending on how you install the plugin, this dependency is provided as follows:
+   - Installation via Composer: the dependency is installed automatically, as it is declared in the plugin's `composer.json`.
+   - Manual installation from source (git clone / source ZIP): install the dependency in your Mautic root: `composer require jeremykendall/php-domain-parser:^6.3`
+   - Installation without Composer: every GitHub release provides a self-contained ZIP named `LeuchtfeuerFloodlightB2BBundle-<version>.zip` which already contains a scoped copy of this dependency, so no `composer require` step is needed.
 2. Go to `Plugins` page
 3. Click on the `Install/Upgrade Plugins` or if you have access to the shell, execute `php bin\console mautic:plugins:reload` to install the plugins.
 4. Click button to install `LeuchtfeuerFloodlightB2BBundle`.

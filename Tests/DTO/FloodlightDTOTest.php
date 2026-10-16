@@ -8,7 +8,10 @@ use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\Company;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\FieldHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\LeuchtfeuerFloodlightB2BIntegration;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 
 class FloodlightDTOTest extends MauticMysqlTestCase
 {
@@ -43,7 +46,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     {
         $dataFake            = $this->fakeData();
         $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility       = self::getContainer()->get(DomainUtility::class);
         $this->floodlightDTO = new FloodlightDTO($dataFake, $fieldModel, $domainUtility);
     }
 
@@ -66,7 +69,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     public function testGetCompanyEntity(): void
     {
         $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility       = self::getContainer()->get(DomainUtility::class);
         $floodlightDto       = new FloodlightDTO($this->fakeData(), $fieldModel, $domainUtility);
         $company             = new Company();
         $newCompany          = $floodlightDto->fillCompany($company);
@@ -81,7 +84,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
 
     public function testFillCompaniesDomain(): void
     {
-        $floodlightCompanyDomainsModel = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.model.floodlightcompanydomains');
+        $floodlightCompanyDomainsModel = self::getContainer()->get(FloodlightCompanyDomainsModel::class);
         $company                       = new Company();
         $domains                       = $this->floodlightDTO->getDomains();
         $domains[]                     = 'www.example.com';
@@ -100,7 +103,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     public function testFillCompanyDomain(): void
     {
         $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility       = self::getContainer()->get(DomainUtility::class);
         $floodlightDto       = new FloodlightDTO($this->fakeData(2), $fieldModel, $domainUtility);
         $company             = new Company();
         $company->setName('Casa da Moeda do Brasil');
@@ -125,7 +128,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     public function testFillLeadDomain(): void
     {
         $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility       = self::getContainer()->get(DomainUtility::class);
         $floodlightDto       = new FloodlightDTO($this->fakeData(), $fieldModel, $domainUtility);
         $leadDomain          = $floodlightDto->fillLeadDomainLookUp();
         $this->assertInstanceOf(FloodlightLeadDomains::class, $leadDomain);
@@ -137,7 +140,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     {
         $data                =$this->fakeData();
         $fieldModel          = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility       = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility       = self::getContainer()->get(DomainUtility::class);
         unset($data['ip_hash']);
         $floodlightDto = new FloodlightDTO($data, $fieldModel, $domainUtility);
         $leadDomain    = $floodlightDto->fillLeadDomainLookUp();
@@ -154,7 +157,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
         $this->em->clear();
 
         $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility = self::getContainer()->get(DomainUtility::class);
         $floodlightDto = new FloodlightDTO($this->fakeData(), $fieldModel, $domainUtility);
         $company       = new Company();
         $newCompany    = $floodlightDto->fillCompany($company);
@@ -225,7 +228,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     public function testListFieldValuesAreNormalizedWithDashes(): void
     {
         $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility = self::getContainer()->get(DomainUtility::class);
 
         // Update existing field or create new one
         $field = $fieldModel->getRepository()->findOneBy(['alias' => 'f4b_companyindustry_icb_industry']);
@@ -266,7 +269,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     public function testListFieldMultiselectValuesAreNormalized(): void
     {
         $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility = self::getContainer()->get(DomainUtility::class);
 
         $field = $fieldModel->getRepository()->findOneBy(['alias' => 'f4b_companyindustry_list']);
         if (!$field) {
@@ -301,7 +304,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     public function testNonListFieldValuesRemainUnchanged(): void
     {
         $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility = self::getContainer()->get(DomainUtility::class);
 
         // Simulate data with spaces in a non-list field
         $floodlightData = [
@@ -331,8 +334,8 @@ class FloodlightDTOTest extends MauticMysqlTestCase
         ];
 
         $fieldModel     = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility  = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
-        $fieldHelper    = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.field');
+        $domainUtility  = self::getContainer()->get(DomainUtility::class);
+        $fieldHelper    = self::getContainer()->get(FieldHelper::class);
         $companyModel   = self::getContainer()->get('mautic.lead.model.company');
 
         // Step 1: Create first company
@@ -398,7 +401,7 @@ class FloodlightDTOTest extends MauticMysqlTestCase
     public function testArrayValuesAreSanitizedAndNormalized(): void
     {
         $fieldModel    = self::getContainer()->get('mautic.lead.model.field');
-        $domainUtility = self::getContainer()->get('mautic.leuchtfeuerfloodlightb2b.helper.utility.domain');
+        $domainUtility = self::getContainer()->get(DomainUtility::class);
 
         // Ensure the field has a list property for the test
         $field = $fieldModel->getRepository()->findOneBy(['alias' => 'f4b_companyindustry_list']);

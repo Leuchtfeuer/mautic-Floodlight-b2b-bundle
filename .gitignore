@@ -1,0 +1,4 @@
+/build/vendor/
+/build/composer.lock
+/staging-scoped/
+/.idea/
