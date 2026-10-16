@@ -6,9 +6,12 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventList
 
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\LeadField;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterCustomFieldCleanup;
 
 class PluginInstallSubscriberTest extends MauticMysqlTestCase
 {
+    use RebuildsCompanyTableAfterCustomFieldCleanup;
+
     public function testOnPluginInstall(): void
     {
         $this->client->request('GET', '/s/plugins/reload');

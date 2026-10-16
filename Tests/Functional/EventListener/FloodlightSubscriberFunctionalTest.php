@@ -29,6 +29,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterCustomFieldCleanup;
 use Psr\Http\Message\RequestInterface;
 
 /**
@@ -36,6 +37,8 @@ use Psr\Http\Message\RequestInterface;
  */
 class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
 {
+    use RebuildsCompanyTableAfterCustomFieldCleanup;
+
     protected $useCleanupRollback = false;
 
     private FloodlightLeadDomainsRepository $leadDomainRepo;
