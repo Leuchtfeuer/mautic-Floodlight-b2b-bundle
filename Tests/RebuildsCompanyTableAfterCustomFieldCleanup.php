@@ -6,7 +6,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests;
 
 trait RebuildsCompanyTableAfterCustomFieldCleanup
 {
-    protected function beforeTearDown(): void
+    protected function afterRollback(): void
     {
         $connection  = $this->em->getConnection();
         $tablePrefix = self::getContainer()->getParameter('mautic.db_table_prefix');

@@ -58,7 +58,7 @@ class WhoisService
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         if (false === $response || 200 !== $httpCode) {
-            $this->mauticLogger->error('WhoisService RDAP request failed for IP: '.$ip);
+            $this->mauticLogger->error('WhoisService RDAP request failed for IP: '.$ip, ['httpCode' => $httpCode, 'curlError' => curl_error($ch)]);
 
             return null;
         }

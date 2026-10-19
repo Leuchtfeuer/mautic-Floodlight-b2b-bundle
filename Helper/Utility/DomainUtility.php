@@ -52,6 +52,12 @@ class DomainUtility
             return null;
         }
 
+        if (!class_exists(Rules::class)) {
+            $this->mauticLogger->error('jeremykendall/php-domain-parser is not installed. Run "composer require jeremykendall/php-domain-parser:^6.3".');
+
+            return null;
+        }
+
         try {
             if (null === $this->rules) {
                 $suffixListPath = $this->pathsHelper->getPluginsPath().'/LeuchtfeuerFloodlightB2BBundle/Config/public_suffix_list.dat';
