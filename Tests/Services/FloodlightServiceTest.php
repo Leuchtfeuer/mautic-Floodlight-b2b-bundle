@@ -211,8 +211,8 @@ class FloodlightServiceTest extends TestCase
     {
         return [
             'default host'       => ['https://api.floodlight-b2b.com/logo/123.png', true],
-            'dev host'           => ['https://api-dev.floodlight-b2b.com/logo/123.png', true],
-            'configured host'    => ['https://api-staging.floodlight-b2b.com/logo/123.png', true],
+            'unconfigured host'  => ['https://other.example.test/logo/123.png', false],
+            'configured host'    => ['https://api.example.test/logo/123.png', true],
             'no https'           => ['http://api.floodlight-b2b.com/logo/123.png', false],
             'foreign host'       => ['https://evil.com/logo.png', false],
             'host suffix attack' => ['https://api.floodlight-b2b.com.evil.com/logo.png', false],
@@ -227,7 +227,7 @@ class FloodlightServiceTest extends TestCase
         $service = new FloodlightService(
             $this->createMock(ApiClient::class),
             $this->createMock(LoggerInterface::class),
-            'https://api-staging.floodlight-b2b.com'
+            'https://api.example.test'
         );
 
         self::assertSame($expected, $service->isAllowedLogoOrigin($url));
