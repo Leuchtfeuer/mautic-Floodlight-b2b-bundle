@@ -1,0 +1,19 @@
+{
+    "name": "leuchtfeuer/floodlight-b2b-vendor-build",
+    "description": "Locked build manifest for the vendored jeremykendall/php-domain-parser dependency shipped inside release ZIPs. Not used at runtime.",
+    "license": "GPL-3.0",
+    "type": "project",
+    "require": {
+        "php": "^8.2",
+        "jeremykendall/php-domain-parser": "^6.3"
+    },
+    "require-dev": {
+        "humbug/php-scoper": "^0.18"
+    },
+    "config": {
+        "vendor-dir": "vendor",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

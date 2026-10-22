@@ -1,3 +1,0 @@
-python-whois
-dnspython==2.6.0
-ipwhois

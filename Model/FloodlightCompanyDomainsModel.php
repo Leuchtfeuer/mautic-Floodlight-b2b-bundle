@@ -75,6 +75,7 @@ class FloodlightCompanyDomainsModel extends FormModel
         if (empty($companyIds)) {
             return [];
         }
+
         // Schritt 2: Nutze die Doctrine-Repository-Methode mit IN-Abfrage
         return $this->getRepository()->createQueryBuilder('cd')
             ->where('cd.company IN (:companyIds)')

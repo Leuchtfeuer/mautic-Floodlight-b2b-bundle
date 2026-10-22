@@ -8,8 +8,7 @@ use Mautic\CoreBundle\Helper\PathsHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\PdpLoader;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisPyService;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use Pdp\Domain;
 use Pdp\Rules;
 use Psr\Log\LoggerInterface;
@@ -19,12 +18,11 @@ class DomainUtility
     private ?Rules $rules = null;
 
     public function __construct(
-        private WhoisPyService $whoisPyService,
+        private WhoisService $whoisService,
         private KeywordBlacklistHelper $keywordBlacklistHelper,
         private DomainBlacklistHelper $domainBlacklistHelper,
         private PathsHelper $pathsHelper,
-        private PdpLoader $pdpLoader,
-        protected LoggerInterface $logger
+        protected LoggerInterface $mauticLogger,
     ) {
     }
 
@@ -50,9 +48,13 @@ class DomainUtility
      */
     public function cleanDomain(?string $domain): ?string
     {
-        $this->pdpLoader->load();
-
         if (is_null($domain) || empty($domain)) {
+            return null;
+        }
+
+        if (!class_exists(Rules::class)) {
+            $this->mauticLogger->error('jeremykendall/php-domain-parser is not installed. Run "composer require jeremykendall/php-domain-parser:^6.3".');
+
             return null;
         }
 
@@ -96,13 +98,18 @@ class DomainUtility
         return false;
     }
 
+    protected function lookupHostname(string $remoteAddr): string|false
+    {
+        return gethostbyaddr($remoteAddr);
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function getDomainByGetHostByAddr(string $remoteAddr): array
     {
         try {
-            $domain       = gethostbyaddr($remoteAddr);
+            $domain       = $this->lookupHostname($remoteAddr);
         } catch (\Exception) {
             $domain = false;
         }
@@ -125,9 +132,9 @@ class DomainUtility
     /**
      * @return array<string,mixed>
      */
-    public function getDomainByWhoisPyService(string $remoteAddr): array
+    public function getDomainByWhoisService(string $remoteAddr): array
     {
-        $domainWhois = $this->whoisPyService->getWhoisData($remoteAddr);
+        $domainWhois = $this->whoisService->getWhoisData($remoteAddr);
         $cleanDomain = '';
         $details     = [];
         $status      = FloodlightLeadDomains::STATUS_NO_DATA_FOUND;
@@ -165,7 +172,7 @@ class DomainUtility
     {
         $this->keywordBlacklistHelper->setBlacklist();
         if (false === $this->keywordBlacklistHelper->checkIfBlacklistLoaded()) {
-            $this->logger->warning('Keyword blacklist file not found.');
+            $this->mauticLogger->warning('Keyword blacklist file not found.');
 
             return false;
         }
@@ -188,7 +195,7 @@ class DomainUtility
     {
         $this->domainBlacklistHelper->setBlacklist();
         if (false === $this->domainBlacklistHelper->checkIfBlacklistLoaded()) {
-            $this->logger->warning('Domain blacklist file not found.');
+            $this->mauticLogger->warning('Domain blacklist file not found.');
 
             return false;
         }

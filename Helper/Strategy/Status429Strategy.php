@@ -46,7 +46,7 @@ class Status429Strategy
             return $hostByAddrData;
         }
 
-        $pyServiceData = $this->domainUtility->getDomainByWhoisPyService($remoteAddr);
+        $pyServiceData = $this->domainUtility->getDomainByWhoisService($remoteAddr);
         if (FloodlightLeadDomains::STATUS_SUCCESS === $pyServiceData['status']
         ) {
             $pyServiceData['lookupType'] = FloodlightLeadDomains::LOOKUP_TYPE_WHOIS;
