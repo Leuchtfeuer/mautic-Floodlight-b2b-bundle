@@ -1,0 +1,174 @@
+<?php
+
+declare(strict_types=1);
+
+namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\EventListener;
+
+use Mautic\CoreBundle\Helper\CoreParametersHelper;
+use Mautic\CoreBundle\Helper\UserHelper;
+use Mautic\DashboardBundle\Event\WidgetDetailEvent;
+use Mautic\DashboardBundle\Event\WidgetTypeListEvent;
+use Mautic\UserBundle\Entity\User;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageData;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageException;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageProvider;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\WidgetPlacement;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\DashboardSubscriber;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+final class DashboardSubscriberTest extends TestCase
+{
+    private UsageProvider&MockObject $usageProvider;
+
+    private DashboardSubscriber $subscriber;
+
+    protected function setUp(): void
+    {
+        $this->usageProvider        = $this->createMock(UsageProvider::class);
+        $userHelper           = $this->createMock(UserHelper::class);
+        $translator           = $this->createMock(TranslatorInterface::class);
+        $translator->method('trans')->willReturnArgument(0);
+
+        $user = $this->createMock(User::class);
+        $user->method('getTimezone')->willReturn('UTC');
+        $userHelper->method('getUser')->willReturn($user);
+
+        $this->subscriber = new DashboardSubscriber(
+            $this->usageProvider,
+            $userHelper,
+            $this->createStub(CoreParametersHelper::class),
+            $translator,
+        );
+    }
+
+    public function testRegistersWidgetType(): void
+    {
+        $event = new WidgetTypeListEvent();
+        $this->subscriber->onWidgetListGenerate($event);
+
+        $types = $event->getTypes();
+        $flat  = array_merge(...array_values($types));
+
+        $this->assertArrayHasKey(WidgetPlacement::WIDGET_TYPE, $flat);
+    }
+
+    public function testIgnoresUnrelatedWidgetType(): void
+    {
+        $event = $this->createDetailEvent('some.other.widget');
+        $this->usageProvider->expects($this->never())->method('getUsage');
+        $event->expects($this->never())->method('setTemplate');
+        $event->expects($this->never())->method('stopPropagation');
+
+        $this->subscriber->onWidgetDetailGenerate($event);
+    }
+
+    public function testRendersSuccessfulState(): void
+    {
+        $usage = new UsageData(134, 500, 200, new \DateTimeImmutable('2025-08-14 22:00:00', new \DateTimeZone('UTC')), 'Professional');
+        $this->usageProvider->method('getUsage')->willReturn($usage);
+
+        $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
+        $event->expects($this->once())->method('setTemplate')->with('@LeuchtfeuerFloodlightB2B/Dashboard/usage.html.twig');
+        $event->expects($this->once())->method('stopPropagation');
+
+        $this->subscriber->onWidgetDetailGenerate($event);
+
+        $data = $this->capturedData;
+        $this->assertSame('success', $data['state']);
+        $this->assertSame('Professional', $data['plan']);
+        $this->assertSame(500, $data['monthlyLimit']);
+        $this->assertSame(134, $data['remaining']);
+        $this->assertSame([134, 366], $data['chartData']['datasets'][0]['data']);
+        $this->assertSame([
+            'leuchtfeuerfloodlightb2b.dashboard.usage.chart.remaining; 134x, 26.8%',
+            'leuchtfeuerfloodlightb2b.dashboard.usage.chart.used; 366x, 73.2%',
+        ], $data['chartData']['labels']);
+        $this->assertSame(200, $data['buffer']);
+        $this->assertSame('https://floodlight-b2b.com/', $data['portalUrl']);
+        $this->assertSame('https://floodlight-b2b.com/', $data['shopUrl']);
+        $this->assertGreaterThanOrEqual(0, $data['daysLeft']);
+    }
+
+    public function testAlwaysFetchesCurrentUsage(): void
+    {
+        $usage = new UsageData(134, 500, 200, new \DateTimeImmutable('+1 day'), 'Free');
+        $this->usageProvider->expects($this->once())->method('getUsage')->willReturn($usage);
+
+        $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
+        $event->expects($this->never())->method('isCached');
+
+        $this->subscriber->onWidgetDetailGenerate($event);
+
+        $this->assertSame('success', $this->capturedData['state']);
+    }
+
+    public function testPastRenewalReturnsZeroDaysLeft(): void
+    {
+        $usage = new UsageData(10, 500, 0, new \DateTimeImmutable('2000-01-01 00:00:00', new \DateTimeZone('UTC')), 'Free');
+        $this->usageProvider->method('getUsage')->willReturn($usage);
+
+        $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
+        $this->subscriber->onWidgetDetailGenerate($event);
+
+        $this->assertSame(0, $this->capturedData['daysLeft']);
+    }
+
+    public function testChartSlicesDoNotExceedMonthlyLimit(): void
+    {
+        $usage = new UsageData(600, 500, 200, new \DateTimeImmutable('+1 day'), 'Free');
+        $this->usageProvider->method('getUsage')->willReturn($usage);
+
+        $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
+        $this->subscriber->onWidgetDetailGenerate($event);
+
+        $this->assertSame([500, 0], $this->capturedData['chartData']['datasets'][0]['data']);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('errorStateProvider')]
+    public function testRendersErrorStates(UsageException $exception, string $expectedState): void
+    {
+        $this->usageProvider->method('getUsage')->willThrowException($exception);
+
+        $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
+        $this->subscriber->onWidgetDetailGenerate($event);
+
+        $data = $this->capturedData;
+        $this->assertSame($expectedState, $data['state']);
+        // Links remain available in every error state.
+        $this->assertSame('https://floodlight-b2b.com/', $data['portalUrl']);
+        $this->assertSame('https://floodlight-b2b.com/', $data['shopUrl']);
+        $this->assertArrayNotHasKey('plan', $data);
+    }
+
+    /**
+     * @return \Iterator<string, array{UsageException, string}>
+     */
+    public static function errorStateProvider(): \Iterator
+    {
+        yield 'setup' => [UsageException::notConfigured(), 'setup'];
+        yield 'invalid credentials' => [UsageException::invalidCredentials(), 'invalid_credentials'];
+        yield 'rate limited' => [UsageException::rateLimited(), 'rate_limited'];
+        yield 'unavailable' => [UsageException::unavailable('boom'), 'error'];
+    }
+
+    /**
+     * @var array<string, mixed>
+     */
+    private array $capturedData = [];
+
+    private function createDetailEvent(string $type): WidgetDetailEvent&MockObject
+    {
+        $this->capturedData = [];
+
+        $event = $this->createMock(WidgetDetailEvent::class);
+        $event->method('getType')->willReturn($type);
+        $event->method('isCached')->willReturn(false);
+        $event->method('setTemplateData')->willReturnCallback(function (array $data): void {
+            $this->capturedData = $data;
+        });
+
+        return $event;
+    }
+}
