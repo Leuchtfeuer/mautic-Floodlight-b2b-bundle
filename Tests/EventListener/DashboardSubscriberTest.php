@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\EventListener;
 
-use Mautic\CoreBundle\Helper\CoreParametersHelper;
-use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\DashboardBundle\Event\WidgetDetailEvent;
 use Mautic\DashboardBundle\Event\WidgetTypeListEvent;
-use Mautic\UserBundle\Entity\User;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageData;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageException;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageProvider;
@@ -16,7 +13,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\WidgetPlacement;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\DashboardSubscriber;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class DashboardSubscriberTest extends TestCase
 {
@@ -26,21 +22,8 @@ final class DashboardSubscriberTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->usageProvider        = $this->createMock(UsageProvider::class);
-        $userHelper           = $this->createMock(UserHelper::class);
-        $translator           = $this->createMock(TranslatorInterface::class);
-        $translator->method('trans')->willReturnArgument(0);
-
-        $user = $this->createMock(User::class);
-        $user->method('getTimezone')->willReturn('UTC');
-        $userHelper->method('getUser')->willReturn($user);
-
-        $this->subscriber = new DashboardSubscriber(
-            $this->usageProvider,
-            $userHelper,
-            $this->createStub(CoreParametersHelper::class),
-            $translator,
-        );
+        $this->usageProvider = $this->createMock(UsageProvider::class);
+        $this->subscriber    = new DashboardSubscriber($this->usageProvider);
     }
 
     public function testRegistersWidgetType(): void
@@ -66,7 +49,8 @@ final class DashboardSubscriberTest extends TestCase
 
     public function testRendersSuccessfulState(): void
     {
-        $usage = new UsageData(134, 500, 200, new \DateTimeImmutable('2025-08-14 22:00:00', new \DateTimeZone('UTC')), 'Professional');
+        $nextRenewal = new \DateTimeImmutable('2025-08-14 22:00:00', new \DateTimeZone('UTC'));
+        $usage       = new UsageData(134, 500, 200, $nextRenewal, 'Professional');
         $this->usageProvider->method('getUsage')->willReturn($usage);
 
         $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
@@ -79,16 +63,15 @@ final class DashboardSubscriberTest extends TestCase
         $this->assertSame('success', $data['state']);
         $this->assertSame('Professional', $data['plan']);
         $this->assertSame(500, $data['monthlyLimit']);
-        $this->assertSame(134, $data['remaining']);
-        $this->assertSame([134, 366], $data['chartData']['datasets'][0]['data']);
-        $this->assertSame([
-            'leuchtfeuerfloodlightb2b.dashboard.usage.chart.remaining; 134x, 26.8%',
-            'leuchtfeuerfloodlightb2b.dashboard.usage.chart.used; 366x, 73.2%',
-        ], $data['chartData']['labels']);
         $this->assertSame(200, $data['buffer']);
+        $this->assertSame(366, $data['usedThisMonth']);
+        // Credits remaining include the buffer: 134 + 200.
+        $this->assertSame(334, $data['creditsRemaining']);
+        // Remaining share of monthly credits plus buffer: 334 / 700.
+        $this->assertEqualsWithDelta(47.714, $data['remainingPercent'], 0.001);
+        $this->assertSame($nextRenewal, $data['nextRenewal']);
         $this->assertSame('https://floodlight-b2b.com/', $data['portalUrl']);
         $this->assertSame('https://floodlight-b2b.com/', $data['shopUrl']);
-        $this->assertGreaterThanOrEqual(0, $data['daysLeft']);
     }
 
     public function testAlwaysFetchesCurrentUsage(): void
@@ -104,18 +87,32 @@ final class DashboardSubscriberTest extends TestCase
         $this->assertSame('success', $this->capturedData['state']);
     }
 
-    public function testPastRenewalReturnsZeroDaysLeft(): void
+    public function testExhaustedCreditsReturnZeroPercent(): void
     {
-        $usage = new UsageData(10, 500, 0, new \DateTimeImmutable('2000-01-01 00:00:00', new \DateTimeZone('UTC')), 'Free');
+        $usage = new UsageData(0, 500, 0, new \DateTimeImmutable('+1 day'), 'Free');
         $this->usageProvider->method('getUsage')->willReturn($usage);
 
         $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
         $this->subscriber->onWidgetDetailGenerate($event);
 
-        $this->assertSame(0, $this->capturedData['daysLeft']);
+        $this->assertSame(500, $this->capturedData['usedThisMonth']);
+        $this->assertSame(0, $this->capturedData['creditsRemaining']);
+        $this->assertEqualsWithDelta(0.0, $this->capturedData['remainingPercent'], PHP_FLOAT_EPSILON);
     }
 
-    public function testChartSlicesDoNotExceedMonthlyLimit(): void
+    public function testZeroTotalCreditsReturnZeroPercent(): void
+    {
+        $usage = new UsageData(0, 0, 0, new \DateTimeImmutable('+1 day'), 'Free');
+        $this->usageProvider->method('getUsage')->willReturn($usage);
+
+        $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
+        $this->subscriber->onWidgetDetailGenerate($event);
+
+        $this->assertSame(0, $this->capturedData['creditsRemaining']);
+        $this->assertEqualsWithDelta(0.0, $this->capturedData['remainingPercent'], PHP_FLOAT_EPSILON);
+    }
+
+    public function testDerivedValuesStayInRangeWhenRemainingExceedsMonthlyLimit(): void
     {
         $usage = new UsageData(600, 500, 200, new \DateTimeImmutable('+1 day'), 'Free');
         $this->usageProvider->method('getUsage')->willReturn($usage);
@@ -123,7 +120,9 @@ final class DashboardSubscriberTest extends TestCase
         $event = $this->createDetailEvent(WidgetPlacement::WIDGET_TYPE);
         $this->subscriber->onWidgetDetailGenerate($event);
 
-        $this->assertSame([500, 0], $this->capturedData['chartData']['datasets'][0]['data']);
+        $this->assertSame(0, $this->capturedData['usedThisMonth']);
+        $this->assertSame(800, $this->capturedData['creditsRemaining']);
+        $this->assertEqualsWithDelta(100.0, $this->capturedData['remainingPercent'], PHP_FLOAT_EPSILON);
     }
 
     #[\PHPUnit\Framework\Attributes\DataProvider('errorStateProvider')]

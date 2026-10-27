@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener;
 
-use Mautic\CoreBundle\Helper\Chart\PieChart;
-use Mautic\CoreBundle\Helper\CoreParametersHelper;
-use Mautic\CoreBundle\Helper\UserHelper;
 use Mautic\DashboardBundle\DashboardEvents;
 use Mautic\DashboardBundle\Event\WidgetDetailEvent;
 use Mautic\DashboardBundle\Event\WidgetTypeListEvent;
@@ -15,7 +12,6 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageException;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\UsageProvider;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Dashboard\WidgetPlacement;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Registers the fixed Floodlight usage widget type and renders it. It handles
@@ -33,9 +29,6 @@ class DashboardSubscriber implements EventSubscriberInterface
 
     public function __construct(
         private readonly UsageProvider $usageProvider,
-        private readonly UserHelper $userHelper,
-        private readonly CoreParametersHelper $coreParametersHelper,
-        private readonly TranslatorInterface $translator,
     ) {
     }
 
@@ -82,34 +75,38 @@ class DashboardSubscriber implements EventSubscriberInterface
         }
 
         return array_merge($base, [
-            'state'        => 'success',
-            'plan'         => $usage->getPlan(),
-            'monthlyLimit' => $usage->getMonthlyLimit(),
-            'remaining'    => $usage->getRemaining(),
-            'chartData'    => $this->buildChartData($usage),
-            'buffer'       => $usage->getBuffer(),
-            'nextRenewal'  => $usage->getNextRenewal(),
-            'daysLeft'     => $this->calculateDaysLeft($usage),
+            'state'            => 'success',
+            'plan'             => $usage->getPlan(),
+            'monthlyLimit'     => $usage->getMonthlyLimit(),
+            'buffer'           => $usage->getBuffer(),
+            'usedThisMonth'    => max(0, $usage->getMonthlyLimit() - $usage->getRemaining()),
+            'creditsRemaining' => $this->calculateCreditsRemaining($usage),
+            'remainingPercent' => $this->calculateRemainingPercent($usage),
+            'nextRenewal'      => $usage->getNextRenewal(),
         ]);
     }
 
     /**
-     * @return array{labels: mixed[], datasets: mixed[]}
+     * Remaining monthly credits plus the credit pack balance (buffer).
      */
-    private function buildChartData(UsageData $usage): array
+    private function calculateCreditsRemaining(UsageData $usage): int
     {
-        $chart              = new PieChart();
-        $remainingForChart  = min($usage->getRemaining(), $usage->getMonthlyLimit());
-        $chart->setDataset(
-            $this->translator->trans('leuchtfeuerfloodlightb2b.dashboard.usage.chart.remaining'),
-            $remainingForChart
-        );
-        $chart->setDataset(
-            $this->translator->trans('leuchtfeuerfloodlightb2b.dashboard.usage.chart.used'),
-            $usage->getMonthlyLimit() - $remainingForChart
-        );
+        return max(0, $usage->getRemaining() + $usage->getBuffer());
+    }
 
-        return $chart->render();
+    /**
+     * Share of all available credits (monthly credits plus buffer) that is
+     * still remaining, capped at 100.
+     */
+    private function calculateRemainingPercent(UsageData $usage): float
+    {
+        $totalCredits = $usage->getMonthlyLimit() + $usage->getBuffer();
+
+        if ($totalCredits <= 0) {
+            return 0.0;
+        }
+
+        return min(100.0, $this->calculateCreditsRemaining($usage) / $totalCredits * 100);
     }
 
     private function stateForCategory(string $category): string
@@ -120,33 +117,5 @@ class DashboardSubscriber implements EventSubscriberInterface
             UsageException::RATE_LIMITED        => 'rate_limited',
             default                             => 'error',
         };
-    }
-
-    /**
-     * Non-negative whole calendar days until renewal, in the current user's
-     * Mautic timezone. A past renewal date returns zero.
-     */
-    private function calculateDaysLeft(UsageData $usage): int
-    {
-        $timezone = new \DateTimeZone($this->resolveTimezone());
-
-        $today   = (new \DateTimeImmutable('now', $timezone))->setTime(0, 0);
-        $renewal = $usage->getNextRenewal()->setTimezone($timezone)->setTime(0, 0);
-
-        $days = (int) $today->diff($renewal)->format('%r%a');
-
-        return max(0, $days);
-    }
-
-    private function resolveTimezone(): string
-    {
-        $user     = $this->userHelper->getUser();
-        $timezone = $user->getTimezone();
-
-        if (empty($timezone)) {
-            $timezone = $this->coreParametersHelper->get('default_timezone');
-        }
-
-        return empty($timezone) ? date_default_timezone_get() : $timezone;
     }
 }
