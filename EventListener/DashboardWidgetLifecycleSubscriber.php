@@ -23,10 +23,15 @@ class DashboardWidgetLifecycleSubscriber implements EventSubscriberInterface
     private const PLUGIN_NAME = 'Floodlight for B2B';
 
     /**
-     * Plugin version that introduces the widget. The update backfill only runs
-     * when crossing this threshold.
+     * Plugin versions that introduce the widget on the M5 and M7 lines. The update
+     * backfill only runs when the old version has not yet placed the widget, so
+     * widgets removed by users are not added again.
      */
-    public const FEATURE_VERSION = '7.2.0';
+    public const M5_FEATURE_VERSION = '5.9.0';
+
+    public const M7_FIRST_VERSION = '7.0.0';
+
+    public const M7_FEATURE_VERSION = '7.2.0';
 
     public function __construct(
         private readonly WidgetPlacement $widgetPlacement,
@@ -58,8 +63,7 @@ class DashboardWidgetLifecycleSubscriber implements EventSubscriberInterface
             return;
         }
 
-        // Only backfill when crossing the feature-introducing version.
-        if (version_compare($event->getOldVersion(), self::FEATURE_VERSION, '>=')) {
+        if (!$this->needsBackfill($event->getOldVersion())) {
             return;
         }
 
@@ -73,6 +77,16 @@ class DashboardWidgetLifecycleSubscriber implements EventSubscriberInterface
         }
 
         $this->widgetPlacement->placeForUser($event->getUser());
+    }
+
+    private function needsBackfill(string $oldVersion): bool
+    {
+        if (version_compare($oldVersion, self::M5_FEATURE_VERSION, '<')) {
+            return true;
+        }
+
+        return version_compare($oldVersion, self::M7_FIRST_VERSION, '>=')
+            && version_compare($oldVersion, self::M7_FEATURE_VERSION, '<');
     }
 
     private function placeForAllUsers(): void
