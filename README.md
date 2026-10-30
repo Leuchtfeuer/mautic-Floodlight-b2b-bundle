@@ -11,7 +11,6 @@ This plugin requires a (free or paid) subscription with the Floodlight for B2B A
 - Provides domain and keyword blacklisting to exclude unwanted companies.
 - Provides commands to enrich companies and retry failed lookups.
 - Brings a Mautic dashboard widget to visualize the use of API credits
-- Optionally disallows free email providers on form email fields.
 
 ## Requirements
 > [!TIP]
