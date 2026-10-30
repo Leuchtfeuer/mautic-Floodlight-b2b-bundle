@@ -1,8 +1,8 @@
 # Floodlight for B2B by Leuchtfeuer
 
 ## Overview
-The Floodlight for B2B is an add-on to Mautic's "account based marketing" capabilities (which is itself a Leuchtfeuer plugin set as of Mautic 5 and 6; intended to be part of the Mautic 7 core).
-It is responsible for enriching company properties, and optionally for detecting companies from anonymous leads in Mautic - which empowers company qualification and segmentation.
+The Floodlight for B2B is an add-on to Mautic's Account Based Marketing (ABM) capabilities (which is another set of Leuchtfeuer plugins).
+Floodlight for B2B is responsible for enriching company properties, and optionally for detecting companies from anonymous leads in Mautic - which empowers company qualification and segmentation.
 This plugin requires a (free or paid) subscription with the Floodlight for B2B API service (https://floodlight-b2b.com)
 
 ## Features
@@ -10,6 +10,7 @@ This plugin requires a (free or paid) subscription with the Floodlight for B2B A
 - Supports reverse proxy setups, including Cloudflare and others.
 - Provides domain and keyword blacklisting to exclude unwanted companies.
 - Provides commands to enrich companies and retry failed lookups.
+- Brings a Mautic dashboard widget to visualize the use of API credits
 - Optionally disallows free email providers on form email fields.
 
 ## Requirements
@@ -26,7 +27,9 @@ This plugin requires a (free or paid) subscription with the Floodlight for B2B A
 > You can find a written and video tutorial on https://floodlight-b2b.com/installing-the-floodlight-for-b2b-mautic-plugin/
 
 ### Composer
-This plugin is currently private and can't be installed via composer.
+This plugin is on https://packagist.org/packages/leuchtfeuer/mautic-floodlight-b2b-bundle.
+
+You can very simply require it in composer.json ("leuchtfeuer/mautic-floodlight-b2b-bundle")
 
 ### Manual Installation
 The plugin can be installed manually, following the usual steps:
@@ -85,7 +88,7 @@ Email fields in the Mautic Form Builder get an additional "Disallow freemailers"
 The list of free email providers is bundled with the plugin (`Config/f4b_free_email_domains.json`, based on https://github.com/Kikobeats/free-email-domains) and updated with each plugin release. It is not editable at runtime. This list is MIT-licensed; see `THIRD_PARTY_LICENSES.md` for the license text.
 
 ## Future Ideas
-* periodic renewal request, from Plugin to API Service
+* periodic refresh of  enriched data, from Plugin to API Service
 * better handling of “try again” status (would be ok to try 10 times or so, but we currently don’t have such a counter - we merely set 1970 at first try, current date at second try)
 
 ## Credits
