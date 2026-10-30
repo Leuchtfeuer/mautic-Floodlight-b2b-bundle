@@ -1,0 +1,362 @@
+{#
+    Styles are inline so the widget renders correctly without running
+    mautic:assets:generate after a plugin update. They restyle the Mautic
+    widget tile: its title (the drag handle) and menu become part of the
+    branded header, and the tile height follows the content.
+#}
+<style>
+    .dashboard-widgets {
+        --f4b-teal: #255156;
+        --f4b-ink: #234c50;
+        --f4b-muted: #526d70;
+        --f4b-lime: #b4c941;
+        --f4b-light: #f1f3f5;
+        --f4b-line: #e9eeef;
+        --f4b-on-teal: #f2f0eb;
+        --f4b-gradient: linear-gradient(90deg, #fbee4f, #c6dd86 50%, #94cdf0);
+    }
+    .f4b-usage {
+        /* Leave room for Mautic's title and card padding at any saved height. */
+        max-height: {{ max(100, (widget.height|default(330)) - 100) }}px;
+        overflow-y: auto;
+        color: var(--f4b-ink);
+    }
+    .f4b-usage > .f4b-usage__logo,
+    .f4b-usage > .f4b-usage__subtitle {
+        display: none;
+    }
+    @supports selector(:has(*)) {
+    .dashboard-widgets .widget:has(.f4b-usage) {
+        height: auto !important;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) {
+        container: f4b-usage / inline-size;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "logo title menu"
+            "logo subtitle menu"
+            "body body body";
+        height: auto !important;
+        padding: 0;
+        border-radius: 12px;
+        background: #fff;
+        color: var(--f4b-ink);
+    }
+    {# Header background with the gradient accent line at its bottom edge. #}
+    .dashboard-widgets .tile:has(.f4b-usage)::before {
+        content: '';
+        grid-area: 1 / 1 / 3 / -1;
+        border-radius: 12px 12px 0 0;
+        background: var(--f4b-gradient) bottom / 100% 4px no-repeat, var(--f4b-teal);
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) > .card-header,
+    .dashboard-widgets .tile:has(.f4b-usage) > .card-body,
+    .dashboard-widgets .tile .f4b-usage {
+        display: contents !important;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) > hr {
+        display: none;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) .f4b-usage__logo,
+    .dashboard-widgets .tile:has(.f4b-usage) .f4b-usage__subtitle {
+        display: block;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) .card-header h4 {
+        grid-area: title;
+        align-self: end;
+        width: auto;
+        margin: 0 0 0 14px;
+        color: var(--f4b-on-teal);
+        font-size: 23px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) .card-header .dropdown {
+        grid-area: menu;
+        align-self: center;
+        margin: 0 32px 4px 16px;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) .card-header .dropdown-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 50%;
+        background: #376166;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) .card-header .dropdown-toggle:hover,
+    .dashboard-widgets .tile:has(.f4b-usage) .card-header .dropdown-toggle:focus-visible {
+        background: #4a7479;
+    }
+    .dashboard-widgets .tile:has(.f4b-usage) .dropdown-toggle .ri-more-2-fill {
+        width: auto;
+        margin: 0;
+        color: #fff;
+        font-size: 18px;
+        line-height: 1;
+    }
+    .f4b-usage__body {
+        padding: 24px 32px;
+    }
+    }
+    .f4b-usage__logo {
+        grid-area: logo;
+        align-self: center;
+        margin: 16px 0 20px 32px;
+        padding-right: 14px;
+        border-right: 2px solid var(--f4b-lime);
+    }
+    .f4b-usage__logo img {
+        display: block;
+        width: 56px;
+        height: auto;
+    }
+    .f4b-usage__subtitle {
+        grid-area: subtitle;
+        align-self: start;
+        margin: 4px 0 0 14px;
+        color: var(--f4b-lime);
+        font-size: 13px;
+        letter-spacing: .14em;
+        line-height: 1.2;
+        text-transform: uppercase;
+    }
+    .f4b-usage__body {
+        grid-area: body;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+        gap: 24px 48px;
+    }
+    .f4b-usage__body--message {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .f4b-usage__facts {
+        margin: 0;
+    }
+    .f4b-usage__fact {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 34px;
+        padding: 4px 0;
+        border-bottom: 1px solid var(--f4b-line);
+        font-size: 16px;
+    }
+    .f4b-usage__fact:last-child {
+        border-bottom: 0;
+    }
+    .f4b-usage__fact dt {
+        color: var(--f4b-muted);
+        font-weight: 400;
+    }
+    .f4b-usage__fact dd {
+        margin: 0;
+        color: var(--f4b-ink);
+        font-weight: 700;
+        text-align: right;
+        white-space: nowrap;
+    }
+    .f4b-usage__fact--total dt {
+        font-weight: 700;
+    }
+    .f4b-usage__badge {
+        display: inline-block;
+        padding: 1px 12px;
+        border-radius: 999px;
+        background: var(--f4b-lime);
+    }
+    .f4b-usage__summary {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .f4b-usage__meter {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 12%;
+        border-radius: 12px;
+        background: var(--f4b-light);
+        text-align: center;
+    }
+    .f4b-usage__percent {
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    .f4b-usage__percent-label {
+        color: var(--f4b-muted);
+        font-size: 16px;
+    }
+    .f4b-usage__bar {
+        width: 100%;
+        height: 13px;
+        margin-top: 12px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: var(--f4b-gradient);
+    }
+    .f4b-usage__bar-remaining {
+        height: 100%;
+        border-radius: 999px;
+        background: var(--f4b-teal);
+    }
+    .f4b-usage__actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    .f4b-usage__button,
+    .f4b-usage__button:hover,
+    .f4b-usage__button:focus {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 8px 22px;
+        border: 1px solid var(--f4b-ink);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--f4b-ink);
+        font-size: 16px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .f4b-usage__button:hover {
+        background: var(--f4b-light);
+    }
+    .f4b-usage__button:focus-visible {
+        outline: 3px solid #94cdf0;
+        outline-offset: 2px;
+    }
+    .f4b-usage__button--primary,
+    .f4b-usage__button--primary:hover,
+    .f4b-usage__button--primary:focus {
+        border-color: var(--f4b-teal);
+        background: var(--f4b-teal);
+        color: var(--f4b-on-teal);
+    }
+    .f4b-usage__button--primary:hover {
+        background: #1b3e42;
+    }
+    .f4b-usage__button i {
+        font-size: 20px;
+        font-weight: 400;
+    }
+    @supports (container-type: inline-size) {
+    @container f4b-usage (max-width: 760px) {
+        .f4b-usage__body {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+    @container f4b-usage (max-width: 480px) {
+        .f4b-usage__logo {
+            margin-left: 16px;
+            padding-right: 10px;
+        }
+        .f4b-usage__logo img {
+            width: 44px;
+        }
+        .dashboard-widgets .tile:has(.f4b-usage) .card-header h4 {
+            margin-left: 10px;
+            font-size: 19px;
+            white-space: normal;
+        }
+        .f4b-usage__subtitle {
+            margin-left: 10px;
+            font-size: 12px;
+        }
+        .dashboard-widgets .tile:has(.f4b-usage) .card-header .dropdown {
+            margin-right: 16px;
+        }
+        .f4b-usage__body {
+            padding: 16px;
+        }
+        .f4b-usage__fact {
+            font-size: 14px;
+        }
+        .f4b-usage__button {
+            flex: 1 1 100%;
+        }
+    }
+    }
+</style>
+{% set actions %}
+    <div class="f4b-usage__actions">
+        <a href="{{ portalUrl }}" target="_blank" rel="noopener noreferrer" class="f4b-usage__button f4b-usage__button--primary">
+            {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.customer_portal'|trans }}
+        </a>
+        <a href="{{ shopUrl }}" target="_blank" rel="noopener noreferrer" class="f4b-usage__button">
+            {{ 'leuchtfeuerfloodlightb2b.dashboard.usage.upgrade_plan'|trans }}
+            <i class="ri-arrow-up-circle-line" aria-hidden="true"></i>
+        </a>
+    </div>
+{% endset %}
+<div class="f4b-usage">
+    <div class="f4b-usage__logo">
+        <img src="{{ getAssetUrl('plugins/LeuchtfeuerFloodlightB2BBundle/Assets/img/logo-light.png') }}" alt="">
+    </div>
+    <p class="f4b-usage__subtitle">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.subtitle'|trans }}</p>
+
+    {% if state == 'success' %}
+        <div class="f4b-usage__body">
+            <dl class="f4b-usage__facts">
+                <div class="f4b-usage__fact">
+                    <dt>{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.plan'|trans }}</dt>
+                    <dd><span class="f4b-usage__badge">{{ plan }}</span></dd>
+                </div>
+                <div class="f4b-usage__fact">
+                    <dt>{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.monthly_limit'|trans }}</dt>
+                    <dd>{{ monthlyLimit|number_format(0, ',', '.') }}</dd>
+                </div>
+                <div class="f4b-usage__fact">
+                    <dt>{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.used'|trans }}</dt>
+                    <dd>{{ usedThisMonth|number_format(0, ',', '.') }}</dd>
+                </div>
+                <div class="f4b-usage__fact">
+                    <dt>{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.buffer'|trans }}</dt>
+                    <dd>{{ buffer|number_format(0, ',', '.') }}</dd>
+                </div>
+                <div class="f4b-usage__fact f4b-usage__fact--total">
+                    <dt>{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.remaining'|trans }}</dt>
+                    <dd>{{ creditsRemaining|number_format(0, ',', '.') }}</dd>
+                </div>
+                <div class="f4b-usage__fact">
+                    <dt>{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.next_renewal'|trans }}</dt>
+                    <dd>{{ dateToDate(nextRenewal) }}</dd>
+                </div>
+            </dl>
+            <div class="f4b-usage__summary">
+                <div class="f4b-usage__meter">
+                    <strong class="f4b-usage__percent">{{ remainingPercent|number_format(1) }}%</strong>
+                    <span class="f4b-usage__percent-label">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.percent_remaining'|trans }}</span>
+                    <div class="f4b-usage__bar" aria-hidden="true">
+                        <div class="f4b-usage__bar-remaining" style="width: {{ remainingPercent|round(2) }}%"></div>
+                    </div>
+                </div>
+                {{ actions }}
+            </div>
+        </div>
+    {% else %}
+        <div class="f4b-usage__body f4b-usage__body--message">
+            {% if state == 'setup' %}
+                <div class="alert alert-warning mb-0" role="alert">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.setup_required'|trans }}</div>
+            {% elseif state == 'invalid_credentials' %}
+                <div class="alert alert-danger mb-0" role="alert">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.invalid_credentials'|trans }}</div>
+            {% elseif state == 'rate_limited' %}
+                <div class="alert alert-warning mb-0" role="alert">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.rate_limited'|trans }}</div>
+            {% else %}
+                <div class="alert alert-danger mb-0" role="alert">{{ 'leuchtfeuerfloodlightb2b.dashboard.usage.unavailable'|trans }}</div>
+            {% endif %}
+            {{ actions }}
+        </div>
+    {% endif %}
+</div>
