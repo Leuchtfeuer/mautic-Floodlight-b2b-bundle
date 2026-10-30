@@ -3,7 +3,7 @@
 ## Overview
 The Floodlight for B2B is an add-on to Mautic's "account based marketing" capabilities (which is itself a Leuchtfeuer plugin set as of Mautic 5 and 6; intended to be part of the Mautic 7 core).
 It is responsible for enriching company properties, and optionally for detecting companies from anonymous leads in Mautic - which empowers company qualification and segmentation.
-This plugin requires the Floodlight for B2B API service.
+This plugin requires a (free or paid) subscription with the Floodlight for B2B API service (https://floodlight-b2b.com)
 
 ## Features
 - Detects and qualifies companies from anonymous leads using the Floodlight for B2B service.
@@ -22,6 +22,9 @@ This plugin requires the Floodlight for B2B API service.
 - jeremykendall/php-domain-parser ^6.3
 
 ## Installation
+> [!TIP]
+> You can find a written and video tutorial on https://floodlight-b2b.com/installing-the-floodlight-for-b2b-mautic-plugin/
+
 ### Composer
 This plugin is currently private and can't be installed via composer.
 
