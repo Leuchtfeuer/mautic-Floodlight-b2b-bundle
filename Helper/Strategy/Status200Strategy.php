@@ -9,6 +9,7 @@ use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\CompanyLeadRepository;
 use Mautic\LeadBundle\Entity\CompanyRepository;
 use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Entity\LeadRepository;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\LeadBundle\Model\LeadModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\DTO\FloodlightDTO;
@@ -22,7 +23,7 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Mapping\CompanyMapper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightCompanyDomainsModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Model\FloodlightLeadDomainsModel;
-use Symfony\Contracts\HttpClient\HttpClientInterface;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 
 class Status200Strategy implements StatusCodeStrategyInterface
 {
@@ -40,8 +41,8 @@ class Status200Strategy implements StatusCodeStrategyInterface
         private readonly CompanyLeadRepository $companyLeadRepository,
         private readonly PathsHelper $pathsHelper,
         private readonly CompanyMapper $companyMapper,
-        private readonly \Mautic\LeadBundle\Entity\LeadRepository $leadRepository,
-        private readonly HttpClientInterface $httpClient,
+        private readonly LeadRepository $leadRepository,
+        private readonly FloodlightService $floodlightService,
     ) {
     }
 
@@ -248,6 +249,9 @@ class Status200Strategy implements StatusCodeStrategyInterface
         if ($this->isLogoAlreadySetManually($company) || '' === $companyLogoUrl) {
             return $company;
         }
+        if (!$this->floodlightService->isAllowedLogoOrigin($companyLogoUrl)) {
+            return $company;
+        }
         $this->deleteOldLogoFile($company);
         $fileName = $this->createLogoFile($company, $companyLogoUrl);
         if (null === $fileName) {
@@ -284,13 +288,13 @@ class Status200Strategy implements StatusCodeStrategyInterface
         $timestamp    = (new \DateTime())->format('Y-m-d-H-i-s');
         $logoFileName = 'f4b_'.md5($company->getName().$timestamp);
 
-        $response = $this->httpClient->request('GET', $companyLogoUrl);
-        if (200 !== $response->getStatusCode()) {
+        $logo = $this->floodlightService->getLogo($companyLogoUrl);
+        if (null === $logo) {
             return null;
         }
 
-        $imageData     = $response->getContent();
-        $contentType   = $response->getHeaders()['content-type'][0] ?? '';
+        $imageData     = $logo['content'];
+        $contentType   = $logo['contentType'];
         $fileExtension = '';
         if (str_contains($contentType, 'image/png')) {
             $fileExtension = '.png';

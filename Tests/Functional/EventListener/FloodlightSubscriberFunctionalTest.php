@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\EventListener;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Promise\FulfilledPromise;
+use GuzzleHttp\Psr7\Response;
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\CoreBundle\Test\Container\TestContainer;
@@ -14,6 +18,7 @@ use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
 use Mautic\PageBundle\Entity\Hit;
 use Mautic\PluginBundle\Entity\Integration;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightCompanyDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomains;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Entity\FloodlightLeadDomainsRepository;
@@ -21,13 +26,13 @@ use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\EventListener\FloodlightSubscrib
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\DomainBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\KeywordBlacklistHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\Utility\DomainUtility;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\WhoisService;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\fixtures\FixtureHelper;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterCustomFieldCleanup;
 use PHPUnit\Framework\Attributes\Group;
+use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpClient\MockHttpClient;
-use Symfony\Component\HttpClient\Response\MockResponse;
 
 #[Group('no-ci')]
 final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
@@ -358,7 +363,7 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
-        $this->mockLogoHttpClient();
+        $this->mockLogoApiClient();
 
         $this->processHit('12.138.157.209', $lead);
         $this->processHit('12.138.157.209', $lead);
@@ -383,7 +388,7 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $lead = $this->createAnonymousLead();
         $this->activePlugin();
         $this->updateApikey();
-        $this->mockLogoHttpClient();
+        $this->mockLogoApiClient();
 
         $this->processHit('12.138.157.209', $lead);
         $this->processHit('12.138.157.209', $lead);
@@ -979,13 +984,40 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         $testContainer->set($id, $service);
     }
 
-    private function mockLogoHttpClient(): void
+    private function mockLogoApiClient(): void
     {
-        $mockClient = new MockHttpClient(
-            static fn (): MockResponse => new MockResponse('fake-png-bytes', ['response_headers' => ['content-type' => 'image/png']])
-        );
+        $container     = self::getContainer();
+        $realApiClient = $container->get(ApiClient::class);
+        $this->assertInstanceOf(ApiClient::class, $realApiClient);
 
-        $this->mockService(MockHttpClient::class, $mockClient);
+        $guzzleClient = new Client([
+            'handler' => static function (RequestInterface $request) use ($realApiClient): FulfilledPromise|\GuzzleHttp\Promise\PromiseInterface {
+                if (str_contains($request->getUri()->getPath(), '/companies/logos/')) {
+                    return new FulfilledPromise(new Response(200, ['Content-Type' => 'image/png'], 'fake-png-bytes'));
+                }
+
+                return $realApiClient->getClient()->sendAsync($request);
+            },
+        ]);
+
+        $apiClient = new class($guzzleClient) extends ApiClient {
+            public function __construct(private readonly ClientInterface $mockedClient)
+            {
+            }
+
+            public function getClient(): ClientInterface
+            {
+                return $this->mockedClient;
+            }
+        };
+
+        $floodlightApiUrl = $container->getParameter('mautic.leuchtfeuerfloodlightb2b.floodlight_api_url');
+        $this->assertIsString($floodlightApiUrl);
+
+        $this->mockService(
+            FloodlightService::class,
+            new FloodlightService($apiClient, $container->get(LoggerInterface::class), $floodlightApiUrl)
+        );
     }
 
     /**

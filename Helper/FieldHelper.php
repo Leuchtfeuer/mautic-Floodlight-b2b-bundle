@@ -69,7 +69,7 @@ class FieldHelper
         $field->setLabel($label);
         $field->setType($type);
         $field->setObject(self::DEFAULT_VALUES['object']);
-        $field->setGroup(self::DEFAULT_VALUES['group']);
+        $field->setGroup($options['group'] ?? self::DEFAULT_VALUES['group']);
         $field->setIsRequired(self::DEFAULT_VALUES['is_required']);
         $field->setIsFixed(self::DEFAULT_VALUES['is_fixed']);
         $field->setIsVisible(self::DEFAULT_VALUES['is_visible']);
