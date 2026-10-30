@@ -23,9 +23,9 @@ class DashboardSubscriber implements EventSubscriberInterface
 
     private const BUNDLE     = 'others';
 
-    private const PORTAL_URL = 'https://floodlight-b2b.com/stripe-customer-portal/?utm_source=app&utm_medium=in-app&utm_campaign=manage_payments&utm_content=widget';
+    private const PORTAL_URL = 'https://floodlight-b2b.com/stripe-customer-portal/?utm_source=f4b-plugin&utm_medium=in-app&utm_campaign=manage_payments&utm_content=dashboard-widget';
 
-    private const SHOP_URL   = 'https://floodlight-b2b.com/floodlight-for-b2b-pro-plans/?utm_source=app&utm_medium=in-app&utm_campaign=upgrade_plan&utm_content=widget';
+    private const SHOP_URL   = 'https://floodlight-b2b.com/floodlight-for-b2b-pro-plans/?utm_source=f4b-plugin&utm_medium=in-app&utm_campaign=upgrade_plan&utm_content=dashboard-widget';
 
     public function __construct(
         private readonly UsageProvider $usageProvider,
