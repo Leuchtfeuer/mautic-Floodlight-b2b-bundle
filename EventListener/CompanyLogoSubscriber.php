@@ -8,12 +8,14 @@ use Mautic\CoreBundle\CoreEvents;
 use Mautic\CoreBundle\Event\CustomContentEvent;
 use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\LeadBundle\Entity\Company;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Integration\Config;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class CompanyLogoSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly PathsHelper $pathsHelper,
+        private readonly Config $config,
     ) {
     }
 
@@ -27,6 +29,10 @@ class CompanyLogoSubscriber implements EventSubscriberInterface
     public function addCompanyLogo(CustomContentEvent $event): void
     {
         if (!$event->checkContext('@MauticLead/Company/company.html.twig', 'company.sidebar.top')) {
+            return;
+        }
+
+        if (!$this->config->isPublished()) {
             return;
         }
 
