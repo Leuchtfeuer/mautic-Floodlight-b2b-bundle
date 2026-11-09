@@ -239,7 +239,6 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'alias'           => 'companylogo_filename',
                 'name'            => 'Company Logo Filename',
                 'type'            => 'text',
-                'group'           => 'core',
                 'limit'           => 191,
                 'externalKeyName' => 'companylogo_filename',
             ],
