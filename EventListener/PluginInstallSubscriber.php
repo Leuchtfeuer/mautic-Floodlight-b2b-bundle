@@ -329,10 +329,6 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 $options['isIndex'] = $fieldData['isIndex'];
             }
 
-            if (isset($fieldData['group'])) {
-                $options['group'] = $fieldData['group'];
-            }
-
             $this->installHelper->installFields(
                 $fieldData['alias'],
                 $fieldData['name'],
