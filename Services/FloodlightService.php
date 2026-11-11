@@ -17,6 +17,13 @@ class FloodlightService implements FloodlightServiceInterface
 {
     public const FLOODLIGHT_VERSION = 'v1';
 
+    /**
+     * @var string[]
+     */
+    private const ALLOWED_LOGO_HOSTS = [
+        'api.floodlight-b2b.com',
+    ];
+
     public function __construct(private readonly ApiClient $client, private readonly LoggerInterface $mauticLogger, private readonly string $floodlightApiUrl = 'https://api.floodlight-b2b.com')
     {
     }
@@ -87,6 +94,61 @@ class FloodlightService implements FloodlightServiceInterface
         return false;
     }
 
+    /**
+     * @return array{content: string, contentType: string}|null
+     */
+    public function getLogo(string $logoUrl): ?array
+    {
+        if (!$this->isAllowedLogoOrigin($logoUrl)) {
+            return null;
+        }
+
+        try {
+            $response = $this->client->getClient()->request('GET', $logoUrl);
+
+            if (200 !== $response->getStatusCode()) {
+                return null;
+            }
+
+            return [
+                'content'     => $response->getBody()->getContents(),
+                'contentType' => $response->getHeaderLine('Content-Type'),
+            ];
+        } catch (\Throwable $e) {
+            $this->mauticLogger->error('FloodlightService getLogo failed: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    public function isAllowedLogoOrigin(string $url): bool
+    {
+        $target = parse_url($url);
+
+        if (!is_array($target) || 'https' !== ($target['scheme'] ?? '') || !isset($target['host'])) {
+            $this->mauticLogger->warning('Floodlight: skipped company logo from unexpected origin.', ['url' => $url]);
+
+            return false;
+        }
+
+        $configuredHost = parse_url($this->floodlightApiUrl, PHP_URL_HOST);
+        $allowedHosts   = self::ALLOWED_LOGO_HOSTS;
+
+        if (is_string($configuredHost) && '' !== $configuredHost) {
+            $allowedHosts[] = $configuredHost;
+        }
+
+        foreach ($allowedHosts as $allowedHost) {
+            if (0 === strcasecmp($target['host'], $allowedHost)) {
+                return true;
+            }
+        }
+
+        $this->mauticLogger->warning('Floodlight: skipped company logo from unexpected origin.', ['url' => $url]);
+
+        return false;
+    }
+
     private function getCompanyByIp(string $ip): ResponseInterface|false
     {
         $url = sprintf('%s/%s/companies/ip/%s', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION, $ip);
@@ -116,9 +178,6 @@ class FloodlightService implements FloodlightServiceInterface
         return $this->makeRequest($url);
     }
 
-    /**
-     * Prüft den Status der API-Autorisierung.
-     */
     public function getAuthorizationStatus(): ResponseInterface|false
     {
         $url = sprintf('%s/%s/auth/usage', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION);
@@ -126,25 +185,19 @@ class FloodlightService implements FloodlightServiceInterface
         return $this->makeRequest($url);
     }
 
-    /**
-     * Verarbeitet das Ergebnis der API-Key-Validierung - vereinfachte Version.
-     */
     private function handleAuthorizationResult(ResponseInterface $result): JsonResponse
     {
         $statusCode = $result->getStatusCode();
 
         if (200 === $statusCode) {
-            // Status 200 = Credentials sind gültig, egal was der Body sagt
+            // Status 200 means the credentials are valid, whatever the body contains
             return new JsonResponse(['message' => 'Valid credentials'], Response::HTTP_OK);
         }
 
-        // Alles andere = Credentials sind ungültig
+        // Any other status means the credentials are invalid
         return new JsonResponse(['message' => 'Your credentials are invalid'], Response::HTTP_UNAUTHORIZED);
     }
 
-    /**
-     * Prüft den Status der API-Autorisierung und gibt eine lesbare Meldung zurück.
-     */
     public function validateApiKey(): JsonResponse
     {
         $result = $this->getAuthorizationStatus();
@@ -157,24 +210,21 @@ class FloodlightService implements FloodlightServiceInterface
     }
 
     /**
-     * Validiert API-Credentials direkt und gibt nur true/false zurück
-     * Wird vom Symfony-Validator verwendet für Form-Daten (VOR dem Speichern).
+     * Validates API credentials directly and returns only true/false.
+     * The Symfony validator uses this for form data (BEFORE the data is saved).
      */
     public function validateApiCredentials(string $accessKeyId, string $secretKey): bool
     {
         try {
-            // Erstelle ValidationCredentials lokal - das ist für diese eine Verwendung OK
+            // Build the credentials locally because the form data is not stored yet
             $validationCredentials = new ValidationCredentials();
             $validationCredentials->setApiAccessKeyId($accessKeyId);
             $validationCredentials->setApiSecretKey($secretKey);
 
-            // Setze Credentials auf den ApiClient
             $this->client->setCredentials($validationCredentials);
 
-            // Verwende die bestehende validateApiKey Methode
             $jsonResponse = $this->validateApiKey();
 
-            // Prüfe den HTTP-Status der JsonResponse
             return 200 === $jsonResponse->getStatusCode() || 429 === $jsonResponse->getStatusCode();
         } catch (\Exception $e) {
             $this->mauticLogger->error('FloodlightService validateApiCredentials failed: '.$e->getMessage());
