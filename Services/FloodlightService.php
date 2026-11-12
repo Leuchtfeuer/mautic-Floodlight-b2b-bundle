@@ -7,7 +7,6 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 use GuzzleHttp\Exception\ClientException;
 use Mautic\IntegrationsBundle\Exception\PluginNotConfiguredException;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ValidationCredentials;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -15,6 +14,8 @@ use Psr\Log\LoggerInterface;
 class FloodlightService implements FloodlightServiceInterface
 {
     public const FLOODLIGHT_VERSION = 'v1';
+
+    private const AUTHORIZATION_TIMEOUT = 5;
 
     public function __construct(private readonly ApiClient $client, private readonly LoggerInterface $mauticLogger, private readonly string $floodlightApiUrl = 'https://api.floodlight-b2b.com')
     {
@@ -71,12 +72,15 @@ class FloodlightService implements FloodlightServiceInterface
         return $result;
     }
 
-    private function makeRequest(string $url): ResponseInterface|false
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function makeRequest(string $url, array $options = []): ResponseInterface|false
     {
         try {
             $myClient = $this->client->getClient();
 
-            return $this->client->getClient()->request('GET', $url);
+            return $this->client->getClient()->request('GET', $url, $options);
         } catch (ClientException $e) {
             if ($e->hasResponse()) {
                 return $e->getResponse();
@@ -115,14 +119,11 @@ class FloodlightService implements FloodlightServiceInterface
         return $this->makeRequest($url);
     }
 
-    /**
-     * Prüft den Status der API-Autorisierung.
-     */
     public function getAuthorizationStatus(): ResponseInterface|false
     {
         $url = sprintf('%s/%s/auth/usage', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION);
 
-        return $this->makeRequest($url);
+        return $this->makeRequest($url, ['timeout' => self::AUTHORIZATION_TIMEOUT]);
     }
 
     public function validateApiCredentials(string $accessKeyId, string $secretKey): CredentialsValidationResult
