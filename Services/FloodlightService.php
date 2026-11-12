@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 
 use GuzzleHttp\Exception\ClientException;
+use Mautic\IntegrationsBundle\Exception\PluginNotConfiguredException;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ValidationCredentials;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 
 class FloodlightService implements FloodlightServiceInterface
 {
@@ -126,60 +125,33 @@ class FloodlightService implements FloodlightServiceInterface
         return $this->makeRequest($url);
     }
 
-    /**
-     * Verarbeitet das Ergebnis der API-Key-Validierung - vereinfachte Version.
-     */
-    private function handleAuthorizationResult(ResponseInterface $result): JsonResponse
+    public function validateApiCredentials(string $accessKeyId, string $secretKey): CredentialsValidationResult
     {
-        $statusCode = $result->getStatusCode();
+        $validationCredentials = new ValidationCredentials();
+        $validationCredentials->setApiAccessKeyId($accessKeyId);
+        $validationCredentials->setApiSecretKey($secretKey);
 
-        if (200 === $statusCode) {
-            // Status 200 = Credentials sind gültig, egal was der Body sagt
-            return new JsonResponse(['message' => 'Valid credentials'], Response::HTTP_OK);
-        }
+        $this->client->setCredentials($validationCredentials);
 
-        // Alles andere = Credentials sind ungültig
-        return new JsonResponse(['message' => 'Your credentials are invalid'], Response::HTTP_UNAUTHORIZED);
-    }
-
-    /**
-     * Prüft den Status der API-Autorisierung und gibt eine lesbare Meldung zurück.
-     */
-    public function validateApiKey(): JsonResponse
-    {
-        $result = $this->getAuthorizationStatus();
-
-        if (false === $result) {
-            return new JsonResponse(['message' => 'Could not connect to API for validation.'], Response::HTTP_SERVICE_UNAVAILABLE);
-        }
-
-        return $this->handleAuthorizationResult($result);
-    }
-
-    /**
-     * Validiert API-Credentials direkt und gibt nur true/false zurück
-     * Wird vom Symfony-Validator verwendet für Form-Daten (VOR dem Speichern).
-     */
-    public function validateApiCredentials(string $accessKeyId, string $secretKey): bool
-    {
         try {
-            // Erstelle ValidationCredentials lokal - das ist für diese eine Verwendung OK
-            $validationCredentials = new ValidationCredentials();
-            $validationCredentials->setApiAccessKeyId($accessKeyId);
-            $validationCredentials->setApiSecretKey($secretKey);
-
-            // Setze Credentials auf den ApiClient
-            $this->client->setCredentials($validationCredentials);
-
-            // Verwende die bestehende validateApiKey Methode
-            $jsonResponse = $this->validateApiKey();
-
-            // Prüfe den HTTP-Status der JsonResponse
-            return 200 === $jsonResponse->getStatusCode() || 429 === $jsonResponse->getStatusCode();
-        } catch (\Exception $e) {
+            $response = $this->getAuthorizationStatus();
+        } catch (PluginNotConfiguredException) {
+            return CredentialsValidationResult::Invalid;
+        } catch (\Throwable $e) {
+            // Connection errors and 5xx responses do not say anything about the credentials
             $this->mauticLogger->error('FloodlightService validateApiCredentials failed: '.$e->getMessage());
 
-            return false;
+            return CredentialsValidationResult::Unverifiable;
         }
+
+        if (false === $response) {
+            return CredentialsValidationResult::Unverifiable;
+        }
+
+        return match ($response->getStatusCode()) {
+            200      => CredentialsValidationResult::Valid,
+            401, 403 => CredentialsValidationResult::Invalid,
+            default  => CredentialsValidationResult::Unverifiable,
+        };
     }
 }

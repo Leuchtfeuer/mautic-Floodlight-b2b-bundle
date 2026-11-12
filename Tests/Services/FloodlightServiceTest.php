@@ -5,7 +5,14 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Services;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use Mautic\IntegrationsBundle\Exception\PluginNotConfiguredException;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\CredentialsValidationResult;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
@@ -134,81 +141,43 @@ final class FloodlightServiceTest extends TestCase
         $this->assertIsArray($result);
     }
 
-    /*
-    public function testGetFloodlightKeyValidationStatusUnauthorized(): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('credentialsValidationProvider')]
+    public function testValidateApiCredentials(Response|\Throwable $outcome, CredentialsValidationResult $expected): void
     {
-        $client            = $this->createMock(ApiClient::class);
-        $responseInterface = $this->createMock(ResponseInterface::class);
-        $guzzleClient      = $this->createMock(Client::class);
-        $logger            = $this->createMock(LoggerInterface::class);
-        $stream            = $this->createMock(StreamInterface::class);
+        $guzzleClient = $this->createMock(Client::class);
+        if ($outcome instanceof \Throwable) {
+            $guzzleClient->method('request')->willThrowException($outcome);
+        } else {
+            $guzzleClient->method('request')->willReturn($outcome);
+        }
 
-        // Mock für den Stream, um die JSON-Antwort zu liefern
-        $stream->expects(self::any())
-            ->method('getContents')
-            ->willReturn('{"statusCode": 401, "timestamp": "2025-04-04T06:46:53.840Z", "message": "Unauthorized", "path": "/v1/auth/usage"}');
+        $client = $this->createMock(ApiClient::class);
+        $client->method('getClient')->willReturn($guzzleClient);
 
-        $guzzleClient->expects(self::any())
-            ->method('request')
-            ->willReturn($responseInterface);
+        $service = new FloodlightService($client, $this->createStub(LoggerInterface::class));
 
-        $client->expects(self::any())
-            ->method('getClient')
-            ->willReturn($guzzleClient);
-
-        $responseInterface->expects(self::any())
-            ->method('getStatusCode')
-            ->willReturn(401);
-
-        $responseInterface->expects(self::any())
-            ->method('getBody')
-            ->willReturn($stream);
-
-        // Erstelle einen teilweisen Mock vom FloodlightService, der nur die handleResult-Methode überschreibt
-        $service = $this->getMockBuilder(FloodlightService::class)
-            ->setConstructorArgs([$client, $logger])
-            ->onlyMethods(['handleResult'])
-            ->getMock();
-
-        // Konfiguriere den Mock, um das erwartete Array zurückzugeben
-        $expectedResult = [
-            'statusCode' => 401,
-            'timestamp' => '2025-04-04T06:46:53.840Z',
-            'message' => 'Unauthorized',
-            'path' => '/v1/auth/usage',
-            'statusRequestCode' => 401
-        ];
-
-        $service->expects(self::once())
-            ->method('handleResult')
-            ->willReturn($expectedResult);
-
-        $result = $service->getAuthorizationStatus();
-
-        self::assertSame($expectedResult, $result);
+        $this->assertSame($expected, $service->validateApiCredentials('key', 'secret'));
     }
-        */
 
-    /*
-     * {
-    "statusCode": 401,
-    "timestamp": "2025-04-04T06:46:53.840Z",
-    "message": "Unauthorized",
-    "path": "/v1/auth/usage"
-    }
-    Valid:
+    public static function credentialsValidationProvider(): \Generator
     {
-        "remaining": 996,
-        "limit": 1000,
-        "free": false,
-        "next_renewal": "2025-04-30T22:00:00.000Z"
+        $request = new Request('GET', '/v1/auth/usage');
+
+        yield 'valid' => [new Response(200), CredentialsValidationResult::Valid];
+        yield 'unauthorized' => [new ClientException('Unauthorized', $request, new Response(401)), CredentialsValidationResult::Invalid];
+        yield 'forbidden' => [new ClientException('Forbidden', $request, new Response(403)), CredentialsValidationResult::Invalid];
+        yield 'too many requests' => [new ClientException('Too many requests', $request, new Response(429)), CredentialsValidationResult::Unverifiable];
+        yield 'server error' => [new ServerException('Server error', $request, new Response(500)), CredentialsValidationResult::Unverifiable];
+        yield 'no connection' => [new ConnectException('Connection refused', $request), CredentialsValidationResult::Unverifiable];
     }
-    Exeeded:
+
+    public function testValidateApiCredentialsWithMissingSecretIsInvalid(): void
     {
-        "remaining": 0,
-        "limit": 1000,
-        "free": false,
-        "next_renewal": "2025-04-30T22:00:00.000Z"
+        $client = $this->createMock(ApiClient::class);
+        $client->method('getClient')->willThrowException(new PluginNotConfiguredException('API key is missing'));
+
+        $service = new FloodlightService($client, $this->createStub(LoggerInterface::class));
+
+        $this->assertSame(CredentialsValidationResult::Invalid, $service->validateApiCredentials('key', ''));
     }
-     */
 }
