@@ -16,6 +16,12 @@ class FloodlightService implements FloodlightServiceInterface
     public const FLOODLIGHT_VERSION = 'v1';
 
     private const AUTHORIZATION_TIMEOUT = 5;
+    /**
+     * @var string[]
+     */
+    private const ALLOWED_LOGO_HOSTS = [
+        'api.floodlight-b2b.com',
+    ];
 
     public function __construct(private readonly ApiClient $client, private readonly LoggerInterface $mauticLogger, private readonly string $floodlightApiUrl = 'https://api.floodlight-b2b.com')
     {
@@ -86,6 +92,61 @@ class FloodlightService implements FloodlightServiceInterface
                 return $e->getResponse();
             }
         }
+
+        return false;
+    }
+
+    /**
+     * @return array{content: string, contentType: string}|null
+     */
+    public function getLogo(string $logoUrl): ?array
+    {
+        if (!$this->isAllowedLogoOrigin($logoUrl)) {
+            return null;
+        }
+
+        try {
+            $response = $this->client->getClient()->request('GET', $logoUrl);
+
+            if (200 !== $response->getStatusCode()) {
+                return null;
+            }
+
+            return [
+                'content'     => $response->getBody()->getContents(),
+                'contentType' => $response->getHeaderLine('Content-Type'),
+            ];
+        } catch (\Throwable $e) {
+            $this->mauticLogger->error('FloodlightService getLogo failed: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    public function isAllowedLogoOrigin(string $url): bool
+    {
+        $target = parse_url($url);
+
+        if (!is_array($target) || 'https' !== ($target['scheme'] ?? '') || !isset($target['host'])) {
+            $this->mauticLogger->warning('Floodlight: skipped company logo from unexpected origin.', ['url' => $url]);
+
+            return false;
+        }
+
+        $configuredHost = parse_url($this->floodlightApiUrl, PHP_URL_HOST);
+        $allowedHosts   = self::ALLOWED_LOGO_HOSTS;
+
+        if (is_string($configuredHost) && '' !== $configuredHost) {
+            $allowedHosts[] = $configuredHost;
+        }
+
+        foreach ($allowedHosts as $allowedHost) {
+            if (0 === strcasecmp($target['host'], $allowedHost)) {
+                return true;
+            }
+        }
+
+        $this->mauticLogger->warning('Floodlight: skipped company logo from unexpected origin.', ['url' => $url]);
 
         return false;
     }
