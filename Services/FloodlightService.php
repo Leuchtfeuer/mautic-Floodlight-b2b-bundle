@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\RequestOptions;
 use Mautic\IntegrationsBundle\Exception\PluginNotConfiguredException;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ValidationCredentials;
@@ -123,7 +124,7 @@ class FloodlightService implements FloodlightServiceInterface
     {
         $url = sprintf('%s/%s/auth/usage', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION);
 
-        return $this->makeRequest($url, ['timeout' => self::AUTHORIZATION_TIMEOUT]);
+        return $this->makeRequest($url, [RequestOptions::TIMEOUT  => self::AUTHORIZATION_TIMEOUT]);
     }
 
     public function validateApiCredentials(string $accessKeyId, string $secretKey): CredentialsValidationResult
