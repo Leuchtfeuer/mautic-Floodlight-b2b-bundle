@@ -20,29 +20,24 @@ use Psr\Log\LoggerInterface;
 
 class UsageProviderTest extends TestCase
 {
-    private ApiClient&MockObject $apiClient;
-
     private Client&MockObject $guzzle;
 
     private Config&MockObject $config;
-
-    private LoggerInterface&MockObject $logger;
 
     private UsageProvider $provider;
 
     protected function setUp(): void
     {
-        $this->apiClient = $this->createMock(ApiClient::class);
+        $apiClient       = self::createStub(ApiClient::class);
         $this->guzzle    = $this->createMock(Client::class);
         $this->config    = $this->createMock(Config::class);
-        $this->logger    = $this->createMock(LoggerInterface::class);
 
-        $this->apiClient->method('getClient')->willReturn($this->guzzle);
+        $apiClient->method('getClient')->willReturn($this->guzzle);
 
         $this->provider = new UsageProvider(
-            $this->apiClient,
+            $apiClient,
             $this->config,
-            $this->logger,
+            self::createStub(LoggerInterface::class),
             'https://api.example.com',
         );
     }

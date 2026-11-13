@@ -42,14 +42,14 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     {
         $helper = new IpLookupRulesHelper(
             self::getContainer()->get('mautic.page.model.page'),
-            $this->createMock(FloodlightLeadDomainsModel::class),
-            $this->createMock(FloodlightService::class),
-            $this->createMock(Reporter::class),
-            $this->createMock(Status200Strategy::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-            $this->createMock(Config::class)
+            self::createStub(FloodlightLeadDomainsModel::class),
+            self::createStub(FloodlightService::class),
+            self::createStub(Reporter::class),
+            self::createStub(Status200Strategy::class),
+            self::createStub(Status202Strategy::class),
+            self::createStub(Status404Strategy::class),
+            self::createStub(Status429Strategy::class),
+            self::createStub(Config::class)
         );
         $lead = $this->createLead();
         $hit  = $this->createHit($lead);
@@ -62,14 +62,14 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
     {
         $helper = new IpLookupRulesHelper(
             self::getContainer()->get('mautic.page.model.page'),
-            $this->createMock(FloodlightLeadDomainsModel::class),
-            $this->createMock(FloodlightService::class),
-            $this->createMock(Reporter::class),
-            $this->createMock(Status200Strategy::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-            $this->createMock(Config::class)
+            self::createStub(FloodlightLeadDomainsModel::class),
+            self::createStub(FloodlightService::class),
+            self::createStub(Reporter::class),
+            self::createStub(Status200Strategy::class),
+            self::createStub(Status202Strategy::class),
+            self::createStub(Status404Strategy::class),
+            self::createStub(Status429Strategy::class),
+            self::createStub(Config::class)
         );
         $lead = $this->createLead();
         $hit  = $this->createHit($lead);
@@ -83,13 +83,13 @@ class IpLookupRulesHelperTest extends MauticMysqlTestCase
         $helper = new IpLookupRulesHelper(
             self::getContainer()->get('mautic.page.model.page'),
             self::getContainer()->get(FloodlightLeadDomainsModel::class),
-            $this->createMock(FloodlightService::class),
-            $this->createMock(Reporter::class),
-            $this->createMock(Status200Strategy::class),
-            $this->createMock(Status202Strategy::class),
-            $this->createMock(Status404Strategy::class),
-            $this->createMock(Status429Strategy::class),
-            $this->createMock(Config::class)
+            self::createStub(FloodlightService::class),
+            self::createStub(Reporter::class),
+            self::createStub(Status200Strategy::class),
+            self::createStub(Status202Strategy::class),
+            self::createStub(Status404Strategy::class),
+            self::createStub(Status429Strategy::class),
+            self::createStub(Config::class)
         );
         // Test with just one hit
         $lead    = $this->createLead();

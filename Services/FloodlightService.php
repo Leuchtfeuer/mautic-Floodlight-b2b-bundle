@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\RequestOptions;
+use Mautic\IntegrationsBundle\Exception\PluginNotConfiguredException;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ApiClient;
-use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\Credentials;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Connection\ValidationCredentials;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 
 class FloodlightService implements FloodlightServiceInterface
 {
     public const FLOODLIGHT_VERSION = 'v1';
 
+    private const AUTHORIZATION_TIMEOUT = 5;
     /**
      * @var string[]
      */
@@ -79,12 +79,15 @@ class FloodlightService implements FloodlightServiceInterface
         return $result;
     }
 
-    private function makeRequest(string $url): ResponseInterface|false
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function makeRequest(string $url, array $options = []): ResponseInterface|false
     {
         try {
             $myClient = $this->client->getClient();
 
-            return $this->client->getClient()->request('GET', $url);
+            return $this->client->getClient()->request('GET', $url, $options);
         } catch (ClientException $e) {
             if ($e->hasResponse()) {
                 return $e->getResponse();
@@ -182,54 +185,36 @@ class FloodlightService implements FloodlightServiceInterface
     {
         $url = sprintf('%s/%s/auth/usage', $this->floodlightApiUrl, self::FLOODLIGHT_VERSION);
 
-        return $this->makeRequest($url);
+        return $this->makeRequest($url, [RequestOptions::TIMEOUT  => self::AUTHORIZATION_TIMEOUT]);
     }
 
-    private function handleAuthorizationResult(ResponseInterface $result): JsonResponse
+    public function validateApiCredentials(string $accessKeyId, string $secretKey): CredentialsValidationResult
     {
-        $statusCode = $result->getStatusCode();
+        $validationCredentials = new ValidationCredentials();
+        $validationCredentials->setApiAccessKeyId($accessKeyId);
+        $validationCredentials->setApiSecretKey($secretKey);
 
-        if (200 === $statusCode) {
-            // Status 200 means the credentials are valid, whatever the body contains
-            return new JsonResponse(['message' => 'Valid credentials'], Response::HTTP_OK);
-        }
+        $this->client->setCredentials($validationCredentials);
 
-        // Any other status means the credentials are invalid
-        return new JsonResponse(['message' => 'Your credentials are invalid'], Response::HTTP_UNAUTHORIZED);
-    }
-
-    public function validateApiKey(): JsonResponse
-    {
-        $result = $this->getAuthorizationStatus();
-
-        if (false === $result) {
-            return new JsonResponse(['message' => 'Could not connect to API for validation.'], Response::HTTP_SERVICE_UNAVAILABLE);
-        }
-
-        return $this->handleAuthorizationResult($result);
-    }
-
-    /**
-     * Validates API credentials directly and returns only true/false.
-     * The Symfony validator uses this for form data (BEFORE the data is saved).
-     */
-    public function validateApiCredentials(string $accessKeyId, string $secretKey): bool
-    {
         try {
-            // Build the credentials locally because the form data is not stored yet
-            $validationCredentials = new ValidationCredentials();
-            $validationCredentials->setApiAccessKeyId($accessKeyId);
-            $validationCredentials->setApiSecretKey($secretKey);
-
-            $this->client->setCredentials($validationCredentials);
-
-            $jsonResponse = $this->validateApiKey();
-
-            return 200 === $jsonResponse->getStatusCode() || 429 === $jsonResponse->getStatusCode();
-        } catch (\Exception $e) {
+            $response = $this->getAuthorizationStatus();
+        } catch (PluginNotConfiguredException) {
+            return CredentialsValidationResult::Invalid;
+        } catch (\Throwable $e) {
+            // Connection errors and 5xx responses do not say anything about the credentials
             $this->logger->error('FloodlightService validateApiCredentials failed: '.$e->getMessage());
 
-            return false;
+            return CredentialsValidationResult::Unverifiable;
         }
+
+        if (false === $response) {
+            return CredentialsValidationResult::Unverifiable;
+        }
+
+        return match ($response->getStatusCode()) {
+            200      => CredentialsValidationResult::Valid,
+            401, 403 => CredentialsValidationResult::Invalid,
+            default  => CredentialsValidationResult::Unverifiable,
+        };
     }
 }

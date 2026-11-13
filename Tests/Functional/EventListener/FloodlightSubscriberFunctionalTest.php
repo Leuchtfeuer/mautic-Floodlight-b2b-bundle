@@ -768,10 +768,10 @@ class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         }
 
         $hit              = $this->createHit($lead, $remoteAddress);
-        $pageHitEventMock = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock->expects($this->any())->method('getHit')->willReturn($hit);
-        $pageHitEventMock->expects($this->any())->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock);
+        $pageHitEvent     = self::createStub(\Mautic\PageBundle\Event\PageHitEvent::class);
+        $pageHitEvent->method('getHit')->willReturn($hit);
+        $pageHitEvent->method('getRequest')->willReturn($request);
+        $floodlightSubscriber->onPageHit($pageHitEvent);
     }
 
     private function mockLogoApiClient(): void
