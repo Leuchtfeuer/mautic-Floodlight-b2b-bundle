@@ -16,11 +16,11 @@ final class DomainUtilityTest extends TestCase
 {
     public function testIsIp(): void
     {
-        $whoisService           = $this->createStub(WhoisService::class);
-        $keywordBlacklistHelper = $this->createStub(KeywordBlacklistHelper::class);
-        $domainBlacklistHelper  = $this->createStub(DomainBlacklistHelper::class);
-        $pathsHelper            = $this->createStub(PathsHelper::class);
-        $logger                 = $this->createStub(LoggerInterface::class);
+        $whoisService           = self::createStub(WhoisService::class);
+        $keywordBlacklistHelper = self::createStub(KeywordBlacklistHelper::class);
+        $domainBlacklistHelper  = self::createStub(DomainBlacklistHelper::class);
+        $pathsHelper            = self::createStub(PathsHelper::class);
+        $logger                 = self::createStub(LoggerInterface::class);
 
         $domainUtility = new DomainUtility($whoisService, $keywordBlacklistHelper, $domainBlacklistHelper, $pathsHelper, $logger);
         $this->assertTrue($domainUtility->hasMoreThanFourNumbers('123.23'));

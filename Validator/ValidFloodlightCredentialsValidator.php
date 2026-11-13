@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Validator;
 
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\CredentialsValidationResult;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\FloodlightService;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -34,15 +35,14 @@ class ValidFloodlightCredentialsValidator extends ConstraintValidator
             $secretKey = $currentApiSecretKey;
         }
 
-        try {
-            $isValid = $this->floodlightService->validateApiCredentials($accessKeyId, $secretKey);
+        $message = match ($this->floodlightService->validateApiCredentials($accessKeyId, $secretKey)) {
+            CredentialsValidationResult::Valid        => null,
+            CredentialsValidationResult::Invalid      => $constraint->message,
+            CredentialsValidationResult::Unverifiable => $constraint->unverifiableMessage,
+        };
 
-            if (!$isValid) {
-                $this->context->buildViolation($constraint->message)
-                    ->addViolation();
-            }
-        } catch (\Exception) {
-            $this->context->buildViolation($constraint->message)
+        if (null !== $message) {
+            $this->context->buildViolation($message)
                 ->addViolation();
         }
     }

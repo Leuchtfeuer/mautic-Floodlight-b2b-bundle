@@ -15,7 +15,7 @@ final class WhoisServiceTest extends TestCase
      */
     private function createService(?array $rdapFixture): WhoisService
     {
-        return new class($this->createStub(LoggerInterface::class), $rdapFixture) extends WhoisService {
+        return new class(self::createStub(LoggerInterface::class), $rdapFixture) extends WhoisService {
             /**
              * @param array<mixed>|null $rdapFixture
              */
