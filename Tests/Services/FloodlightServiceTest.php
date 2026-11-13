@@ -142,7 +142,7 @@ final class FloodlightServiceTest extends TestCase
         $this->assertIsArray($result);
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('credentialsValidationProvider')]
+    #[DataProvider('credentialsValidationProvider')]
     public function testValidateApiCredentials(Response|\Throwable $outcome, CredentialsValidationResult $expected): void
     {
         $guzzleClient = self::createStub(Client::class);
@@ -180,6 +180,8 @@ final class FloodlightServiceTest extends TestCase
         $service = new FloodlightService($client, self::createStub(LoggerInterface::class));
 
         $this->assertSame(CredentialsValidationResult::Invalid, $service->validateApiCredentials('key', ''));
+    }
+
     public function testGetLogoSuccess(): void
     {
         $client            = $this->createMock(ApiClient::class);
