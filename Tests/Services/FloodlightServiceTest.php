@@ -144,17 +144,17 @@ final class FloodlightServiceTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('credentialsValidationProvider')]
     public function testValidateApiCredentials(Response|\Throwable $outcome, CredentialsValidationResult $expected): void
     {
-        $guzzleClient = $this->createMock(Client::class);
+        $guzzleClient = self::createStub(Client::class);
         if ($outcome instanceof \Throwable) {
             $guzzleClient->method('request')->willThrowException($outcome);
         } else {
             $guzzleClient->method('request')->willReturn($outcome);
         }
 
-        $client = $this->createMock(ApiClient::class);
+        $client = self::createStub(ApiClient::class);
         $client->method('getClient')->willReturn($guzzleClient);
 
-        $service = new FloodlightService($client, $this->createStub(LoggerInterface::class));
+        $service = new FloodlightService($client, self::createStub(LoggerInterface::class));
 
         $this->assertSame($expected, $service->validateApiCredentials('key', 'secret'));
     }
@@ -173,10 +173,10 @@ final class FloodlightServiceTest extends TestCase
 
     public function testValidateApiCredentialsWithMissingSecretIsInvalid(): void
     {
-        $client = $this->createMock(ApiClient::class);
+        $client = self::createStub(ApiClient::class);
         $client->method('getClient')->willThrowException(new PluginNotConfiguredException('API key is missing'));
 
-        $service = new FloodlightService($client, $this->createStub(LoggerInterface::class));
+        $service = new FloodlightService($client, self::createStub(LoggerInterface::class));
 
         $this->assertSame(CredentialsValidationResult::Invalid, $service->validateApiCredentials('key', ''));
     }
