@@ -756,10 +756,10 @@ final class FloodlightSubscriberFunctionalTest extends MauticMysqlTestCase
         }
 
         $hit              = $this->createHit($lead, $remoteAddress);
-        $pageHitEventMock = $this->createMock(\Mautic\PageBundle\Event\PageHitEvent::class);
-        $pageHitEventMock->method('getHit')->willReturn($hit);
-        $pageHitEventMock->method('getRequest')->willReturn($request);
-        $floodlightSubscriber->onPageHit($pageHitEventMock);
+        $pageHitEvent     = self::createStub(\Mautic\PageBundle\Event\PageHitEvent::class);
+        $pageHitEvent->method('getHit')->willReturn($hit);
+        $pageHitEvent->method('getRequest')->willReturn($request);
+        $floodlightSubscriber->onPageHit($pageHitEvent);
     }
 
     private function createHit(Lead $lead, string $ipAdress = '127.0.0.1'): Hit

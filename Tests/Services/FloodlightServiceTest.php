@@ -23,11 +23,11 @@ final class FloodlightServiceTest extends TestCase
 {
     public function testSuccessTwoStatusCodeOne200(): void
     {
-        $client            = $this->createMock(ApiClient::class);
-        $responseInterface = $this->createMock(ResponseInterface::class);
-        $guzzleClient      = $this->createMock(Client::class);
-        $stream            = $this->createMock(StreamInterface::class);
-        $logger            = $this->createStub(LoggerInterface::class);
+        $client            = self::createStub(ApiClient::class);
+        $responseInterface = self::createStub(ResponseInterface::class);
+        $guzzleClient      = self::createStub(Client::class);
+        $stream            = self::createStub(StreamInterface::class);
+        $logger            = self::createStub(LoggerInterface::class);
         $stream
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
@@ -52,11 +52,11 @@ final class FloodlightServiceTest extends TestCase
 
     public function testFailThree202Response(): void
     {
-        $client            = $this->createMock(ApiClient::class);
-        $responseInterface = $this->createMock(ResponseInterface::class);
-        $guzzleClient      = $this->createMock(Client::class);
-        $logger            = $this->createStub(LoggerInterface::class);
-        $stream            = $this->createMock(StreamInterface::class);
+        $client            = self::createStub(ApiClient::class);
+        $responseInterface = self::createStub(ResponseInterface::class);
+        $guzzleClient      = self::createStub(Client::class);
+        $logger            = self::createStub(LoggerInterface::class);
+        $stream            = self::createStub(StreamInterface::class);
         $stream
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
@@ -82,11 +82,11 @@ final class FloodlightServiceTest extends TestCase
 
     public function testFailStatusCode404(): void
     {
-        $client            = $this->createMock(ApiClient::class);
-        $responseInterface = $this->createMock(ResponseInterface::class);
-        $guzzleClient      = $this->createMock(Client::class);
-        $logger            = $this->createStub(LoggerInterface::class);
-        $stream            = $this->createMock(StreamInterface::class);
+        $client            = self::createStub(ApiClient::class);
+        $responseInterface = self::createStub(ResponseInterface::class);
+        $guzzleClient      = self::createStub(Client::class);
+        $logger            = self::createStub(LoggerInterface::class);
+        $stream            = self::createStub(StreamInterface::class);
 
         $guzzleClient
             ->method('request')
@@ -114,11 +114,11 @@ final class FloodlightServiceTest extends TestCase
 
     public function testSuccess200FirstTry(): void
     {
-        $client            = $this->createMock(ApiClient::class);
-        $responseInterface = $this->createMock(ResponseInterface::class);
-        $guzzleClient      = $this->createMock(Client::class);
-        $stream            = $this->createMock(StreamInterface::class);
-        $logger            = $this->createStub(LoggerInterface::class);
+        $client            = self::createStub(ApiClient::class);
+        $responseInterface = self::createStub(ResponseInterface::class);
+        $guzzleClient      = self::createStub(Client::class);
+        $stream            = self::createStub(StreamInterface::class);
+        $logger            = self::createStub(LoggerInterface::class);
         $stream
             ->method('getContents')
             ->willReturn('[{"foo": "bar"}]');
