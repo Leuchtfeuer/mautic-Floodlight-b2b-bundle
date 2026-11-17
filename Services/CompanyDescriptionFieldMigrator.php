@@ -15,6 +15,7 @@ class CompanyDescriptionFieldMigrator
 
     private readonly string $companiesTable;
     private readonly string $leadFieldsTable;
+    private readonly string $leadListsTable;
 
     public function __construct(
         private readonly Connection $connection,
@@ -22,12 +23,14 @@ class CompanyDescriptionFieldMigrator
         $prefix                = defined('MAUTIC_TABLE_PREFIX') && is_string(MAUTIC_TABLE_PREFIX) ? MAUTIC_TABLE_PREFIX : '';
         $this->companiesTable  = $prefix.'companies';
         $this->leadFieldsTable = $prefix.'lead_fields';
+        $this->leadListsTable  = $prefix.'lead_lists';
     }
 
     public function hasPendingMigration(): bool
     {
         return $this->hasLegacyColumn()
             || $this->hasLegacyField()
+            || [] !== $this->fetchSegmentsWithLegacyFilter()
             || self::LIMIT !== $this->getCoreLimit();
     }
 
@@ -36,6 +39,8 @@ class CompanyDescriptionFieldMigrator
         $core   = self::CORE_ALIAS;
         $legacy = self::LEGACY_ALIAS;
         $limit  = self::LIMIT;
+
+        $this->rewriteSegmentFilters();
 
         if ($this->hasLegacyColumn()) {
             $this->connection->executeStatement(
@@ -55,6 +60,41 @@ class CompanyDescriptionFieldMigrator
         $this->connection->executeStatement(
             "UPDATE `{$this->leadFieldsTable}` SET `char_length_limit` = ? WHERE `alias` = ? AND `object` = 'company'",
             [$limit, $core]
+        );
+    }
+
+    private function rewriteSegmentFilters(): void
+    {
+        foreach ($this->fetchSegmentsWithLegacyFilter() as $id => $serializedFilters) {
+            $filters = unserialize($serializedFilters, ['allowed_classes' => false]);
+            if (!is_array($filters)) {
+                continue;
+            }
+
+            foreach ($filters as &$filter) {
+                if (is_array($filter) && self::LEGACY_ALIAS === ($filter['field'] ?? null)) {
+                    $filter['field'] = self::CORE_ALIAS;
+                }
+            }
+            unset($filter);
+
+            $this->connection->executeStatement(
+                "UPDATE `{$this->leadListsTable}` SET `filters` = ? WHERE `id` = ?",
+                [serialize($filters), $id]
+            );
+        }
+    }
+
+    /**
+     * @return array<int|string, string>
+     */
+    private function fetchSegmentsWithLegacyFilter(): array
+    {
+        $legacy = self::LEGACY_ALIAS;
+
+        return $this->connection->fetchAllKeyValue(
+            "SELECT `id`, `filters` FROM `{$this->leadListsTable}` WHERE `filters` LIKE ?",
+            ['%s:5:"field";s:'.strlen($legacy).':"'.$legacy.'";%']
         );
     }
 

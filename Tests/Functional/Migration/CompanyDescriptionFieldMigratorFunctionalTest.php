@@ -7,6 +7,7 @@ namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\Functional\Migration
 use Doctrine\DBAL\Connection;
 use Mautic\CoreBundle\Test\MauticMysqlTestCase;
 use Mautic\LeadBundle\Entity\LeadField;
+use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Model\FieldModel;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\CompanyDescriptionFieldMigrator;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Tests\RebuildsCompanyTableAfterCustomFieldCleanup;
@@ -29,6 +30,9 @@ final class CompanyDescriptionFieldMigratorFunctionalTest extends MauticMysqlTes
         $field->setObject('company');
         $field->setGroup('core');
         self::getContainer()->get(FieldModel::class)->saveEntity($field);
+
+        $legacySegment = $this->createSegment('legacy', 'f4b_companydescription');
+        $longSegment   = $this->createSegment('long', 'f4b_companydescription_long');
         $this->em->clear();
 
         $longDescription = str_repeat('ä', 250);
@@ -55,5 +59,28 @@ final class CompanyDescriptionFieldMigratorFunctionalTest extends MauticMysqlTes
         $descriptions = $connection->fetchAllKeyValue("SELECT companyname, companydescription FROM `{$table}`");
         $this->assertSame('Own text', $descriptions['short']);
         $this->assertSame(mb_substr($longDescription, 0, CompanyDescriptionFieldMigrator::LIMIT), $descriptions['too-long']);
+
+        $this->assertSame('companydescription', $this->em->find(LeadList::class, $legacySegment)?->getFilters()[0]['field']);
+        $this->assertSame('f4b_companydescription_long', $this->em->find(LeadList::class, $longSegment)?->getFilters()[0]['field']);
+    }
+
+    private function createSegment(string $alias, string $field): int
+    {
+        $segment = new LeadList();
+        $segment->setName($alias);
+        $segment->setPublicName($alias);
+        $segment->setAlias($alias);
+        $segment->setFilters([[
+            'glue'       => 'and',
+            'field'      => $field,
+            'object'     => 'company',
+            'type'       => 'textarea',
+            'operator'   => '!empty',
+            'properties' => ['filter' => null],
+        ]]);
+        $this->em->persist($segment);
+        $this->em->flush();
+
+        return (int) $segment->getId();
     }
 }
