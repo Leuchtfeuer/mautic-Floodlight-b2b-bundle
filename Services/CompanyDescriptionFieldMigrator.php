@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services;
 
 use Doctrine\DBAL\Connection;
+use Mautic\CoreBundle\Helper\Serializer;
 
 class CompanyDescriptionFieldMigrator
 {
@@ -66,7 +67,7 @@ class CompanyDescriptionFieldMigrator
     private function rewriteSegmentFilters(): void
     {
         foreach ($this->fetchSegmentsWithLegacyFilter() as $id => $serializedFilters) {
-            $filters = unserialize($serializedFilters, ['allowed_classes' => false]);
+            $filters = Serializer::decode($serializedFilters);
             if (!is_array($filters)) {
                 continue;
             }

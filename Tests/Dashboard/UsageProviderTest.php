@@ -28,7 +28,7 @@ final class UsageProviderTest extends TestCase
 
     protected function setUp(): void
     {
-        $apiClient = $this->createMock(ApiClient::class);
+        $apiClient       = $this->createMock(ApiClient::class);
         $this->guzzle    = $this->createMock(Client::class);
         $this->config    = $this->createMock(Config::class);
 
