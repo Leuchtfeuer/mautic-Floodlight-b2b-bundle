@@ -9,6 +9,7 @@ use Mautic\CoreBundle\Helper\PathsHelper;
 use Mautic\PluginBundle\Event\PluginInstallEvent;
 use Mautic\PluginBundle\PluginEvents;
 use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Helper\InstallHelper;
+use MauticPlugin\LeuchtfeuerFloodlightB2BBundle\Services\CompanyDescriptionFieldMigrator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class PluginInstallSubscriber implements EventSubscriberInterface
@@ -135,13 +136,6 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 'type'            => 'textarea',
                 'limit'           => 2560,
                 'externalKeyName' => 'companydescription_long',
-            ],
-            [
-                'alias'           => 'f4b_companydescription',
-                'name'            => 'Company Description',
-                'type'            => 'textarea',
-                'limit'           => 255,
-                'externalKeyName' => 'companydescription',
             ],
             [
                 'alias'           => 'f4b_companyfounding_year',
@@ -289,7 +283,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
             ],
         ];
 
-    public function __construct(private readonly InstallHelper $installHelper, private readonly PathsHelper $pathsHelper, private readonly FilePathResolver $filePathResolver)
+    public function __construct(private readonly InstallHelper $installHelper, private readonly PathsHelper $pathsHelper, private readonly FilePathResolver $filePathResolver, private readonly CompanyDescriptionFieldMigrator $companyDescriptionFieldMigrator)
     {
     }
 
@@ -336,5 +330,7 @@ class PluginInstallSubscriber implements EventSubscriberInterface
                 $options
             );
         }
+
+        $this->companyDescriptionFieldMigrator->migrate();
     }
 }

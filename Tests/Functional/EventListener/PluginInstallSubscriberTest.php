@@ -35,7 +35,6 @@ final class PluginInstallSubscriberTest extends MauticMysqlTestCase
             'f4b_companyemployees_range',
             'f4b_companyrank_tranco',
             'f4b_companystate_code',
-            'f4b_companydescription',
             'f4b_companydescription_long',
             'f4b_companyindustry_icb_sector',
             'f4b_companyindustry_icb_subIndustry',
