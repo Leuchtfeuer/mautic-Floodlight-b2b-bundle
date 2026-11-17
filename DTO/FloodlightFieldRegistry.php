@@ -78,7 +78,6 @@ final class FloodlightFieldRegistry
         $la  = FieldType::LIST_ARRAY;
         $ds  = CompanyMappingType::DIRECT_SETTER;
         $auf = CompanyMappingType::ADD_UPDATED_FIELD;
-        $dau = CompanyMappingType::DIRECT_SETTER_AND_UPDATED_FIELD;
         $no  = CompanyMappingType::NONE;
 
         // apiKey, dbAlias, dtoProperty, type, companyMapping, companySetter, truncate
@@ -119,7 +118,7 @@ final class FloodlightFieldRegistry
             new FieldDefinition('companyindustry_icb_sector', 'f4b_companyindustry_icb_sector', 'companyIndustryICBCSector', $lv, $auf),
 
             // --- Description fields ---
-            new FieldDefinition('companydescription', 'f4b_companydescription', 'companyDescription', $s, $dau, 'setDescription'),
+            new FieldDefinition('companydescription', 'companydescription', 'companyDescription', $s, $ds, 'setDescription'),
             new FieldDefinition('companydescription_long', 'f4b_companydescription_long', 'companyDescriptionLong', $s, $auf),
 
             // --- Company size and financials ---

@@ -25,13 +25,11 @@ class CompanyMapper
                 continue;
             }
 
-            if (CompanyMappingType::DIRECT_SETTER === $def->companyMapping
-                || CompanyMappingType::DIRECT_SETTER_AND_UPDATED_FIELD === $def->companyMapping) {
+            if (CompanyMappingType::DIRECT_SETTER === $def->companyMapping) {
                 $company->{$def->companySetter}($value);
             }
 
-            if (CompanyMappingType::ADD_UPDATED_FIELD === $def->companyMapping
-                || CompanyMappingType::DIRECT_SETTER_AND_UPDATED_FIELD === $def->companyMapping) {
+            if (CompanyMappingType::ADD_UPDATED_FIELD === $def->companyMapping) {
                 $company->addUpdatedField($def->dbAlias, $value);
             }
         }

@@ -8,6 +8,5 @@ enum CompanyMappingType
 {
     case DIRECT_SETTER;
     case ADD_UPDATED_FIELD;
-    case DIRECT_SETTER_AND_UPDATED_FIELD;
     case NONE;
 }

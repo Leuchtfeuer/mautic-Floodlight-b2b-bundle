@@ -269,11 +269,11 @@ class FloodlightDtoHydrator
     {
         $limit = $this->getFieldLimit($dbAlias);
 
-        if (null === $limit || strlen($value) <= $limit) {
+        if (null === $limit || mb_strlen($value) <= $limit) {
             return $value;
         }
 
-        return substr($value, 0, $limit);
+        return mb_substr($value, 0, $limit);
     }
 
     /**
@@ -300,7 +300,7 @@ class FloodlightDtoHydrator
             $value      = $this->sanitizeHtmlEntities($value);
             $testString = $pipeSeparated.($pipeSeparated ? '|' : '').$value;
 
-            if (strlen($testString) <= $limit) {
+            if (mb_strlen($testString) <= $limit) {
                 $pipeSeparated = $testString;
                 $result[]      = $value;
             } else {
