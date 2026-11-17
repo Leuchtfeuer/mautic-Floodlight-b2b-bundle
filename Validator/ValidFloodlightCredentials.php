@@ -14,6 +14,7 @@ use Symfony\Component\Validator\Constraint;
 class ValidFloodlightCredentials extends Constraint
 {
     public string $message              = 'leuchtfeuer.floodlight.validator.invalid_credentials';
+    public string $unverifiableMessage  = 'leuchtfeuer.floodlight.validator.unverifiable_credentials';
     public ?string $currentApiSecretKey = null;
 
     /**

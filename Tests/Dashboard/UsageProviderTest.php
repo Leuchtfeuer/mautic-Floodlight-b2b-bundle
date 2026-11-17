@@ -28,7 +28,7 @@ final class UsageProviderTest extends TestCase
 
     protected function setUp(): void
     {
-        $apiClient = $this->createMock(ApiClient::class);
+        $apiClient       = self::createStub(ApiClient::class);
         $this->guzzle    = $this->createMock(Client::class);
         $this->config    = $this->createMock(Config::class);
 
@@ -37,7 +37,7 @@ final class UsageProviderTest extends TestCase
         $this->provider = new UsageProvider(
             $apiClient,
             $this->config,
-            $this->createStub(LoggerInterface::class),
+            self::createStub(LoggerInterface::class),
             'https://api.example.com',
         );
     }

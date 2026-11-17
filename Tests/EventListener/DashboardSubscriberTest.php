@@ -70,8 +70,8 @@ final class DashboardSubscriberTest extends TestCase
         // Remaining share of monthly credits plus buffer: 334 / 700.
         $this->assertEqualsWithDelta(47.714, $data['remainingPercent'], 0.001);
         $this->assertSame($nextRenewal, $data['nextRenewal']);
-        $this->assertSame('https://floodlight-b2b.com/', $data['portalUrl']);
-        $this->assertSame('https://floodlight-b2b.com/', $data['shopUrl']);
+        $this->assertSame('https://m.floodlight-b2b.com/asset/1:manage-payments', $data['portalUrl']);
+        $this->assertSame('https://m.floodlight-b2b.com/asset/2:upgrade-plan', $data['shopUrl']);
     }
 
     public function testAlwaysFetchesCurrentUsage(): void
@@ -136,8 +136,8 @@ final class DashboardSubscriberTest extends TestCase
         $data = $this->capturedData;
         $this->assertSame($expectedState, $data['state']);
         // Links remain available in every error state.
-        $this->assertSame('https://floodlight-b2b.com/', $data['portalUrl']);
-        $this->assertSame('https://floodlight-b2b.com/', $data['shopUrl']);
+        $this->assertSame('https://m.floodlight-b2b.com/asset/1:manage-payments', $data['portalUrl']);
+        $this->assertSame('https://m.floodlight-b2b.com/asset/2:upgrade-plan', $data['shopUrl']);
         $this->assertArrayNotHasKey('plan', $data);
     }
 

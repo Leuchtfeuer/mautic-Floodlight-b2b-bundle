@@ -75,7 +75,7 @@ final class LeadDomainsTest extends MauticMysqlTestCase
     public function testSetLead(): void
     {
         $leadDomain = new FloodlightLeadDomains();
-        $leadDomain->setContact($this->createStub(Lead::class));
+        $leadDomain->setContact(self::createStub(Lead::class));
         $this->assertInstanceOf(Lead::class, $leadDomain->getContact());
     }
 

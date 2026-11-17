@@ -20,7 +20,7 @@ final class DashboardWidgetLifecycleSubscriberTest extends TestCase
         $widgetPlacement = $this->createMock(WidgetPlacement::class);
         $widgetPlacement->expects($expectBackfill ? $this->once() : $this->never())->method('placeForUsers');
 
-        $userRepository = $this->createStub(UserRepository::class);
+        $userRepository = self::createStub(UserRepository::class);
         $userRepository->method('findAll')->willReturn([]);
 
         $plugin = new Plugin();
