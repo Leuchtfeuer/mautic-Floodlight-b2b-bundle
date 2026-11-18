@@ -15,7 +15,7 @@ class DtoHelper
         'f4b_companylabels'                     => 'companyLabels',
         'f4b_companyindustry_linkedin'          => 'companyIndustryLinkedin',
         'f4b_companyindustry_list'              => 'companyIndustryList',
-        'f4b_companydescription'                => 'companyDescription',
+        'companydescription'                    => 'companyDescription',
         'f4b_companydescription_long'           => 'companyDescriptionLong',
         'f4b_companyname_legal'                 => 'companyNameLegal',
         'f4b_companyname_alternatives'          => 'companyNameAlternative',
