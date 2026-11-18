@@ -21,7 +21,7 @@ class FloodlightDTO implements DTOInterface
         'companylabels'                     => 'f4b_companylabels',
         'companyindustry_linkedin'          => 'f4b_companyindustry_linkedin',
         'companyindustry_list'              => 'f4b_companyindustry_list',
-        'companydescription'                => 'f4b_companydescription',
+        'companydescription'                => 'companydescription',
         'companydescription_long'           => 'f4b_companydescription_long',
         'companyname_legal'                 => 'f4b_companyname_legal',
         'companyname_alternatives'          => 'f4b_companyname_alternatives',
@@ -453,7 +453,7 @@ class FloodlightDTO implements DTOInterface
 
     public function setCompanyDescription(string $companyDescription): void
     {
-        $this->companyDescription = substr($companyDescription, 0, 190);
+        $this->companyDescription = $companyDescription;
     }
 
     public function getCompanyFoundingYear(): string
@@ -1004,9 +1004,6 @@ class FloodlightDTO implements DTOInterface
         if (!empty($this->getCompanyDescriptionLong())) {
             $company->addUpdatedField('f4b_companydescription_long', $this->getCompanyDescriptionLong());
         }
-        if (!empty($this->getCompanyDescription())) {
-            $company->addUpdatedField('f4b_companydescription', $this->getCompanyDescription());
-        }
         if (!empty($this->getCompanyFoundingYear())) {
             $company->addUpdatedField('f4b_companyfounding_year', $this->getCompanyFoundingYear());
         }
@@ -1159,11 +1156,11 @@ class FloodlightDTO implements DTOInterface
 
         $limit = $this->getFieldLimit($dtoFieldName);
 
-        if (null === $limit || strlen($value) <= $limit) {
+        if (null === $limit || mb_strlen($value) <= $limit) {
             return $value;
         }
 
-        return substr($value, 0, $limit);
+        return mb_substr($value, 0, $limit);
     }
 
     /**
@@ -1194,7 +1191,7 @@ class FloodlightDTO implements DTOInterface
             $value      = $this->sanitizeHtmlEntities($value);
             $testString = $pipeSeparated.($pipeSeparated ? '|' : '').$value;
 
-            if (strlen($testString) <= $limit) {
+            if (mb_strlen($testString) <= $limit) {
                 $pipeSeparated = $testString;
                 $result[]      = $value;
             } else {
